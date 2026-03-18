@@ -109,19 +109,21 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="mt-1 ml-4 pl-4 border-l border-slate-100 space-y-1 py-1">
+                <div className="mt-1 ml-2 pl-3 border-l border-slate-100 space-y-1 py-1">
                   {businessItems.map((item) => (
                     <button
                       key={item.id}
                       onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                      className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg transition-all ${
                         activeTab === item.id 
                           ? 'text-primary bg-primary/5 font-bold' 
                           : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                       }`}
                     >
-                      <item.icon size={16} />
-                      <span className="text-xs font-medium">{item.label}</span>
+                      <item.icon size={14} className="shrink-0" />
+                      <span className="text-[12px] font-medium whitespace-nowrap">
+                        {item.label}
+                      </span>
                     </button>
                   ))}
                 </div>
