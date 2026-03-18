@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   BarChart3, 
@@ -13,10 +13,13 @@ import {
   Wallet, 
   Archive, 
   FileText,
-  Settings 
+  Settings,
+  ChevronDown,
+  ChevronRight,
+  Layers
 } from 'lucide-react';
 
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface SidebarProps {
   activeTab: string;
@@ -24,6 +27,8 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
+  const [isBusinessOpen, setIsBusinessOpen] = useState(true);
+
   const navItems = [
     { id: 'dashboard', label: '首页', icon: LayoutDashboard },
     { id: 'business-dashboard', label: '业务仪表盘', icon: BarChart3 },
@@ -43,6 +48,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'other-materials', label: '项目其他材料', icon: FileText },
   ];
 
+  // Auto-open business menu if a sub-item is active
+  useEffect(() => {
+    if (businessItems.some(item => item.id === activeTab)) {
+      setIsBusinessOpen(true);
+    }
+  }, [activeTab]);
+
   return (
     <motion.aside 
       initial={{ x: -20, opacity: 0 }}
@@ -58,48 +70,76 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
         </div>
       </div>
 
-      <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto custom-scrollbar">
         {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-              activeTab === item.id ? 'sidebar-item-active' : 'text-slate-600 hover:bg-slate-50'
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+              activeTab === item.id ? 'sidebar-item-active shadow-sm' : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
-            <item.icon size={20} />
-            <span className="text-sm font-medium">{item.label}</span>
+            <item.icon size={18} />
+            <span className="text-sm font-bold">{item.label}</span>
           </button>
         ))}
 
-        <div className="pt-6">
-          <p className="px-3 text-base font-bold text-slate-900 mb-4">业务管理</p>
-          <div className="space-y-1">
-            {businessItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                  activeTab === item.id ? 'sidebar-item-active' : 'text-slate-600 hover:bg-slate-50'
-                }`}
+        <div className="pt-2">
+          <button
+            onClick={() => setIsBusinessOpen(!isBusinessOpen)}
+            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all ${
+              businessItems.some(item => item.id === activeTab) 
+                ? 'text-primary bg-primary/5' 
+                : 'text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Layers size={18} />
+              <span className="text-sm font-bold">业务管理</span>
+            </div>
+            {isBusinessOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </button>
+
+          <AnimatePresence>
+            {isBusinessOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
               >
-                <item.icon size={20} />
-                <span className="text-sm font-medium">{item.label}</span>
-              </button>
-            ))}
-          </div>
+                <div className="mt-1 ml-4 pl-4 border-l border-slate-100 space-y-1 py-1">
+                  {businessItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                        activeTab === item.id 
+                          ? 'text-primary bg-primary/5 font-bold' 
+                          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                      }`}
+                    >
+                      <item.icon size={16} />
+                      <span className="text-xs font-medium">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </nav>
 
       <div className="p-4 border-t border-slate-200">
         <button 
           onClick={() => setActiveTab('settings')}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-            activeTab === 'settings' ? 'sidebar-item-active' : 'text-slate-600 hover:bg-slate-50'
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+            activeTab === 'settings' ? 'sidebar-item-active shadow-sm' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
-          <Settings size={20} />
-          <span className="text-sm font-medium">系统设置</span>
+          <Settings size={18} />
+          <span className="text-sm font-bold">系统设置</span>
         </button>
       </div>
     </motion.aside>
