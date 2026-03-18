@@ -26,8 +26,15 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
 }
 
+interface SubItem {
+  id: string;
+  label: string;
+  children?: { id: string; label: string }[];
+}
+
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   const [isBusinessOpen, setIsBusinessOpen] = useState(true);
+  const [expandedSubItems, setExpandedSubItems] = useState<string[]>([]);
 
   const navItems = [
     { id: 'dashboard', label: '首页', icon: LayoutDashboard },
@@ -36,22 +43,47 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'enterprise', label: '企业信息', icon: Building2 },
   ];
 
-  const businessItems = [
-    { id: 'leads', label: '商机线索', icon: Lightbulb },
-    { id: 'project-registration', label: '投标项目登记', icon: Briefcase },
-    { id: 'parsing', label: '招标文件解析', icon: FileSearch },
-    { id: 'ai-prep', label: 'AI编标', icon: BrainCircuit },
-    { id: 'inspection', label: '标书检查', icon: ShieldCheck },
-    { id: 'simulation', label: '模拟开标', icon: PlayCircle },
-    { id: 'deposit-management', label: '保证金管理', icon: Wallet },
-    { id: 'opening-management', label: '投标/开标情况管理', icon: Archive },
-    { id: 'other-materials', label: '项目其他材料', icon: FileText },
+  const businessItems: SubItem[] = [
+    { id: 'leads', label: '商机线索' },
+    { id: 'project-registration', label: '投标项目登记' },
+    { id: 'parsing', label: '招标文件解析' },
+    { id: 'ai-prep', label: 'AI编标' },
+    { id: 'inspection', label: '标书检查' },
+    { id: 'simulation', label: '模拟开标' },
+    { id: 'deposit-management', label: '保证金管理' },
+    { 
+      id: 'opening-management', 
+      label: '投标/开标情况管理',
+      children: [
+        { id: 'opening-tracking', label: '投标进度跟踪' },
+        { id: 'opening-records', label: '开标记录汇总' },
+        { id: 'opening-analysis', label: '评标结果分析' },
+        { id: 'opening-exceptions', label: '异常情况处理' },
+        { id: 'opening-archive', label: '归档资料管理' },
+      ]
+    },
+    { id: 'other-materials', label: '项目其他材料' },
   ];
 
-  // Auto-open business menu if a sub-item is active
+  const toggleSubItem = (id: string) => {
+    setExpandedSubItems(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  // Auto-open business menu and sub-items if active
   useEffect(() => {
-    if (businessItems.some(item => item.id === activeTab)) {
+    const isBusinessSub = businessItems.some(item => 
+      item.id === activeTab || item.children?.some(child => child.id === activeTab)
+    );
+    if (isBusinessSub) {
       setIsBusinessOpen(true);
+      const parent = businessItems.find(item => 
+        item.children?.some(child => child.id === activeTab)
+      );
+      if (parent && !expandedSubItems.includes(parent.id)) {
+        setExpandedSubItems(prev => [...prev, parent.id]);
+      }
     }
   }, [activeTab]);
 
@@ -70,66 +102,97 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
         </div>
       </div>
 
-      <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto custom-scrollbar">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-              activeTab === item.id ? 'sidebar-item-active shadow-sm' : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <item.icon size={18} />
-            <span className="text-sm font-bold">{item.label}</span>
-          </button>
-        ))}
+      <nav className="flex-1 flex flex-col min-h-0">
+        <div className="px-4 py-2 space-y-1 shrink-0">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+                activeTab === item.id ? 'sidebar-item-active shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <item.icon size={18} />
+              <span className="text-sm font-bold">{item.label}</span>
+            </button>
+          ))}
+        </div>
 
-        <div className="pt-2">
-          <button
-            onClick={() => setIsBusinessOpen(!isBusinessOpen)}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all ${
-              businessItems.some(item => item.id === activeTab) 
-                ? 'text-primary bg-primary/5' 
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Layers size={18} />
-              <span className="text-sm font-bold">业务管理</span>
-            </div>
-            {isBusinessOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          </button>
+        <div className="flex-1 px-4 py-2 min-h-0">
+          <div className="pt-2">
+            <button
+              onClick={() => setIsBusinessOpen(!isBusinessOpen)}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all ${
+                isBusinessOpen ? 'text-primary bg-primary/5' : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Layers size={18} />
+                <span className="text-sm font-bold">业务管理</span>
+              </div>
+              {isBusinessOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </button>
 
-          <AnimatePresence>
-            {isBusinessOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="mt-1 ml-2 pl-3 border-l border-slate-100 space-y-1 py-1">
-                  {businessItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg transition-all ${
-                        activeTab === item.id 
-                          ? 'text-primary bg-primary/5 font-bold' 
-                          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-                      }`}
-                    >
-                      <item.icon size={14} className="shrink-0" />
-                      <span className="text-[12px] font-medium whitespace-nowrap">
-                        {item.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <AnimatePresence>
+              {isBusinessOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-1 ml-4 pl-2 border-l border-slate-100 space-y-1 py-1">
+                    {businessItems.map((item) => (
+                      <div key={item.id} className="space-y-1">
+                        <button
+                          onClick={() => {
+                            if (item.children) {
+                              toggleSubItem(item.id);
+                            } else {
+                              setActiveTab(item.id);
+                            }
+                          }}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${
+                            activeTab === item.id || item.children?.some(c => c.id === activeTab)
+                              ? 'text-primary bg-primary/5 font-bold' 
+                              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                          }`}
+                        >
+                          <span className="text-[12px] font-medium whitespace-nowrap">
+                            {item.label}
+                          </span>
+                          {item.children && (
+                            expandedSubItems.includes(item.id) ? <ChevronDown size={12} /> : <ChevronRight size={12} />
+                          )}
+                        </button>
+
+                        {item.children && expandedSubItems.includes(item.id) && (
+                          <div className="ml-3 pl-3 border-l border-slate-100 space-y-1 py-1 max-h-40 overflow-y-auto custom-scrollbar">
+                            {item.children.map((child) => (
+                              <button
+                                key={child.id}
+                                onClick={() => setActiveTab(child.id)}
+                                className={`w-full flex items-center px-3 py-1.5 rounded-lg transition-all ${
+                                  activeTab === child.id 
+                                    ? 'text-primary bg-primary/5 font-bold' 
+                                    : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'
+                                }`}
+                              >
+                                <span className="text-[11px] font-medium whitespace-nowrap">
+                                  {child.label}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </nav>
 
