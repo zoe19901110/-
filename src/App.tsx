@@ -12,6 +12,9 @@ import SecurityDepositManagement from './components/SecurityDepositManagement';
 import TenderOpeningStatusManagement from './components/TenderOpeningStatusManagement';
 import OtherProjectMaterials from './components/OtherProjectMaterials';
 import SystemSettings from './components/SystemSettings';
+import EnterpriseInfo from './components/EnterpriseInfo';
+import Certificates from './components/Certificates';
+import Materials from './components/Materials';
 
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -37,6 +40,16 @@ export default function App() {
   };
 
   const renderContent = () => {
+    // Handle enterprise sub-tabs
+    if (activeTab.startsWith('ent-')) {
+      const subTab = activeTab.replace('ent-', '');
+      return <EnterpriseInfo initialTab={subTab} />;
+    }
+
+    if (activeTab === 'certificates' || activeTab === 'materials') {
+      return <EnterpriseInfo initialTab={activeTab} />;
+    }
+
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard onEnterWorkbench={handleEnterWorkbench} setActiveTab={setActiveTab} />;
@@ -56,6 +69,10 @@ export default function App() {
         return <BidInspection />;
       case 'org':
         return <OrgStructure />;
+      case 'enterprise':
+        return <EnterpriseInfo />;
+      case 'knowledge-base':
+        return <Materials />;
       case 'project-registration':
         return <TenderProjectRegistration onEnterWorkbench={handleEnterWorkbench} />;
       case 'deposit-management':
@@ -92,7 +109,7 @@ export default function App() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar />
         <main className="flex-1 overflow-y-auto p-8">
-          <div className={`${activeTab === 'workbench' ? 'max-w-[1400px]' : 'max-w-[1200px]'} mx-auto w-full`}>
+          <div className="max-w-[1600px] mx-auto w-full">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}

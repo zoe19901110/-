@@ -8,6 +8,7 @@ import {
   Search, 
   MoreHorizontal, 
   ChevronRight,
+  Plus,
   UserCheck,
   Building,
   Mail,
@@ -28,10 +29,13 @@ interface User {
   id: string;
   name: string;
   dept: string;
-  role: string;
+  position: string;
+  roleId: string; // Link to Role
   email: string;
   phone: string;
   status: string;
+  username?: string;
+  hasAccount: boolean;
 }
 
 interface Role {
@@ -57,10 +61,14 @@ const OrgStructure: React.FC = () => {
   const [userForm, setUserForm] = useState({
     name: '',
     dept: '',
-    role: '',
+    position: '',
+    roleId: '3', // Default to '普通员工'
     email: '',
     phone: '',
-    status: '正常'
+    status: '正常',
+    createAccount: false,
+    username: '',
+    password: ''
   });
 
   const [departments, setDepartments] = useState<Department[]>([
@@ -72,10 +80,10 @@ const OrgStructure: React.FC = () => {
   ]);
 
   const [users, setUsers] = useState<User[]>([
-    { id: '1', name: '陈经理', dept: '总经办', role: '项目总监', email: 'chen@example.com', phone: '13800008888', status: '正常' },
-    { id: '2', name: '王志强', dept: '市场部', role: '市场经理', email: 'wang@example.com', phone: '13900007777', status: '正常' },
-    { id: '3', name: '李晓明', dept: '技术部', role: '技术专家', email: 'li@example.com', phone: '13700006666', status: '正常' },
-    { id: '4', name: '张美玲', dept: '财务部', role: '财务主管', email: 'zhang@example.com', phone: '13600005555', status: '正常' },
+    { id: '1', name: '陈经理', dept: '总经办', position: '项目总监', roleId: '1', email: 'chen@example.com', phone: '13800008888', status: '正常', hasAccount: true, username: '13800008888' },
+    { id: '2', name: '王志强', dept: '市场部', position: '市场经理', roleId: '2', email: 'wang@example.com', phone: '13900007777', status: '正常', hasAccount: true, username: '13900007777' },
+    { id: '3', name: '李晓明', dept: '技术部', position: '技术专家', roleId: '3', email: 'li@example.com', phone: '13700006666', status: '正常', hasAccount: false },
+    { id: '4', name: '张美玲', dept: '财务部', position: '财务主管', roleId: '4', email: 'zhang@example.com', phone: '13600005555', status: '正常', hasAccount: false },
   ]);
 
   const [roles] = useState<Role[]>([
@@ -87,10 +95,71 @@ const OrgStructure: React.FC = () => {
 
   const tabs = [
     { id: 'dept', label: '部门与人员', icon: Users },
-    { id: 'account', label: '账号分配', icon: UserCheck },
     { id: 'role', label: '角色管理', icon: Shield },
     { id: 'permission', label: '权限管理', icon: Key },
   ];
+
+  const [selectedRoleId, setSelectedRoleId] = useState('1');
+  const [permissions, setPermissions] = useState<Record<string, Record<string, { view: boolean; edit: boolean }>>>({
+    '1': { // 超级管理员
+      'leads': { view: true, edit: true },
+      'projects': { view: true, edit: true },
+      'parsing': { view: true, edit: true },
+      'ai-prep': { view: true, edit: true },
+      'inspection': { view: true, edit: true },
+      'simulation': { view: true, edit: true },
+      'deposit': { view: true, edit: true },
+      'opening': { view: true, edit: true },
+      'org': { view: true, edit: true },
+    },
+    '2': { // 部门经理
+      'leads': { view: true, edit: true },
+      'projects': { view: true, edit: true },
+      'parsing': { view: true, edit: false },
+      'ai-prep': { view: true, edit: false },
+      'inspection': { view: true, edit: false },
+      'simulation': { view: true, edit: true },
+      'deposit': { view: true, edit: true },
+      'opening': { view: true, edit: true },
+      'org': { view: true, edit: false },
+    },
+    '3': { // 普通员工
+      'leads': { view: true, edit: false },
+      'projects': { view: true, edit: false },
+      'parsing': { view: true, edit: false },
+      'ai-prep': { view: true, edit: false },
+      'inspection': { view: true, edit: false },
+      'simulation': { view: true, edit: false },
+      'deposit': { view: false, edit: false },
+      'opening': { view: true, edit: false },
+      'org': { view: false, edit: false },
+    }
+  });
+
+  const modules = [
+    { id: 'leads', name: '商机线索管理' },
+    { id: 'projects', name: '投标项目登记' },
+    { id: 'parsing', name: '招标文件解析' },
+    { id: 'ai-prep', name: 'AI编标工作台' },
+    { id: 'inspection', name: '标书合规性检查' },
+    { id: 'simulation', name: '模拟开标系统' },
+    { id: 'deposit', name: '保证金管理' },
+    { id: 'opening', name: '开标情况管理' },
+    { id: 'org', name: '组织架构管理' },
+  ];
+
+  const handlePermissionChange = (moduleId: string, type: 'view' | 'edit', value: boolean) => {
+    setPermissions(prev => ({
+      ...prev,
+      [selectedRoleId]: {
+        ...prev[selectedRoleId],
+        [moduleId]: {
+          ...prev[selectedRoleId]?.[moduleId] || { view: false, edit: false },
+          [type]: value
+        }
+      }
+    }));
+  };
 
   // Handlers
   const handleAddDept = () => {
@@ -132,33 +201,75 @@ const OrgStructure: React.FC = () => {
     setUserForm({
       name: '',
       dept: selectedDeptId ? departments.find(d => d.id === selectedDeptId)?.name || '' : '',
-      role: '',
+      position: '',
+      roleId: '3',
       email: '',
       phone: '',
-      status: '正常'
+      status: '正常',
+      createAccount: false,
+      username: '',
+      password: ''
     });
     setShowUserModal(true);
   };
 
   const handleEditUser = (user: User) => {
     setEditingUser(user);
-    setUserForm({ ...user });
+    setUserForm({ 
+      ...user, 
+      createAccount: user.hasAccount,
+      username: user.username || '',
+      password: '' 
+    });
     setShowUserModal(true);
   };
 
   const handleSaveUser = () => {
-    if (!userForm.name || !userForm.dept) return;
+    if (!userForm.name || !userForm.dept || !userForm.phone) return;
     
+    // Check if account exists globally by phone
+    const existingUser = users.find(u => u.phone === userForm.phone);
+
     let updatedUsers;
-    if (editingUser) {
-      updatedUsers = users.map(u => u.id === editingUser.id ? { ...u, ...userForm } : u);
+    let isNewAccount = false;
+
+    if (existingUser) {
+      // If found existing user, update them (this effectively "selects" and moves them)
+      isNewAccount = !existingUser.hasAccount;
+      updatedUsers = users.map(u => u.id === existingUser.id ? { 
+        ...u, 
+        ...userForm,
+        id: existingUser.id, // Ensure we keep the original ID
+        hasAccount: true,
+        username: userForm.phone
+      } : u);
+
+      // If we were editing a DIFFERENT user and changed their phone to an existing one,
+      // we remove the "old" user record to avoid duplicates
+      if (editingUser && editingUser.id !== existingUser.id) {
+        updatedUsers = updatedUsers.filter(u => u.id !== editingUser.id);
+      }
+    } else if (editingUser) {
+      // Standard edit for non-conflicting phone
+      isNewAccount = !editingUser.hasAccount;
+      updatedUsers = users.map(u => u.id === editingUser.id ? { 
+        ...u, 
+        ...userForm,
+        hasAccount: true,
+        username: userForm.phone
+      } : u);
     } else {
+      // Standard add for new phone
+      isNewAccount = true;
       const newUser = {
         id: Math.random().toString(36).substr(2, 9),
-        ...userForm
+        ...userForm,
+        hasAccount: true,
+        username: userForm.phone
       };
       updatedUsers = [...users, newUser];
     }
+
     setUsers(updatedUsers);
 
     // Update dept counts
@@ -168,11 +279,19 @@ const OrgStructure: React.FC = () => {
     }));
     setDepartments(newDeptCounts);
     
+    if (isNewAccount) {
+      alert('账号已创建，初始密码为123456，请及时修改密码。');
+    }
+
     setShowUserModal(false);
   };
 
-  const handleDeleteUser = (id: string) => {
-    if (window.confirm('确定要删除该人员吗？')) {
+  const handleResetPassword = () => {
+    alert('密码已重置为初始密码：123456');
+  };
+
+  const handleRemoveUser = (id: string) => {
+    if (window.confirm('确定要将该人员从企业中移除吗？移除后该账号将无法登录且在企业中消失。')) {
       const updatedUsers = users.filter(u => u.id !== id);
       setUsers(updatedUsers);
       
@@ -187,7 +306,7 @@ const OrgStructure: React.FC = () => {
 
   const filteredUsers = users.filter(user => {
     const matchesDept = selectedDeptId ? user.dept === departments.find(d => d.id === selectedDeptId)?.name : true;
-    const matchesSearch = user.name.includes(searchQuery) || user.email.includes(searchQuery) || user.role.includes(searchQuery);
+    const matchesSearch = user.name.includes(searchQuery) || user.email.includes(searchQuery) || user.position.includes(searchQuery);
     return matchesDept && matchesSearch;
   });
 
@@ -330,7 +449,7 @@ const OrgStructure: React.FC = () => {
                         type="text" 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="搜索姓名、角色或邮箱..."
+                        placeholder="搜索姓名、角色或手机号..."
                         className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                       />
                     </div>
@@ -348,66 +467,82 @@ const OrgStructure: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
-                      <tr className="bg-slate-50/50 text-slate-400 text-[11px] font-bold uppercase tracking-wider">
-                        <th className="px-6 py-4">姓名</th>
-                        <th className="px-6 py-4">部门/角色</th>
-                        <th className="px-6 py-4">联系方式</th>
-                        <th className="px-6 py-4">状态</th>
-                        <th className="px-6 py-4 text-right">操作</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {filteredUsers.length > 0 ? filteredUsers.map((user) => (
-                        <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="size-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold text-sm shadow-sm">
-                                {user.name.charAt(0)}
-                              </div>
-                              <span className="text-sm font-bold text-slate-900">{user.name}</span>
+                    <tr className="bg-slate-50/50 text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+                      <th className="px-6 py-4">姓名</th>
+                      <th className="px-6 py-4">部门/职位</th>
+                      <th className="px-6 py-4">系统角色</th>
+                      <th className="px-6 py-4">联系方式/账号</th>
+                      <th className="px-6 py-4">账号状态</th>
+                      <th className="px-6 py-4">系统状态</th>
+                      <th className="px-6 py-4 text-right">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredUsers.length > 0 ? filteredUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="size-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold text-sm shadow-sm">
+                              {user.name.charAt(0)}
                             </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="space-y-0.5">
-                              <p className="text-xs font-bold text-slate-700">{user.dept}</p>
-                              <p className="text-[10px] text-slate-400">{user.role}</p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                                <Mail size={12} className="text-slate-400" /> {user.email}
-                              </div>
-                              <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                                <Phone size={12} className="text-slate-400" /> {user.phone}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                              user.status === '正常' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
-                            }`}>
-                              <span className={`size-1.5 rounded-full ${user.status === '正常' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                              {user.status}
+                            <span className="text-sm font-bold text-slate-900">{user.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="space-y-0.5">
+                            <p className="text-xs font-bold text-slate-700">{user.dept}</p>
+                            <p className="text-[10px] text-slate-400">{user.position}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/5 text-primary text-[10px] font-bold border border-primary/10">
+                            {roles.find(r => r.id === user.roleId)?.name}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                            <Phone size={12} className="text-primary" /> 
+                            <span className="font-mono font-bold text-slate-700">{user.phone}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {user.hasAccount ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold">
+                              <Key size={10} /> 已开通
                             </span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button 
-                                onClick={() => handleEditUser(user)}
-                                className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
-                              >
-                                <Edit2 size={14} />
-                              </button>
-                              <button 
-                                onClick={() => handleDeleteUser(user.id)}
-                                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-400 text-[10px] font-bold">
+                              <UserPlus size={10} /> 待分配
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold w-fit ${
+                            user.status === '正常' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                          }`}>
+                            <span className={`size-1.5 rounded-full ${user.status === '正常' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                            系统{user.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={() => handleEditUser(user)}
+                              className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                              title="编辑"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                            <button 
+                              onClick={() => handleRemoveUser(user.id)}
+                              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              title="移除企业"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
                       )) : (
                         <tr>
                           <td colSpan={5} className="px-6 py-20 text-center">
@@ -442,46 +577,99 @@ const OrgStructure: React.FC = () => {
                 <p className="text-sm text-slate-500 mb-6 leading-relaxed">{role.desc}</p>
                 <div className="flex items-center justify-between pt-4 border-t border-slate-50">
                   <span className="text-xs text-slate-400">关联用户: <span className="font-bold text-slate-700">{role.userCount}</span></span>
-                  <button className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
-                    配置权限 <ChevronRight size={14} />
-                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {activeSubTab === 'account' && (
-          <div className="col-span-12 bg-white rounded-xl border border-slate-200 shadow-sm p-12 flex flex-col items-center justify-center text-center space-y-4">
-            <div className="size-16 bg-blue-50 rounded-full flex items-center justify-center text-primary">
-              <UserCheck size={32} />
-            </div>
-            <div>
-              <h4 className="text-lg font-bold">账号分配与管理</h4>
-              <p className="text-slate-500 text-sm max-w-md mt-2">
-                为组织成员分配系统登录账号，设置初始密码及安全策略。支持批量导入与导出。
-              </p>
-            </div>
-            <button className="bg-primary text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
-              立即分配账号
-            </button>
-          </div>
-        )}
-
         {activeSubTab === 'permission' && (
-          <div className="col-span-12 bg-white rounded-xl border border-slate-200 shadow-sm p-12 flex flex-col items-center justify-center text-center space-y-4">
-            <div className="size-16 bg-purple-50 rounded-full flex items-center justify-center text-purple-600">
-              <Key size={32} />
+          <div className="col-span-12 space-y-6">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="grid grid-cols-12 min-h-[600px]">
+                {/* Role Selector Sidebar */}
+                <div className="col-span-3 border-r border-slate-100 bg-slate-50/30">
+                  <div className="p-4 border-b border-slate-100">
+                    <h4 className="text-sm font-bold text-slate-900">选择角色</h4>
+                  </div>
+                  <div className="p-2 space-y-1">
+                    {roles.map((role) => (
+                      <button
+                        key={role.id}
+                        onClick={() => setSelectedRoleId(role.id)}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all text-left ${
+                          selectedRoleId === role.id ? 'bg-primary text-white shadow-md' : 'hover:bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        <span className="text-sm font-bold">{role.name}</span>
+                        <ChevronRight size={16} className={selectedRoleId === role.id ? 'text-white' : 'text-slate-300'} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Permission Matrix */}
+                <div className="col-span-9 flex flex-col">
+                  <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">
+                        权限配置: <span className="text-primary ml-1">{roles.find(r => r.id === selectedRoleId)?.name}</span>
+                      </h4>
+                      <p className="text-[10px] text-slate-400 mt-0.5">勾选对应的功能模块权限，即时生效</p>
+                    </div>
+                    <button 
+                      onClick={() => alert('权限配置已保存')}
+                      className="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/90 shadow-md shadow-primary/20"
+                    >
+                      保存配置
+                    </button>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                          <th className="px-8 py-4">功能模块</th>
+                          <th className="px-8 py-4 text-center">查看权限</th>
+                          <th className="px-8 py-4 text-center">编辑权限</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {modules.map((module) => (
+                          <tr key={module.id} className="hover:bg-slate-50/30 transition-colors">
+                            <td className="px-8 py-5">
+                              <span className="text-sm font-medium text-slate-700">{module.name}</span>
+                            </td>
+                            <td className="px-8 py-5 text-center">
+                              <label className="inline-flex items-center cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  className="sr-only peer" 
+                                  checked={permissions[selectedRoleId]?.[module.id]?.view || false}
+                                  onChange={(e) => handlePermissionChange(module.id, 'view', e.target.checked)}
+                                />
+                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                              </label>
+                            </td>
+                            <td className="px-8 py-5 text-center">
+                              <label className="inline-flex items-center cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  className="sr-only peer" 
+                                  checked={permissions[selectedRoleId]?.[module.id]?.edit || false}
+                                  onChange={(e) => handlePermissionChange(module.id, 'edit', e.target.checked)}
+                                />
+                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                              </label>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <h4 className="text-lg font-bold">权限矩阵管理</h4>
-              <p className="text-slate-500 text-sm max-w-md mt-2">
-                精细化控制系统各功能模块的访问权限。支持基于角色的权限继承与自定义权限配置。
-              </p>
-            </div>
-            <button className="bg-purple-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all">
-              配置权限矩阵
-            </button>
           </div>
         )}
       </div>
@@ -567,14 +755,26 @@ const OrgStructure: React.FC = () => {
                   </select>
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">角色</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">职位</label>
                   <input 
                     type="text" 
-                    value={userForm.role}
-                    onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                    value={userForm.position}
+                    onChange={(e) => setUserForm({ ...userForm, position: e.target.value })}
                     placeholder="如：项目经理"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20"
                   />
+                </div>
+                <div className="col-span-1">
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">系统角色 (关联权限)</label>
+                  <select 
+                    value={userForm.roleId}
+                    onChange={(e) => setUserForm({ ...userForm, roleId: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    {roles.map(role => (
+                      <option key={role.id} value={role.id}>{role.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="col-span-1">
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">状态</label>
@@ -588,22 +788,76 @@ const OrgStructure: React.FC = () => {
                   </select>
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">电子邮箱</label>
-                  <input 
-                    type="email" 
-                    value={userForm.email}
-                    onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
-                  />
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">联系电话 (即系统登录账号)</label>
+                  <div className="relative">
+                    <input 
+                      type="tel" 
+                      value={userForm.phone}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setUserForm({ ...userForm, phone: val });
+                        
+                        // Auto-search and link if 11 digits
+                        if (val.length === 11) {
+                          const match = users.find(u => u.phone === val);
+                          if (match) {
+                            setUserForm(prev => ({
+                              ...prev,
+                              phone: val,
+                              name: match.name,
+                              position: match.position,
+                              roleId: match.roleId,
+                              status: match.status
+                            }));
+                          }
+                        }
+                      }}
+                      placeholder="请输入手机号"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                    />
+                    {userForm.phone.length >= 11 && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {(() => {
+                          const existingUser = users.find(u => u.phone === userForm.phone && (!editingUser || u.id !== editingUser.id));
+                          if (existingUser) {
+                            return (
+                              <div className="flex flex-col items-end">
+                                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded flex items-center gap-1">
+                                  <UserCheck size={10} /> 已匹配到账号
+                                </span>
+                                <span className="text-[8px] text-slate-400 mt-0.5">已自动同步: {existingUser.name}</span>
+                              </div>
+                            );
+                          } else if (!editingUser || !editingUser.hasAccount) {
+                            return (
+                              <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded flex items-center gap-1">
+                                <Plus size={10} /> 将自动创建账号
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">联系电话</label>
-                  <input 
-                    type="tel" 
-                    value={userForm.phone}
-                    onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
-                  />
+
+                {/* Account Settings Section */}
+                <div className="col-span-2 pt-4 border-t border-slate-100 mt-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Key size={16} className="text-primary" />
+                      <span className="text-sm font-bold text-slate-900">账号安全设置</span>
+                    </div>
+                    {editingUser && editingUser.hasAccount && (
+                      <button 
+                        onClick={handleResetPassword}
+                        className="text-[10px] font-bold text-primary hover:bg-primary/5 px-2 py-1 rounded-md transition-colors flex items-center gap-1"
+                      >
+                        <Key size={10} /> 重置密码
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex gap-3 mt-8">

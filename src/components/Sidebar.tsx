@@ -16,7 +16,8 @@ import {
   Settings,
   ChevronDown,
   ChevronRight,
-  Layers
+  Layers,
+  Database
 } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'motion/react';
@@ -40,7 +41,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'dashboard', label: '首页', icon: LayoutDashboard },
     { id: 'business-dashboard', label: '业务仪表盘', icon: BarChart3 },
     { id: 'org', label: '组织架构', icon: Network },
-    { id: 'enterprise', label: '企业信息', icon: Building2 },
+    { id: 'enterprise', label: '企业资料', icon: Building2 },
+    { id: 'knowledge-base', label: '企业知识库', icon: Database },
   ];
 
   const businessItems: SubItem[] = [
@@ -53,14 +55,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'deposit-management', label: '保证金管理' },
     { 
       id: 'opening-management', 
-      label: '投标/开标情况管理',
-      children: [
-        { id: 'opening-tracking', label: '投标进度跟踪' },
-        { id: 'opening-records', label: '开标记录汇总' },
-        { id: 'opening-analysis', label: '评标结果分析' },
-        { id: 'opening-exceptions', label: '异常情况处理' },
-        { id: 'opening-archive', label: '归档资料管理' },
-      ]
+      label: '投标/开标情况管理'
     },
     { id: 'other-materials', label: '项目其他材料' },
   ];
@@ -102,24 +97,30 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
         </div>
       </div>
 
-      <nav className="flex-1 flex flex-col min-h-0">
-        <div className="px-4 py-2 space-y-1 shrink-0">
+      <nav className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
+        <div className="px-4 py-2 space-y-1">
           {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                activeTab === item.id ? 'sidebar-item-active shadow-sm' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <item.icon size={18} />
-              <span className="text-sm font-bold">{item.label}</span>
-            </button>
+            <div key={item.id} className="space-y-1">
+              <button
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all ${
+                  activeTab === item.id
+                    ? 'sidebar-item-active shadow-sm' 
+                    : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon size={18} />
+                  <span className="text-sm font-bold">{item.label}</span>
+                </div>
+              </button>
+            </div>
           ))}
         </div>
 
-        <div className="flex-1 px-4 py-2 min-h-0">
-          <div className="pt-2">
+        <div className="flex-1 px-4 py-2 min-h-0 space-y-2">
+          {/* Business Management Menu */}
+          <div>
             <button
               onClick={() => setIsBusinessOpen(!isBusinessOpen)}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all ${
