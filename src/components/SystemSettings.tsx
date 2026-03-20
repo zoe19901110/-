@@ -14,8 +14,13 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-const SystemSettings: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<'profile' | 'password'>('profile');
+interface SystemSettingsProps {
+  currentEnterprise?: { id: string; name: string };
+  initialSection?: 'profile' | 'password';
+}
+
+const SystemSettings: React.FC<SystemSettingsProps> = ({ currentEnterprise, initialSection = 'profile' }) => {
+  const [activeSection, setActiveSection] = useState<'profile' | 'password'>(initialSection);
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -35,6 +40,7 @@ const SystemSettings: React.FC = () => {
               src="https://i.pravatar.cc/150?u=chen" 
               alt="Avatar" 
               className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
             />
           </div>
           <button className="absolute -bottom-2 -right-2 size-8 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
@@ -43,7 +49,7 @@ const SystemSettings: React.FC = () => {
         </div>
         <div>
           <h3 className="text-lg font-bold text-slate-900">陈经理</h3>
-          <p className="text-sm text-slate-500 font-medium">项目总监 · 数字化招采部</p>
+          <p className="text-sm text-slate-500 font-medium">项目总监 · {currentEnterprise?.name || '数字化招采部'}</p>
           <div className="flex items-center gap-2 mt-2">
             <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold flex items-center gap-1">
               <ShieldCheck size={10} />

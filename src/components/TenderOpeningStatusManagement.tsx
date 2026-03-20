@@ -24,7 +24,11 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-const TenderOpeningStatusManagement: React.FC = () => {
+interface TenderOpeningStatusManagementProps {
+  currentEnterprise?: { id: string; name: string };
+}
+
+const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps> = ({ currentEnterprise }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -60,58 +64,63 @@ const TenderOpeningStatusManagement: React.FC = () => {
     setContractRecords(newRecords);
   };
 
-  const records = [
-    {
-      id: '1',
-      projectName: '2024年智慧交通管理平台建设项目',
-      openingDate: '2024-03-20',
-      result: '中标',
-      bidPrice: '¥4,450,000.00',
-      competitors: 5,
-      ranking: 1,
-      remarks: '技术分第一，商务分第二'
-    },
-    {
-      id: '2',
-      projectName: '政务云扩容采购项目',
-      openingDate: '2024-02-28',
-      result: '未中标',
-      bidPrice: '¥2,750,000.00',
-      competitors: 8,
-      ranking: 3,
-      remarks: '价格偏高，技术方案获优'
-    },
-    {
-      id: '3',
-      projectName: 'XX市智慧医疗信息系统',
-      openingDate: '2024-03-15',
-      result: '中标',
-      bidPrice: '¥8,200,000.00',
-      competitors: 4,
-      ranking: 1,
-      remarks: '方案优势明显，价格适中'
-    },
-    {
-      id: '4',
-      projectName: '工业园区污水处理自动化改造',
-      openingDate: '2024-03-05',
-      result: '未中标',
-      bidPrice: '¥1,500,000.00',
-      competitors: 12,
-      ranking: 5,
-      remarks: '竞争激烈，价格分较低'
-    },
-    {
-      id: '5',
-      projectName: '省图书馆数字化二期工程',
-      openingDate: '2024-01-25',
-      result: '中标',
-      bidPrice: '¥3,100,000.00',
-      competitors: 3,
-      ranking: 1,
-      remarks: '唯一通过技术初审的单位'
-    }
-  ];
+  const [records, setRecords] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    const enterprisePrefix = currentEnterprise ? `[${currentEnterprise.name}] ` : '';
+    setRecords([
+      {
+        id: '1',
+        projectName: `${enterprisePrefix}2024年智慧交通管理平台建设项目`,
+        openingDate: '2024-03-20',
+        result: '中标',
+        bidPrice: '¥4,450,000.00',
+        competitors: 5,
+        ranking: 1,
+        remarks: '技术分第一，商务分第二'
+      },
+      {
+        id: '2',
+        projectName: `${enterprisePrefix}政务云扩容采购项目`,
+        openingDate: '2024-02-28',
+        result: '未中标',
+        bidPrice: '¥2,750,000.00',
+        competitors: 8,
+        ranking: 3,
+        remarks: '价格偏高，技术方案获优'
+      },
+      {
+        id: '3',
+        projectName: `${enterprisePrefix}XX市智慧医疗信息系统`,
+        openingDate: '2024-03-15',
+        result: '中标',
+        bidPrice: '¥8,200,000.00',
+        competitors: 4,
+        ranking: 1,
+        remarks: '方案优势明显，价格适中'
+      },
+      {
+        id: '4',
+        projectName: `${enterprisePrefix}工业园区污水处理自动化改造`,
+        openingDate: '2024-03-05',
+        result: '未中标',
+        bidPrice: '¥1,500,000.00',
+        competitors: 12,
+        ranking: 5,
+        remarks: '竞争激烈，价格分较低'
+      },
+      {
+        id: '5',
+        projectName: `${enterprisePrefix}省图书馆数字化二期工程`,
+        openingDate: '2024-01-25',
+        result: '中标',
+        bidPrice: '¥3,100,000.00',
+        competitors: 3,
+        ranking: 1,
+        remarks: '唯一通过技术初审的单位'
+      }
+    ]);
+  }, [currentEnterprise]);
 
   return (
     <motion.div 

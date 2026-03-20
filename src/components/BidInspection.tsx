@@ -25,7 +25,12 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-const BidInspection: React.FC = () => {
+interface BidInspectionProps {
+  currentEnterprise?: { id: string; name: string };
+  uploadedFiles: Record<string, boolean>;
+}
+
+const BidInspection: React.FC<BidInspectionProps> = ({ currentEnterprise, uploadedFiles }) => {
   const [view, setView] = useState<'list' | 'detail'>('list');
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -36,7 +41,7 @@ const BidInspection: React.FC = () => {
   };
 
   if (view === 'detail') {
-    return <BidInspectionDetail onBack={() => setView('list')} project={selectedProject} />;
+    return <BidInspectionDetail onBack={() => setView('list')} project={selectedProject} uploadedFiles={uploadedFiles} />;
   }
 
   return (
@@ -106,11 +111,11 @@ const BidInspection: React.FC = () => {
           </div>
           <div className="divide-y divide-slate-50">
             {[
-              { name: '上海市浦东新区金融中心二期总承包工程', status: '进行中', time: '6小时前', deadline: '03/15 17:00', deadlineLabel: '投标截止', countdown: '剩3天', checkStatus: [1, 3, 0] },
-              { name: '深圳市轨道交通13号线土建工程', status: '检查中', time: '1天前', deadline: '03/23 09:00', deadlineLabel: '投标截止', checkStatus: [1, 1, 3] },
-              { name: '杭州西站枢纽配套设施建设项目', status: '未开始', time: '2天前', deadline: '03/28 09:00', deadlineLabel: '投标截止', checkStatus: [0, 0, 0] },
-              { name: '广州白云机场三期扩建工程', status: '已完成', time: '5天前', deadline: '03/14 10:00', deadlineLabel: '开标时间', checkStatus: [1, 1, 1] },
-              { name: '成都市天府新区智慧城市基础设施项目', status: '已开标', time: '2026/3/3', checkStatus: [1, 1, 1] },
+              { name: `${currentEnterprise?.name || '某'}金融中心二期总承包工程`, status: '进行中', time: '6小时前', deadline: '03/15 17:00', deadlineLabel: '投标截止', countdown: '剩3天', checkStatus: [1, 3, 0] },
+              { name: `${currentEnterprise?.name || '某'}轨道交通13号线土建工程`, status: '检查中', time: '1天前', deadline: '03/23 09:00', deadlineLabel: '投标截止', checkStatus: [1, 1, 3] },
+              { name: `${currentEnterprise?.name || '某'}枢纽配套设施建设项目`, status: '未开始', time: '2天前', deadline: '03/28 09:00', deadlineLabel: '投标截止', checkStatus: [0, 0, 0] },
+              { name: `${currentEnterprise?.name || '某'}机场三期扩建工程`, status: '已完成', time: '5天前', deadline: '03/14 10:00', deadlineLabel: '开标时间', checkStatus: [1, 1, 1] },
+              { name: `${currentEnterprise?.name || '某'}智慧城市基础设施项目`, status: '已开标', time: '2026/3/3', checkStatus: [1, 1, 1] },
             ].map((project, i) => (
               <div 
                 key={i} 
@@ -172,8 +177,8 @@ const BidInspection: React.FC = () => {
             <div className="space-y-4">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">高风险项目</p>
               {[
-                { name: '上海市浦东新区金融中心二期总承包工程', risk: '风险' },
-                { name: '深圳市轨道交通13号线土建工程', risk: '风险' },
+                { name: `${currentEnterprise?.name || '某'}金融中心二期总承包工程`, risk: '风险' },
+                { name: `${currentEnterprise?.name || '某'}轨道交通13号线土建工程`, risk: '风险' },
               ].map((item, i) => (
                 <div key={i} className="p-3 bg-orange-50/50 rounded-xl border border-orange-100 group cursor-pointer hover:bg-orange-50 transition-colors">
                   <div className="flex items-center justify-between mb-1">
@@ -191,9 +196,9 @@ const BidInspection: React.FC = () => {
             <div className="mt-8 space-y-4">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">最近检查完成</p>
               {[
-                { name: '上海市浦东新区金融中心二期总承包...', date: '2026/3/13' },
-                { name: '深圳市轨道交通13号线土建工程', date: '2026/3/12' },
-                { name: '广州白云机场三期扩建工程', date: '2026/3/8' },
+                { name: `${currentEnterprise?.name || '某'}金融中心二期总承包...`, date: '2026/3/13' },
+                { name: `${currentEnterprise?.name || '某'}轨道交通13号线土建工程`, date: '2026/3/12' },
+                { name: `${currentEnterprise?.name || '某'}机场三期扩建工程`, date: '2026/3/8' },
               ].map((item, i) => (
                 <div key={i} className="flex items-center justify-between group cursor-pointer">
                   <div className="min-w-0 flex-1">
@@ -288,8 +293,8 @@ const BidInspection: React.FC = () => {
                           <div className="size-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
                             <UploadCloud size={32} />
                           </div>
-                          <p className="text-sm text-slate-600 font-bold">点击或拖拽招标文件上传</p>
-                          <p className="text-[11px] text-slate-400">支持 PDF / Word 格式，AI将自动解析评分标准</p>
+                          <p className="text-sm text-slate-600 font-bold">点击或拖拽招标文件至此处上传</p>
+                          <p className="text-[11px] text-slate-400">支持 PDF、Word、ZF、CF 格式，AI将自动识别关键信息并填充表单</p>
                         </div>
                       </div>
                     </div>
@@ -322,15 +327,77 @@ const BidInspection: React.FC = () => {
 interface BidInspectionDetailProps {
   onBack: () => void;
   project: any;
+  uploadedFiles: Record<string, boolean>;
 }
 
-const BidInspectionDetail: React.FC<BidInspectionDetailProps> = ({ onBack, project }) => {
+const BidInspectionDetail: React.FC<BidInspectionDetailProps> = ({ onBack, project, uploadedFiles }) => {
+  const [showClarificationModal, setShowClarificationModal] = useState(false);
+  const [useClarification, setUseClarification] = useState(false);
+  const [checkingVersion, setCheckingVersion] = useState<any>(null);
+
+  const hasClarification = Object.keys(uploadedFiles).some(key => key.startsWith('clar-doc-') && uploadedFiles[key]);
+
+  const handleStartCheck = (version: any) => {
+    if (hasClarification && !useClarification) {
+      setCheckingVersion(version);
+      setShowClarificationModal(true);
+    } else {
+      // Proceed with normal check
+      alert(`正在检查：${version.name}`);
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       className="space-y-8"
     >
+      {/* Clarification Prompt Modal */}
+      <AnimatePresence>
+        {showClarificationModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
+            >
+              <div className="p-8">
+                <div className="size-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 mb-6">
+                  <AlertTriangle size={32} />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 mb-2">发现最新答疑文件</h3>
+                <p className="text-slate-500 text-sm leading-relaxed mb-8">
+                  系统检测到该项目已上传最新的答疑/澄清文件。是否导入最新答疑内容进行标书检查？这能确保检查结果更符合最新的招标要求。
+                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => {
+                      setUseClarification(true);
+                      setShowClarificationModal(false);
+                      alert(`已导入最新答疑文件，正在重新检查：${checkingVersion?.name}`);
+                    }}
+                    className="w-full py-4 bg-primary text-white rounded-2xl font-black shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                  >
+                    <RefreshCw size={20} /> 是的，导入最新答疑
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowClarificationModal(false);
+                      alert(`正在按原招标文件检查：${checkingVersion?.name}`);
+                    }}
+                    className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-black hover:bg-slate-200 transition-all"
+                  >
+                    不，按原文件检查
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button 
@@ -403,7 +470,7 @@ const BidInspectionDetail: React.FC<BidInspectionDetailProps> = ({ onBack, proje
             <UploadCloud className="text-primary" size={24} />
             <div className="text-center">
               <p className="text-[13px] text-primary font-bold">点击上传控制价文件</p>
-              <p className="text-[11px] text-slate-400">支持 PDF / Excel</p>
+              <p className="text-[11px] text-slate-400">支持 PDF、Word、ZF、CF 格式</p>
             </div>
           </div>
         </div>
@@ -450,7 +517,12 @@ const BidInspectionDetail: React.FC<BidInspectionDetailProps> = ({ onBack, proje
                 })}
               </div>
               <div className="flex items-center gap-3">
-                <button className="px-4 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded hover:bg-slate-50">开始检查</button>
+                <button 
+                  onClick={() => handleStartCheck(v)}
+                  className="px-4 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded hover:bg-slate-50"
+                >
+                  开始检查
+                </button>
                 <button className="p-1 text-slate-400 hover:text-primary"><MoreHorizontal size={18} /></button>
                 <ChevronRight className="text-slate-300" size={18} />
               </div>

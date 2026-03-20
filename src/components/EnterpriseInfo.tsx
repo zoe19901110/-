@@ -30,11 +30,19 @@ import { motion, AnimatePresence } from 'motion/react';
 
 import Certificates from './Certificates';
 
-const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
+interface EnterpriseInfoProps {
+  initialTab?: string;
+  currentEnterprise?: { id: string; name: string };
+}
+
+const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnterprise }) => {
   const [activeTab, setActiveTab] = useState(initialTab && !['certificates'].includes(initialTab) ? initialTab : 'basic');
   const [sidePanel, setSidePanel] = useState<'certificates' | null>(
     initialTab === 'certificates' ? initialTab : null
   );
+
+  const enterpriseName = currentEnterprise?.name || 'XX建设集团有限公司';
+  const enterpriseId = currentEnterprise?.id || 'ent-1';
 
   React.useEffect(() => {
     if (initialTab) {
@@ -106,7 +114,14 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
     </div>
   );
 
-  const renderPersonnel = () => (
+  const renderPersonnel = () => {
+    const personnelData = [
+      { name: '张建国', title: '高级工程师', cert: '一级建造师', code: '京111060800001', date: '2025-12-31' },
+      { name: '李晓明', title: '工程师', cert: '二级建造师', code: '京211060800002', date: '2024-06-15' },
+      { name: '王志强', title: '高级会计师', cert: '注册会计师', code: '11000001', date: '2026-11-10' },
+    ].map(p => ({ ...p, name: `${p.name} (${enterpriseName})` }));
+
+    return (
     <div className="flex flex-col">
       <div className="bg-white overflow-hidden">
         <div className="overflow-x-auto">
@@ -122,11 +137,7 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {[
-              { name: '张建国', title: '高级工程师', cert: '一级建造师', code: '京111060800001', date: '2025-12-31' },
-              { name: '李晓明', title: '工程师', cert: '二级建造师', code: '京211060800002', date: '2024-06-15' },
-              { name: '王志强', title: '高级会计师', cert: '注册会计师', code: '11000001', date: '2026-11-10' },
-            ].map((item, idx) => (
+            {personnelData.map((item, idx) => (
               <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                 <td className="px-6 py-4 font-bold text-slate-700">{item.name}</td>
                 <td className="px-6 py-4 text-sm text-slate-500">{item.title}</td>
@@ -156,8 +167,16 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
     </div>
     </div>
   );
+};
 
-  const renderFinance = () => (
+  const renderFinance = () => {
+    const financeData = [
+      { name: '2023年度财务审计报告', year: '2023', revenue: '12.8 亿元', profit: '8,500 万元', status: '已审计' },
+      { name: '2022年度财务审计报告', year: '2022', revenue: '11.1 亿元', profit: '7,800 万元', status: '已审计' },
+      { name: '2021年度财务审计报告', year: '2021', revenue: '9.5 亿元', profit: '6,200 万元', status: '已审计' },
+    ].map(f => ({ ...f, name: `${enterpriseName} - ${f.name}` }));
+
+    return (
     <div className="flex flex-col">
       <div className="bg-white overflow-hidden">
         <div className="overflow-x-auto">
@@ -173,11 +192,7 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                { name: '2023年度财务审计报告', year: '2023', revenue: '12.8 亿元', profit: '8,500 万元', status: '已审计' },
-                { name: '2022年度财务审计报告', year: '2022', revenue: '11.1 亿元', profit: '7,800 万元', status: '已审计' },
-                { name: '2021年度财务审计报告', year: '2021', revenue: '9.5 亿元', profit: '6,200 万元', status: '已审计' },
-              ].map((item, idx) => (
+              {financeData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -214,8 +229,16 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
       </div>
     </div>
   );
+};
 
-  const renderRewards = () => (
+  const renderRewards = () => {
+    const rewardsData = [
+      { type: '奖励', title: '2023年度建筑业纳税百强企业', org: '某市人民政府', date: '2024-01-10', status: 'active' },
+      { type: '奖励', title: '抗洪救灾突出贡献奖', org: '某省应急管理厅', date: '2023-08-20', status: 'active' },
+      { type: '处罚', title: '某工地扬尘治理不力通报批评', org: '某市住建局', date: '2023-03-15', status: 'expired' },
+    ].map(r => ({ ...r, title: `${enterpriseName} - ${r.title}` }));
+
+    return (
     <div className="flex flex-col">
       <div className="bg-white overflow-hidden">
         <div className="overflow-x-auto">
@@ -231,11 +254,7 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                { type: '奖励', title: '2023年度建筑业纳税百强企业', org: '某市人民政府', date: '2024-01-10', status: 'active' },
-                { type: '奖励', title: '抗洪救灾突出贡献奖', org: '某省应急管理厅', date: '2023-08-20', status: 'active' },
-                { type: '处罚', title: '某工地扬尘治理不力通报批评', org: '某市住建局', date: '2023-03-15', status: 'expired' },
-              ].map((item, idx) => (
+              {rewardsData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
@@ -271,8 +290,21 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
       </div>
     </div>
   );
+};
 
-  const renderMaterials = () => (
+  const renderMaterials = () => {
+    const materialsData = [
+      { name: '营业执照副本', type: '证照类', count: 1 },
+      { name: '开户许可证', type: '证照类', count: 1 },
+      { name: '安全生产许可证', type: '证照类', count: 1 },
+      { name: '法人身份证复印件', type: '人员类', count: 2 },
+      { name: '近三年财务审计报告', type: '财务类', count: 3 },
+      { name: '社保缴纳证明', type: '人员类', count: 12 },
+      { name: '纳税证明', type: '财务类', count: 6 },
+      { name: '诚信承诺书', type: '通用类', count: 1 },
+    ].map(m => ({ ...m, name: `${enterpriseName} - ${m.name}` }));
+
+    return (
     <div className="flex flex-col">
       <div className="bg-white overflow-hidden">
         <div className="overflow-x-auto">
@@ -286,16 +318,7 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                { name: '营业执照副本', type: '证照类', count: 1 },
-                { name: '开户许可证', type: '证照类', count: 1 },
-                { name: '安全生产许可证', type: '证照类', count: 1 },
-                { name: '法人身份证复印件', type: '人员类', count: 2 },
-                { name: '近三年财务审计报告', type: '财务类', count: 3 },
-                { name: '社保缴纳证明', type: '人员类', count: 12 },
-                { name: '纳税证明', type: '财务类', count: 6 },
-                { name: '诚信承诺书', type: '通用类', count: 1 },
-              ].map((item, idx) => (
+              {materialsData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -328,8 +351,21 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
       </div>
     </div>
   );
+};
 
-  const renderBasicInfo = () => (
+  const renderBasicInfo = () => {
+    const basicInfoData = [
+      { label: '法定代表人', value: '张建国' },
+      { label: '注册资本', value: '50,000.00 万人民币' },
+      { label: '成立日期', value: '2008-05-18' },
+      { label: '企业类型', value: '有限责任公司(国有独资)' },
+      { label: '所属行业', value: '房屋建筑业' },
+      { label: '登记机关', value: '北京市市场监督管理局' },
+      { label: '注册地址', value: '北京市朝阳区某某路某某大厦 18 层' },
+      { label: '经营范围', value: '各类房屋建筑工程施工总承包；市政公用工程施工总承包；钢结构工程专业承包；机电设备安装工程专业承包；地基与基础工程专业承包；建筑装修装饰工程专业承包；建筑幕墙工程专业承包；园林古建筑工程专业承包；消防设施工程专业承包；起重设备安装工程专业承包；建筑工程设计；工程造价咨询；工程招标代理；工程监理；建筑材料销售。' },
+    ];
+
+    return (
     <div className="flex flex-col">
       <div className="p-8 border-b border-slate-100 bg-slate-50/30">
         <div className="flex items-center gap-6">
@@ -337,23 +373,14 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
             <Building2 size={32} />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-slate-900">中建某某建设集团有限公司</h3>
+            <h3 className="text-xl font-bold text-slate-900">{enterpriseName}</h3>
             <p className="text-sm text-slate-500 mt-1">统一社会信用代码：91110000100001234X</p>
           </div>
         </div>
       </div>
       <div className="p-0">
         <div className="grid grid-cols-1 divide-y divide-slate-100">
-          {[
-            { label: '法定代表人', value: '张建国' },
-            { label: '注册资本', value: '50,000.00 万人民币' },
-            { label: '成立日期', value: '2008-05-18' },
-            { label: '企业类型', value: '有限责任公司(国有独资)' },
-            { label: '所属行业', value: '房屋建筑业' },
-            { label: '登记机关', value: '北京市市场监督管理局' },
-            { label: '注册地址', value: '北京市朝阳区某某路某某大厦 18 层' },
-            { label: '经营范围', value: '各类房屋建筑工程施工总承包；市政公用工程施工总承包；钢结构工程专业承包；机电设备安装工程专业承包；地基与基础工程专业承包；建筑装修装饰工程专业承包；建筑幕墙工程专业承包；园林古建筑工程专业承包；消防设施工程专业承包；起重设备安装工程专业承包；建筑工程设计；工程造价咨询；工程招标代理；工程监理；建筑材料销售。' },
-          ].map((item, idx) => (
+          {basicInfoData.map((item, idx) => (
             <div key={idx} className="flex px-8 py-4 hover:bg-slate-50/50 transition-colors">
               <div className="w-40 shrink-0 text-xs font-bold text-slate-400 uppercase tracking-wider">{item.label}</div>
               <div className="text-sm text-slate-700 font-medium">{item.value}</div>
@@ -363,8 +390,19 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
       </div>
     </div>
   );
+  };
 
-  const renderQualification = () => (
+  const renderQualification = () => {
+    const qualificationData = [
+      { name: '建筑工程施工总承包特级', code: 'A1011011000101', date: '2028-12-31', status: 'valid' },
+      { name: '市政公用工程施工总承包一级', code: 'A2021022000202', date: '2027-06-15', status: 'valid' },
+      { name: '钢结构工程专业承包一级', code: 'B3031033000303', date: '2024-03-20', status: 'warning' },
+      { name: '建筑装修装饰工程专业承包一级', code: 'B4041044000404', date: '2026-11-10', status: 'valid' },
+      { name: '机电工程施工总承包一级', code: 'A5051055000505', date: '2025-08-22', status: 'valid' },
+      { name: '地基基础工程专业承包一级', code: 'B6061066000606', date: '2024-04-05', status: 'warning' },
+    ].map(q => ({ ...q, name: `${enterpriseName} - ${q.name}` }));
+
+    return (
     <div className="flex flex-col">
       <div className="bg-white overflow-hidden">
         <div className="overflow-x-auto">
@@ -379,14 +417,7 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                { name: '建筑工程施工总承包特级', code: 'A1011011000101', date: '2028-12-31', status: 'valid' },
-                { name: '市政公用工程施工总承包一级', code: 'A2021022000202', date: '2027-06-15', status: 'valid' },
-                { name: '钢结构工程专业承包一级', code: 'B3031033000303', date: '2024-03-20', status: 'warning' },
-                { name: '建筑装修装饰工程专业承包一级', code: 'B4041044000404', date: '2026-11-10', status: 'valid' },
-                { name: '机电工程施工总承包一级', code: 'A5051055000505', date: '2025-08-22', status: 'valid' },
-                { name: '地基基础工程专业承包一级', code: 'B6061066000606', date: '2024-04-05', status: 'warning' },
-              ].map((item, idx) => (
+              {qualificationData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -437,8 +468,18 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
       </div>
     </div>
   );
+};
 
-  const renderPerformance = () => (
+  const renderPerformance = () => {
+    const performanceData = [
+      { name: '某市中心医院综合大楼建设项目', amount: '4.2 亿元', date: '2023-08-15', manager: '王志强', location: '江苏省南京市' },
+      { name: '某新区市政道路及管网配套工程', amount: '8,500 万元', date: '2023-05-20', manager: '李晓明', location: '浙江省杭州市' },
+      { name: '某大型商业综合体装修装饰工程', amount: '1.2 亿元', date: '2022-12-10', manager: '陈经理', location: '上海市浦东新区' },
+      { name: '某科技园区研发中心二期工程', amount: '2.8 亿元', date: '2022-09-30', manager: '张美玲', location: '广东省深圳市' },
+      { name: '某跨江大桥加固维修及亮化工程', amount: '4,500 万元', date: '2022-06-15', manager: '王志强', location: '湖北省武汉市' },
+    ].map(p => ({ ...p, name: `${enterpriseName} - ${p.name}` }));
+
+    return (
     <div className="flex flex-col">
       <div className="bg-white overflow-hidden">
         <div className="overflow-x-auto">
@@ -454,13 +495,7 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                { name: '某市中心医院综合大楼建设项目', amount: '4.2 亿元', date: '2023-08-15', manager: '王志强', location: '江苏省南京市' },
-                { name: '某新区市政道路及管网配套工程', amount: '8,500 万元', date: '2023-05-20', manager: '李晓明', location: '浙江省杭州市' },
-                { name: '某大型商业综合体装修装饰工程', amount: '1.2 亿元', date: '2022-12-10', manager: '陈经理', location: '上海市浦东新区' },
-                { name: '某科技园区研发中心二期工程', amount: '2.8 亿元', date: '2022-09-30', manager: '张美玲', location: '广东省深圳市' },
-                { name: '某跨江大桥加固维修及亮化工程', amount: '4,500 万元', date: '2022-06-15', manager: '王志强', location: '湖北省武汉市' },
-              ].map((item, idx) => (
+              {performanceData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -504,8 +539,19 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
       </div>
     </div>
   );
+};
 
-  const renderHonors = () => (
+  const renderHonors = () => {
+    const honorsData = [
+      { name: '中国建筑工程鲁班奖', year: '2023', level: '国家级', icon: Award, color: 'text-amber-500 bg-amber-50' },
+      { name: '全国优秀施工企业', year: '2022', level: '国家级', icon: ShieldCheck, color: 'text-blue-500 bg-blue-50' },
+      { name: '省优质工程“扬子杯”', year: '2023', level: '省级', icon: Award, color: 'text-emerald-500 bg-emerald-50' },
+      { name: '市建筑业先进单位', year: '2022', level: '市级', icon: Award, color: 'text-purple-500 bg-purple-50' },
+      { name: 'AAA 级信用企业', year: '2023', level: '国家级', icon: ShieldCheck, color: 'text-rose-500 bg-rose-50' },
+      { name: '安全生产文明工地', year: '2021', level: '省级', icon: CheckCircle2, color: 'text-cyan-500 bg-cyan-50' },
+    ].map(h => ({ ...h, name: `${enterpriseName} - ${h.name}` }));
+
+    return (
     <div className="flex flex-col">
       <div className="bg-white overflow-hidden">
         <div className="overflow-x-auto">
@@ -519,14 +565,7 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                { name: '中国建筑工程鲁班奖', year: '2023', level: '国家级', icon: Award, color: 'text-amber-500 bg-amber-50' },
-                { name: '全国优秀施工企业', year: '2022', level: '国家级', icon: ShieldCheck, color: 'text-blue-500 bg-blue-50' },
-                { name: '省优质工程“扬子杯”', year: '2023', level: '省级', icon: Award, color: 'text-emerald-500 bg-emerald-50' },
-                { name: '市建筑业先进单位', year: '2022', level: '市级', icon: Award, color: 'text-purple-500 bg-purple-50' },
-                { name: 'AAA 级信用企业', year: '2023', level: '国家级', icon: ShieldCheck, color: 'text-rose-500 bg-rose-50' },
-                { name: '安全生产文明工地', year: '2021', level: '省级', icon: CheckCircle2, color: 'text-cyan-500 bg-cyan-50' },
-              ].map((item, idx) => (
+              {honorsData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -561,8 +600,16 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
       </div>
     </div>
   );
+};
 
-  const renderDisclosure = () => (
+  const renderDisclosure = () => {
+    const disclosureData = [
+      { title: '关于公司 2023 年度利润分配预案的公告', date: '2024-03-20', type: '定期报告' },
+      { title: '关于中标重大工程项目的公告', date: '2024-02-15', type: '临时公告' },
+      { title: '关于公司法定代表人变更的公告', date: '2023-12-10', type: '临时公告' },
+    ].map(d => ({ ...d, title: `${enterpriseName} - ${d.title}` }));
+
+    return (
     <div className="flex flex-col">
       <div className="bg-white overflow-hidden">
         <div className="overflow-x-auto">
@@ -576,11 +623,7 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                { title: '关于公司 2023 年度利润分配预案的公告', date: '2024-03-20', type: '定期报告' },
-                { title: '关于中标重大工程项目的公告', date: '2024-02-15', type: '临时公告' },
-                { title: '关于公司法定代表人变更的公告', date: '2023-12-10', type: '临时公告' },
-              ].map((item, idx) => (
+              {disclosureData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -615,8 +658,16 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
       </div>
     </div>
   );
+};
 
-  const renderCredit = () => (
+  const renderCredit = () => {
+    const creditData = [
+      { name: '企业信用等级', value: 'AAA', org: '中国建筑业协会', icon: ShieldCheck, color: 'bg-emerald-50 text-emerald-500' },
+      { name: '荣誉称号', value: '守合同重信用', org: '国家工商行政管理总局', icon: CheckCircle2, color: 'bg-blue-50 text-blue-500' },
+      { name: '售后服务评价', value: '五星级', org: 'GB/T 27922-2011', icon: Award, color: 'bg-purple-50 text-purple-500' },
+    ].map(c => ({ ...c, name: `${enterpriseName} - ${c.name}` }));
+
+    return (
     <div className="flex flex-col">
       <div className="bg-white overflow-hidden">
         <div className="overflow-x-auto">
@@ -630,11 +681,7 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                { name: '企业信用等级', value: 'AAA', org: '中国建筑业协会', icon: ShieldCheck, color: 'bg-emerald-50 text-emerald-500' },
-                { name: '荣誉称号', value: '守合同重信用', org: '国家工商行政管理总局', icon: CheckCircle2, color: 'bg-blue-50 text-blue-500' },
-                { name: '售后服务评价', value: '五星级', org: 'GB/T 27922-2011', icon: Award, color: 'bg-purple-50 text-purple-500' },
-              ].map((item, idx) => (
+              {creditData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -667,6 +714,7 @@ const EnterpriseInfo: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
       </div>
     </div>
   );
+};
 
   return (
     <div className="flex flex-col h-full">

@@ -75,6 +75,9 @@ interface WorkbenchProps {
   onExit: () => void;
   initialPhase?: Phase;
   initialProjectData?: any;
+  currentEnterprise: { id: string; name: string };
+  uploadedFiles: Record<string, boolean>;
+  setUploadedFiles: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 
 const ParsingReportView = ({ onBack, projectData }: { onBack: () => void, projectData: any }) => (
@@ -99,7 +102,14 @@ const ParsingReportView = ({ onBack, projectData }: { onBack: () => void, projec
   </div>
 );
 
-const Workbench: React.FC<WorkbenchProps> = ({ onExit, initialPhase, initialProjectData }) => {
+const Workbench: React.FC<WorkbenchProps> = ({ 
+  onExit, 
+  initialPhase, 
+  initialProjectData, 
+  currentEnterprise,
+  uploadedFiles,
+  setUploadedFiles
+}) => {
   const [currentPhase, setCurrentPhase] = useState<Phase>(initialPhase || 'preparation');
   const [subView, setSubView] = useState<SubView>('main');
   const [showToolModal, setShowToolModal] = useState(false);
@@ -113,7 +123,7 @@ const Workbench: React.FC<WorkbenchProps> = ({ onExit, initialPhase, initialProj
   const [isTenderUploaded, setIsTenderUploaded] = useState(initialProjectData?.isTenderUploaded || false);
   const [refreshKey, setRefreshKey] = useState(0); // Dummy state for forcing re-render
   const [projectData, setProjectData] = useState(initialProjectData || {
-    projectName: '城市基础设施二期项目',
+    projectName: `城市基础设施二期项目 (${currentEnterprise.name})`,
     projectNumber: 'BID-2023-00892',
     tenderer: 'XX市交通运输局',
     tendererContact: '张工 010-88888888',
@@ -128,6 +138,15 @@ const Workbench: React.FC<WorkbenchProps> = ({ onExit, initialPhase, initialProj
     tenderRequirements: '1. 资质要求：具备市政公用工程施工总承包一级及以上资质；\n2. 业绩要求：近三年内具有类似智慧交通项目业绩；\n3. 技术要求：支持国产化适配。',
     otherRemarks: ''
   });
+
+  useEffect(() => {
+    if (!initialProjectData) {
+      setProjectData(prev => ({
+        ...prev,
+        projectName: `城市基础设施二期项目 (${currentEnterprise.name})`
+      }));
+    }
+  }, [currentEnterprise.name, initialProjectData]);
 
   const handleProjectDataChange = (field: string, value: string) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
@@ -413,6 +432,8 @@ const Workbench: React.FC<WorkbenchProps> = ({ onExit, initialPhase, initialProj
                   setIsTenderUploaded={setIsTenderUploaded}
                   projectData={projectData}
                   handleProjectDataChange={handleProjectDataChange}
+                  uploadedFiles={uploadedFiles}
+                  setUploadedFiles={setUploadedFiles}
                 />
               )}
               {currentPhase === 'production' && <ProductionPhase onNavigate={handleStartProduction} onSelect={setSelectedCard} />}
@@ -426,7 +447,7 @@ const Workbench: React.FC<WorkbenchProps> = ({ onExit, initialPhase, initialProj
               {subView === 'qualification-view' && <QualificationView onBack={() => setSubView('main')} />}
               {subView === 'risk-view' && <RiskView onBack={() => setSubView('main')} />}
               {subView === 'file-production' && <FileProductionView onBack={() => setSubView('main')} />}
-              {subView === 'inspection-detail' && <InspectionDetailView onBack={() => setSubView('main')} />}
+              {subView === 'inspection-detail' && <InspectionDetailView onBack={() => setSubView('main')} uploadedFiles={uploadedFiles} />}
               {subView === 'archive-register' && <ArchiveRegisterView onBack={() => setSubView('main')} />}
               {subView === 'parsing-report' && <ParsingReportView onBack={() => setSubView('main')} projectData={projectData} />}
               {subView === 'bid-parsing' && (
@@ -1100,137 +1121,216 @@ const FileProductionView = ({ onBack }: { onBack: () => void }) => (
   </div>
 );
 
-const InspectionDetailView = ({ onBack }: { onBack: () => void }) => (
-  <div className="space-y-8">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <button 
-          onClick={onBack} 
-          className="size-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:border-primary hover:text-primary transition-all shadow-sm group"
-          title="返回"
-        >
-          <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
-        </button>
-        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
-          <span className="w-1.5 h-6 bg-primary rounded-full"></span>
-          标书检查
-        </h3>
+const InspectionDetailView = ({ onBack, uploadedFiles }: { onBack: () => void, uploadedFiles: Record<string, boolean> }) => {
+  const [showClarificationModal, setShowClarificationModal] = useState(false);
+  const [useClarification, setUseClarification] = useState(false);
+  const [selectedVersion, setSelectedVersion] = useState<any>(null);
+
+  const hasClarification = Object.keys(uploadedFiles || {}).some(key => key.startsWith('clar-doc-') && uploadedFiles[key]);
+
+  const handleStartCheck = (version: any) => {
+    setSelectedVersion(version);
+    if (hasClarification && !useClarification) {
+      setShowClarificationModal(true);
+    } else {
+      // Proceed with check
+      console.log('Starting check for:', version.name, useClarification ? 'with clarification' : 'original');
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={onBack} 
+            className="size-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:border-primary hover:text-primary transition-all shadow-sm group"
+            title="返回"
+          >
+            <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+          </button>
+          <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
+            <span className="w-1.5 h-6 bg-primary rounded-full"></span>
+            标书检查
+          </h3>
+        </div>
       </div>
-    </div>
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <div className="lg:col-span-3 bg-white rounded-xl p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
-        <div className="grid grid-cols-2 gap-y-8">
-          {[
-            { label: '招标人', value: '上海浦东开发集团', icon: Building2 },
-            { label: '项目类型', value: '工程类', icon: Network },
-            { label: '联系人', value: '王经理', icon: User },
-            { label: '联系方式', value: '13800138000', icon: Phone },
-          ].map((item, i) => (
-            <div key={i} className="space-y-1">
-              <div className="flex items-center gap-2 text-slate-400">
-                <item.icon size={16} />
-                <span className="text-xs">{item.label}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3 bg-white rounded-xl p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div className="grid grid-cols-2 gap-y-8">
+            {[
+              { label: '招标人', value: '上海浦东开发集团', icon: Building2 },
+              { label: '项目类型', value: '工程类', icon: Network },
+              { label: '联系人', value: '王经理', icon: User },
+              { label: '联系方式', value: '13800138000', icon: Phone },
+            ].map((item, i) => (
+              <div key={i} className="space-y-1">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <item.icon size={16} />
+                  <span className="text-xs">{item.label}</span>
+                </div>
+                <p className="text-sm font-bold ml-6">{item.value}</p>
               </div>
-              <p className="text-sm font-bold ml-6">{item.value}</p>
+            ))}
+          </div>
+          <div className="flex items-center gap-12 pt-8 border-t border-slate-50 mt-8">
+            <div className="flex items-center gap-3">
+              <Clock className="text-slate-400" size={20} />
+              <div className="text-xs">
+                <span className="text-slate-400 block mb-0.5">投标截止</span>
+                <span className="text-red-600 font-bold">2026-03-15 17:00</span>
+                <span className="bg-red-50 text-red-500 px-1.5 py-0.5 rounded text-[10px] ml-1">剩 3 天</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Calendar className="text-slate-400" size={20} />
+              <div className="text-xs">
+                <span className="text-slate-400 block mb-0.5">开标时间</span>
+                <span className="font-bold">2026-03-18 09:30</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="lg:col-span-1 bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <FolderOpen className="text-primary" size={20} />
+            <h3 className="text-sm font-bold">招标相关文件</h3>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center gap-3">
+            <div className="size-10 bg-white border border-slate-200 rounded flex items-center justify-center text-primary">
+              <FileText size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <p className="text-[13px] font-bold truncate">XX市政道路...招标文件.pdf</p>
+                <CheckCircle2 className="text-green-500" size={16} />
+              </div>
+              <p className="text-[11px] text-slate-400">招标文件 • 11.9 MB</p>
+            </div>
+          </div>
+          <div className="p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50/30 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-blue-50/50 transition-colors">
+            <UploadCloud className="text-primary" size={24} />
+            <div className="text-center">
+              <p className="text-[13px] text-primary font-bold">点击上传控制价文件</p>
+              <p className="text-[11px] text-slate-400">支持 PDF、Word、ZF、CF 格式</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 flex items-center justify-between border-b border-slate-50">
+          <h3 className="font-bold text-sm">投标文件版本</h3>
+          <div className="flex gap-2">
+            <button className="px-3 py-1.5 border border-slate-200 text-slate-600 rounded text-xs font-medium hover:bg-slate-50">+ 添加版本</button>
+            <button className="px-3 py-1.5 bg-primary text-white rounded text-xs font-medium hover:bg-primary/90 flex items-center gap-1">
+              <CheckCircle2 size={14} /> 全部检查
+            </button>
+          </div>
+        </div>
+        <div className="divide-y divide-slate-100">
+          {[
+            { name: '投标文件-最终版', time: '2026-03-01 10:00', desc: '最终确认版本，准备递交', status: [0, 0, 0] },
+            { name: '投标文件-修订版2', time: '2026-02-20 15:30', desc: '针对技术响应点进行了优化', status: [1, 2, 0] },
+            { name: '投标文件-修订版1', time: '2026-02-10 09:15', desc: '补充了部分业绩证明材料', status: [1, 3, 1] },
+          ].map((v, i) => (
+            <div key={i} className="px-6 py-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex-1">
+                <p className="text-sm font-bold text-slate-900">{v.name}</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">{v.time} | {v.desc}</p>
+              </div>
+              <div className="flex items-center gap-3 mr-8">
+                {['资信', '技术', '经济'].map((tag, idx) => {
+                  const s = v.status[idx];
+                  return (
+                    <span key={tag} className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-[11px] ${
+                      s === 1 ? 'border-green-100 bg-green-50 text-green-600' :
+                      s === 2 ? 'border-blue-100 bg-blue-50 text-blue-600' :
+                      s === 3 ? 'border-orange-100 bg-orange-50 text-orange-600' :
+                      'border-slate-200 text-slate-400'
+                    }`}>
+                      {s === 1 && <CheckCircle2 size={12} />}
+                      {s === 2 && <History size={12} className="animate-spin" />}
+                      {s === 3 && <AlertTriangle size={12} />}
+                      {s === 0 && <span className="size-1.5 rounded-full border border-slate-300"></span>}
+                      {tag}
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => handleStartCheck(v)}
+                  className="px-4 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded hover:bg-slate-50"
+                >
+                  开始检查
+                </button>
+                <button className="p-1 text-slate-400 hover:text-primary"><MoreHorizontal size={18} /></button>
+                <ChevronRight className="text-slate-300" size={18} />
+              </div>
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-12 pt-8 border-t border-slate-50 mt-8">
-          <div className="flex items-center gap-3">
-            <Clock className="text-slate-400" size={20} />
-            <div className="text-xs">
-              <span className="text-slate-400 block mb-0.5">投标截止</span>
-              <span className="text-red-600 font-bold">2026-03-15 17:00</span>
-              <span className="bg-red-50 text-red-500 px-1.5 py-0.5 rounded text-[10px] ml-1">剩 3 天</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Calendar className="text-slate-400" size={20} />
-            <div className="text-xs">
-              <span className="text-slate-400 block mb-0.5">开标时间</span>
-              <span className="font-bold">2026-03-18 09:30</span>
-            </div>
-          </div>
-        </div>
       </div>
-      <div className="lg:col-span-1 bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 mb-2">
-          <FolderOpen className="text-primary" size={20} />
-          <h3 className="text-sm font-bold">招标相关文件</h3>
-        </div>
-        <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center gap-3">
-          <div className="size-10 bg-white border border-slate-200 rounded flex items-center justify-center text-primary">
-            <FileText size={20} />
+
+      <AnimatePresence>
+        {showClarificationModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              onClick={() => setShowClarificationModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+            >
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="size-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                    <FileSearch size={20} />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900">发现最新答疑文件</h3>
+                </div>
+                <p className="text-slate-600 text-sm leading-relaxed mb-6">
+                  系统检测到该项目已上传最新的答疑/澄清文件。为了确保检查结果的准确性，建议导入最新答疑内容进行比对检查。
+                </p>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={() => {
+                      setUseClarification(true);
+                      setShowClarificationModal(false);
+                      // Proceed with check
+                      console.log('Starting check with clarification for:', selectedVersion?.name);
+                    }}
+                    className="w-full py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Check size={18} /> 导入最新答疑文件检查
+                  </button>
+                  <button
+                    onClick={() => {
+                      setUseClarification(false);
+                      setShowClarificationModal(false);
+                      // Proceed with check
+                      console.log('Starting check with original for:', selectedVersion?.name);
+                    }}
+                    className="w-full py-3 bg-slate-50 text-slate-600 rounded-xl font-bold hover:bg-slate-100 transition-all"
+                  >
+                    暂不导入，按原招标文件检查
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <p className="text-[13px] font-bold truncate">XX市政道路...招标文件.pdf</p>
-              <CheckCircle2 className="text-green-500" size={16} />
-            </div>
-            <p className="text-[11px] text-slate-400">招标文件 • 11.9 MB</p>
-          </div>
-        </div>
-        <div className="p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50/30 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-blue-50/50 transition-colors">
-          <UploadCloud className="text-primary" size={24} />
-          <div className="text-center">
-            <p className="text-[13px] text-primary font-bold">点击上传控制价文件</p>
-            <p className="text-[11px] text-slate-400">支持 PDF / Excel</p>
-          </div>
-        </div>
-      </div>
+        )}
+      </AnimatePresence>
     </div>
-    
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="px-6 py-4 flex items-center justify-between border-b border-slate-50">
-        <h3 className="font-bold text-sm">投标文件版本</h3>
-        <div className="flex gap-2">
-          <button className="px-3 py-1.5 border border-slate-200 text-slate-600 rounded text-xs font-medium hover:bg-slate-50">+ 添加版本</button>
-          <button className="px-3 py-1.5 bg-primary text-white rounded text-xs font-medium hover:bg-primary/90 flex items-center gap-1">
-            <CheckCircle2 size={14} /> 全部检查
-          </button>
-        </div>
-      </div>
-      <div className="divide-y divide-slate-100">
-        {[
-          { name: '投标文件-最终版', time: '2026-03-01 10:00', desc: '最终确认版本，准备递交', status: [0, 0, 0] },
-          { name: '投标文件-修订版2', time: '2026-02-20 15:30', desc: '针对技术响应点进行了优化', status: [1, 2, 0] },
-          { name: '投标文件-修订版1', time: '2026-02-10 09:15', desc: '补充了部分业绩证明材料', status: [1, 3, 1] },
-        ].map((v, i) => (
-          <div key={i} className="px-6 py-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
-            <div className="flex-1">
-              <p className="text-sm font-bold text-slate-900">{v.name}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">{v.time} | {v.desc}</p>
-            </div>
-            <div className="flex items-center gap-3 mr-8">
-              {['资信', '技术', '经济'].map((tag, idx) => {
-                const s = v.status[idx];
-                return (
-                  <span key={tag} className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-[11px] ${
-                    s === 1 ? 'border-green-100 bg-green-50 text-green-600' :
-                    s === 2 ? 'border-blue-100 bg-blue-50 text-blue-600' :
-                    s === 3 ? 'border-orange-100 bg-orange-50 text-orange-600' :
-                    'border-slate-200 text-slate-400'
-                  }`}>
-                    {s === 1 && <CheckCircle2 size={12} />}
-                    {s === 2 && <History size={12} className="animate-spin" />}
-                    {s === 3 && <AlertTriangle size={12} />}
-                    {s === 0 && <span className="size-1.5 rounded-full border border-slate-300"></span>}
-                    {tag}
-                  </span>
-                );
-              })}
-            </div>
-            <div className="flex items-center gap-3">
-              <button className="px-4 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded hover:bg-slate-50">开始检查</button>
-              <button className="p-1 text-slate-400 hover:text-primary"><MoreHorizontal size={18} /></button>
-              <ChevronRight className="text-slate-300" size={18} />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 const ResourceCenterView = ({ onBack }: { onBack: () => void }) => {
   const [activeTab, setActiveTab] = useState<'receipts' | 'personnel' | 'performance'>('receipts');
@@ -1542,7 +1642,7 @@ const ArchiveRegisterView = ({ onBack }: { onBack: () => void }) => (
 );
 
 
-const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRightTab, initialProjectData, isTenderUploaded, setIsTenderUploaded, projectData, handleProjectDataChange }: { 
+const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRightTab, initialProjectData, isTenderUploaded, setIsTenderUploaded, projectData, handleProjectDataChange, uploadedFiles, setUploadedFiles }: { 
   onNavigate: (view: SubView) => void, 
   onSelect: (id: string | null) => void,
   setActiveRightTab: (id: string | null) => void,
@@ -1551,7 +1651,9 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
   isTenderUploaded: boolean,
   setIsTenderUploaded: (val: boolean) => void,
   projectData: any,
-  handleProjectDataChange: (field: string, value: string) => void
+  handleProjectDataChange: (field: string, value: string) => void,
+  uploadedFiles: Record<string, boolean>,
+  setUploadedFiles: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
 }) => {
   const [isParsed, setIsParsed] = useState(!!initialProjectData);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -1559,6 +1661,85 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
   const [showResultPage, setShowResultPage] = useState(false);
   const [showQualificationResult, setShowQualificationResult] = useState(false);
   const [showParsingPage, setShowParsingPage] = useState(false);
+  const [clarificationRounds, setClarificationRounds] = useState<number>(0);
+  
+  // New states for upload parsing
+  const [activeUpload, setActiveUpload] = useState<{ id: string; label: string } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStep, setUploadStep] = useState<'uploading' | 'parsing' | 'comparing' | 'done'>('uploading');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [diffData, setDiffData] = useState<{ field: string; label: string; oldVal: string; newVal: string }[]>([]);
+
+  const handleToggleUpload = (id: string) => {
+    setUploadedFiles(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const startUploadFlow = (cat: { id: string; label: string }) => {
+    // Only tender-doc and clar-doc trigger the parsing flow
+    if (cat.id === 'tender-doc' || cat.id.startsWith('clar-doc-')) {
+      setActiveUpload(cat);
+      setIsUploading(true);
+      setUploadStep('uploading');
+      setUploadProgress(0);
+      
+      // Step 1: Uploading
+      let progress = 0;
+      const uploadInterval = setInterval(() => {
+        progress += 5;
+        setUploadProgress(progress);
+        if (progress >= 100) {
+          clearInterval(uploadInterval);
+          setUploadStep('parsing');
+          setUploadProgress(0);
+          
+          // Step 2: Parsing
+          let parseProgress = 0;
+          const parseInterval = setInterval(() => {
+            parseProgress += 2;
+            setUploadProgress(parseProgress);
+            if (parseProgress >= 100) {
+              clearInterval(parseInterval);
+              
+              // Mock differences
+              const mockDiffs = [
+                { field: 'openingTime', label: '开标时间', oldVal: projectData.openingTime, newVal: '2024-05-20 09:30' },
+                { field: 'depositAmount', label: '保证金金额', oldVal: projectData.depositAmount, newVal: '500,000.00' }
+              ];
+              setDiffData(mockDiffs);
+              setUploadStep('comparing');
+            }
+          }, 50);
+        }
+      }, 30)
+    } else {
+      handleToggleUpload(cat.id);
+    }
+  };
+
+  const applyChanges = () => {
+    diffData.forEach(diff => {
+      handleProjectDataChange(diff.field, diff.newVal);
+    });
+    if (activeUpload) {
+      handleToggleUpload(activeUpload.id);
+      if (activeUpload.id === 'tender-doc') {
+        setIsTenderUploaded(true);
+      }
+    }
+    setIsUploading(false);
+    setActiveUpload(null);
+  };
+
+  const skipChanges = () => {
+    if (activeUpload) {
+      handleToggleUpload(activeUpload.id);
+      if (activeUpload.id === 'tender-doc') {
+        setIsTenderUploaded(true);
+      }
+    }
+    setIsUploading(false);
+    setActiveUpload(null);
+  };
 
   const handleStartAnalysis = () => {
     setIsAnalyzing(true);
@@ -1623,11 +1804,13 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
     );
   }
 
-  const uploadCategories = [
+  const baseCategories = [
     { id: 'tender-doc', label: '招标文件', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { id: 'clarification', label: '答疑文件', icon: MessageSquare, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { id: 'list', label: '招标清单', icon: ClipboardList, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { id: 'price', label: '控制价文件', icon: Receipt, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { id: 'tender-list', label: '招标清单', icon: ClipboardList, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { id: 'tender-price', label: '控制价文件', icon: Receipt, color: 'text-amber-600', bg: 'bg-amber-50' },
+  ];
+
+  const otherCategories = [
     { id: 'filing', label: '项目备案', icon: ShieldCheck, color: 'text-indigo-600', bg: 'bg-indigo-50' },
     { id: 'other', label: '其他信息', icon: Info, color: 'text-slate-600', bg: 'bg-slate-50' },
   ];
@@ -1643,8 +1826,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
             <div className="size-24 bg-blue-50 rounded-2xl flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
               <UploadCloud size={48} />
             </div>
-            <h3 className="text-xl font-black text-slate-900 mb-2">点击添加文件或拖拽到此区域</h3>
-            <p className="text-slate-400 text-sm mb-8">支持 doc, docx, pdf 文件格式</p>
+            <h3 className="text-xl font-black text-slate-900 mb-2">点击或拖拽招标文件至此处上传</h3>
+            <p className="text-slate-400 text-sm mb-8">支持 PDF、Word、ZF、CF 格式，AI将自动识别关键信息并填充表单</p>
             
             <button 
               onClick={handleStartAnalysis}
@@ -1758,7 +1941,7 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
   }
 
   if (showParsingPage) {
-    return <BidParsing autoImported={isTenderUploaded} onBack={() => setShowParsingPage(false)} />;
+    return <BidParsing autoImported={isTenderUploaded} uploadedFiles={uploadedFiles} onBack={() => setShowParsingPage(false)} />;
   }
 
   return (
@@ -1904,50 +2087,297 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
         </div>
 
         <div className="pt-8 border-t border-slate-100">
-          <h3 className="text-lg font-black text-slate-900 flex items-center gap-2 mb-6">
-            <UploadCloud size={20} className="text-primary" />
-            准备阶段文件上传
-          </h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+              <UploadCloud size={20} className="text-primary" />
+              准备阶段文件上传
+            </h3>
+            <button 
+              onClick={() => setClarificationRounds(prev => prev + 1)}
+              className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-xs font-bold hover:bg-primary/20 transition-all flex items-center gap-1.5"
+            >
+              <Plus size={14} />
+              添加答疑环节
+            </button>
+          </div>
           
-          <div className="grid grid-cols-3 gap-4">
-            {uploadCategories.map((cat) => {
-              const isUploaded = cat.id === 'tender-doc' && isTenderUploaded;
-              return (
-                <div 
-                  key={cat.id} 
-                  onClick={() => {
-                    if (cat.id === 'tender-doc') {
-                      setIsTenderUploaded(!isTenderUploaded);
-                    }
-                  }}
-                  className={`p-4 rounded-2xl border transition-all group cursor-pointer ${
-                    isUploaded 
-                      ? 'bg-blue-50/50 border-blue-200 hover:border-blue-300' 
-                      : 'bg-slate-50 border-slate-100 hover:border-primary/30 hover:bg-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className={`size-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${
-                      isUploaded ? 'bg-blue-100 text-blue-600' : `${cat.bg} ${cat.color}`
-                    }`}>
-                      {isUploaded ? <CheckCircle2 size={20} /> : <cat.icon size={20} />}
+          <div className="space-y-8">
+            {/* Base Documents Group */}
+            <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+              <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <span className="w-1 h-3 bg-blue-500 rounded-full"></span>
+                招标基础文件
+              </h4>
+              <div className="grid grid-cols-3 gap-4">
+                {baseCategories.map((cat) => {
+                  const isUploaded = uploadedFiles[cat.id] || (cat.id === 'tender-doc' && isTenderUploaded);
+                  return (
+                    <div 
+                      key={cat.id} 
+                      onClick={() => {
+                        if (!isUploaded) {
+                          startUploadFlow(cat);
+                        } else {
+                          handleToggleUpload(cat.id);
+                          if (cat.id === 'tender-doc') {
+                            setIsTenderUploaded(!isTenderUploaded);
+                          }
+                        }
+                      }}
+                      className={`p-4 rounded-2xl border transition-all group cursor-pointer ${
+                        isUploaded 
+                          ? 'bg-blue-50/50 border-blue-200 hover:border-blue-300' 
+                          : 'bg-white border-slate-100 hover:border-primary/30 hover:shadow-md'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`size-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${
+                          isUploaded ? 'bg-blue-100 text-blue-600' : `${cat.bg} ${cat.color}`
+                        }`}>
+                          {isUploaded ? <CheckCircle2 size={20} /> : <cat.icon size={20} />}
+                        </div>
+                        <span className="text-sm font-black text-slate-700">{cat.label}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[10px] font-medium ${isUploaded ? 'text-blue-500' : 'text-slate-400'}`}>
+                          {isUploaded ? '已上传文件' : '未上传文件'}
+                        </span>
+                        <button className={`text-[10px] font-black hover:underline ${isUploaded ? 'text-blue-600' : 'text-primary'}`}>
+                          {isUploaded ? '重新上传' : '点击上传'}
+                        </button>
+                      </div>
                     </div>
-                    <span className="text-sm font-black text-slate-700">{cat.label}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-medium ${isUploaded ? 'text-blue-500' : 'text-slate-400'}`}>
-                      {isUploaded ? '已上传文件' : '未上传文件'}
-                    </span>
-                    <button className={`text-[10px] font-black hover:underline ${isUploaded ? 'text-blue-600' : 'text-primary'}`}>
-                      {isUploaded ? '重新上传' : '点击上传'}
-                    </button>
-                  </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Clarification Rounds */}
+            {Array.from({ length: clarificationRounds }).map((_, index) => (
+              <div key={index} className="bg-purple-50/30 p-6 rounded-2xl border border-purple-100 relative group/round">
+                <button 
+                  onClick={() => setClarificationRounds(prev => Math.max(0, prev - 1))}
+                  className="absolute top-4 right-4 text-slate-400 hover:text-red-500 opacity-0 group-hover/round:opacity-100 transition-opacity"
+                >
+                  <Trash2 size={16} />
+                </button>
+                <h4 className="text-xs font-black text-purple-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span className="w-1 h-3 bg-purple-500 rounded-full"></span>
+                  第 {index + 1} 次答疑文件
+                </h4>
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { id: `clar-doc-${index}`, label: '答疑文件', icon: MessageSquare, color: 'text-purple-600', bg: 'bg-purple-100' },
+                    { id: `clar-list-${index}`, label: '答疑清单', icon: ClipboardList, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+                    { id: `clar-price-${index}`, label: '答疑控制价', icon: Receipt, color: 'text-amber-600', bg: 'bg-amber-100' },
+                  ].map((cat) => {
+                    const isUploaded = uploadedFiles[cat.id];
+                    return (
+                      <div 
+                        key={cat.id} 
+                        onClick={() => {
+                          if (!isUploaded) {
+                            startUploadFlow(cat);
+                          } else {
+                            handleToggleUpload(cat.id);
+                          }
+                        }}
+                        className={`p-4 rounded-2xl border transition-all group cursor-pointer ${
+                          isUploaded 
+                            ? 'bg-purple-100/50 border-purple-200 hover:border-purple-300' 
+                            : 'bg-white border-purple-100/50 hover:border-purple-300 hover:shadow-md'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`size-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${
+                            isUploaded ? 'bg-purple-200 text-purple-700' : `${cat.bg} ${cat.color}`
+                          }`}>
+                            {isUploaded ? <CheckCircle2 size={20} /> : <cat.icon size={20} />}
+                          </div>
+                          <span className="text-sm font-black text-slate-700">{cat.label}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className={`text-[10px] font-medium ${isUploaded ? 'text-purple-600' : 'text-slate-400'}`}>
+                            {isUploaded ? '已上传文件' : '未上传文件'}
+                          </span>
+                          <button className={`text-[10px] font-black hover:underline ${isUploaded ? 'text-purple-600' : 'text-primary'}`}>
+                            {isUploaded ? '重新上传' : '点击上传'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+            ))}
+
+            {/* Other Documents */}
+            <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+              <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <span className="w-1 h-3 bg-slate-400 rounded-full"></span>
+                其他材料
+              </h4>
+              <div className="grid grid-cols-3 gap-4">
+                {otherCategories.map((cat) => {
+                  const isUploaded = uploadedFiles[cat.id];
+                  return (
+                    <div 
+                      key={cat.id} 
+                      onClick={() => handleToggleUpload(cat.id)}
+                      className={`p-4 rounded-2xl border transition-all group cursor-pointer ${
+                        isUploaded 
+                          ? 'bg-blue-50/50 border-blue-200 hover:border-blue-300' 
+                          : 'bg-white border-slate-100 hover:border-primary/30 hover:shadow-md'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`size-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${
+                          isUploaded ? 'bg-blue-100 text-blue-600' : `${cat.bg} ${cat.color}`
+                        }`}>
+                          {isUploaded ? <CheckCircle2 size={20} /> : <cat.icon size={20} />}
+                        </div>
+                        <span className="text-sm font-black text-slate-700">{cat.label}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[10px] font-medium ${isUploaded ? 'text-blue-500' : 'text-slate-400'}`}>
+                          {isUploaded ? '已上传文件' : '未上传文件'}
+                        </span>
+                        <button className={`text-[10px] font-black hover:underline ${isUploaded ? 'text-blue-600' : 'text-primary'}`}>
+                          {isUploaded ? '重新上传' : '点击上传'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Upload & Parsing Modal */}
+      <AnimatePresence>
+        {isUploading && activeUpload && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              onClick={() => {
+                if (uploadStep === 'comparing') setIsUploading(false);
+              }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="bg-slate-50 px-8 py-6 border-bottom border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="size-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                    <UploadCloud size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900">
+                      {uploadStep === 'uploading' && '正在上传文件...'}
+                      {uploadStep === 'parsing' && 'AI 正在解析文件...'}
+                      {uploadStep === 'comparing' && '解析结果对比'}
+                    </h3>
+                    <p className="text-slate-500 text-sm">{activeUpload.label}</p>
+                  </div>
+                </div>
+                {uploadStep === 'comparing' && (
+                  <button 
+                    onClick={() => setIsUploading(false)}
+                    className="size-10 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-400 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="p-8">
+                {(uploadStep === 'uploading' || uploadStep === 'parsing') && (
+                  <div className="space-y-8 py-4">
+                    <div className="flex justify-between text-sm font-black text-slate-700 mb-2">
+                      <span>{uploadStep === 'uploading' ? '上传进度' : 'AI 解析进度'}</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
+                      <motion.div 
+                        className="h-full bg-primary"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${uploadProgress}%` }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    </div>
+                    <div className="flex items-center gap-3 text-slate-500 text-sm bg-blue-50 p-4 rounded-xl">
+                      <RefreshCw size={16} className="animate-spin text-primary" />
+                      <span>
+                        {uploadStep === 'uploading' ? '正在安全传输文件到服务器...' : 'AI 正在提取项目关键信息，请稍候...'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {uploadStep === 'comparing' && (
+                  <div className="space-y-6">
+                    <div className="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex items-start gap-3">
+                      <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={20} />
+                      <div>
+                        <h4 className="text-sm font-black text-amber-900">检测到项目信息变动</h4>
+                        <p className="text-xs text-amber-700 leading-relaxed mt-1">
+                          解析出的文件内容与当前项目信息存在差异。请核对以下变动，并选择是否更新项目数据。
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="border border-slate-100 rounded-2xl overflow-hidden">
+                      <table className="w-full text-left text-sm">
+                        <thead>
+                          <tr className="bg-slate-50 border-bottom border-slate-100">
+                            <th className="px-4 py-3 font-black text-slate-500 uppercase tracking-wider text-[10px]">信息项</th>
+                            <th className="px-4 py-3 font-black text-slate-500 uppercase tracking-wider text-[10px]">当前值</th>
+                            <th className="px-4 py-3 font-black text-slate-500 uppercase tracking-wider text-[10px]">解析值</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {diffData.map((diff, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-4 py-4 font-bold text-slate-700">{diff.label}</td>
+                              <td className="px-4 py-4 text-slate-500 line-through decoration-slate-300">{diff.oldVal || '未填写'}</td>
+                              <td className="px-4 py-4 font-black text-blue-600 bg-blue-50/30">{diff.newVal}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="flex gap-4 pt-4">
+                      <button 
+                        onClick={applyChanges}
+                        className="flex-1 py-4 bg-primary text-white rounded-2xl font-black shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Check size={20} /> 确认并替换更新
+                      </button>
+                      <button 
+                        onClick={skipChanges}
+                        className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black hover:bg-slate-200 transition-all"
+                      >
+                        维持现状
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Right Sidebar */}
       <div className="w-80 flex flex-col gap-6">

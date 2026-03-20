@@ -1,28 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   UploadCloud, 
   FileText, 
   Download, 
   CheckCircle2,
   RefreshCw,
+  AlertTriangle,
+  MessageSquare,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface BidParsingProps {
   autoImported?: boolean;
+  uploadedFiles?: Record<string, boolean>;
   onBack?: () => void;
   onViewReport?: () => void;
+  currentEnterprise?: { id: string; name: string };
 }
 
-const BidParsing: React.FC<BidParsingProps> = ({ autoImported, onBack, onViewReport }) => {
+const BidParsing: React.FC<BidParsingProps> = ({ autoImported, uploadedFiles, onBack, onViewReport, currentEnterprise }) => {
+  const enterpriseName = currentEnterprise?.name || '杭州某某科技有限公司';
   const [files, setFiles] = useState([
-    { name: '2023年智慧校园建设项目招标文件.pdf', time: '2023-11-20 14:30', type: 'pdf', status: '分析完成' },
-    { name: '配套网络设备采购需求清单.docx', time: '2023-11-19 10:15', type: 'doc', status: '分析完成' }
+    { name: `2023年${enterpriseName}智慧校园建设项目招标文件.pdf`, time: '2023-11-20 14:30', type: 'pdf', status: '分析完成' },
+    { name: `${enterpriseName}配套网络设备采购需求清单.docx`, time: '2023-11-19 10:15', type: 'doc', status: '分析完成' }
   ]);
   const [isImported, setIsImported] = useState(autoImported);
   const [isParsed, setIsParsed] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [isQualificationChecked, setIsQualificationChecked] = useState(false);
+  const [showClarificationModal, setShowClarificationModal] = useState(false);
+  const [useClarification, setUseClarification] = useState(false);
+
+  useEffect(() => {
+    if (isImported && !isParsed && !useClarification) {
+      const hasClarification = Object.keys(uploadedFiles || {}).some(key => key.startsWith('clar-doc-') && uploadedFiles[key]);
+      if (hasClarification) {
+        setShowClarificationModal(true);
+      }
+    }
+  }, [isImported, isParsed, uploadedFiles, useClarification]);
 
   return (
     <motion.div 
@@ -62,7 +78,7 @@ const BidParsing: React.FC<BidParsingProps> = ({ autoImported, onBack, onViewRep
                     <CheckCircle2 size={32} />
                   </div>
                   <p className="font-black text-lg text-slate-900 mb-2">招标文件解析完成</p>
-                  <p className="text-slate-500 text-sm mb-6">2024年XX市智慧交通管理平台建设项目招标文件.pdf</p>
+                  <p className="text-slate-500 text-sm mb-6">2024年{enterpriseName}智慧交通管理平台建设项目招标文件.pdf</p>
                   <div className="flex gap-4">
                     <button onClick={onViewReport} className="bg-primary hover:bg-primary/90 text-white font-bold py-2.5 px-8 rounded-lg transition-all shadow-lg shadow-primary/20">
                       查看解析报告
@@ -78,10 +94,10 @@ const BidParsing: React.FC<BidParsingProps> = ({ autoImported, onBack, onViewRep
               ) : (
                 <div className="border-2 border-blue-100 bg-blue-50/30 rounded-xl p-12 flex flex-col items-center justify-center">
                   <div className="size-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 text-blue-600">
-                    <FileText size={32} />
+                    {useClarification ? <MessageSquare size={32} /> : <FileText size={32} />}
                   </div>
-                  <p className="font-black text-lg text-slate-900 mb-2">招标文件已就绪</p>
-                  <p className="text-slate-500 text-sm mb-6">2024年XX市智慧交通管理平台建设项目招标文件.pdf</p>
+                  <p className="font-black text-lg text-slate-900 mb-2">{useClarification ? '答疑文件已就绪' : '招标文件已就绪'}</p>
+                  <p className="text-slate-500 text-sm mb-6">2024年{enterpriseName}智慧交通管理平台建设项目招标文件.pdf</p>
                   <div className="flex gap-4">
                     <button 
                       onClick={() => {
@@ -117,8 +133,8 @@ const BidParsing: React.FC<BidParsingProps> = ({ autoImported, onBack, onViewRep
                 <div className="size-14 bg-blue-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <UploadCloud className="text-primary" size={28} />
                 </div>
-                <p className="font-bold mb-1">点击或拖拽文件到此处上传</p>
-                <p className="text-slate-400 text-sm mb-8">支持 PDF, DOC, DOCX, ZIP 格式 (最大 50MB)</p>
+                <p className="font-bold mb-1">点击或拖拽招标文件至此处上传</p>
+                <p className="text-slate-400 text-sm mb-8">支持 PDF、Word、ZF、CF 格式，AI将自动识别关键信息并填充表单</p>
                 <button className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-10 rounded-lg transition-all shadow-lg shadow-primary/20">
                   立即开始智能分析
                 </button>
@@ -169,6 +185,35 @@ const BidParsing: React.FC<BidParsingProps> = ({ autoImported, onBack, onViewRep
           </div>
         </div>
       </div>
+      
+      {showClarificationModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-300">
+            <div className="size-12 bg-amber-100 rounded-xl flex items-center justify-center mb-6 text-amber-600">
+              <AlertTriangle size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">检测到新的答疑文件</h3>
+            <p className="text-slate-500 mb-8 leading-relaxed">系统检测到您已上传最新的答疑文件，是否使用该文件重新进行智能检测？</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => {
+                  setUseClarification(true);
+                  setShowClarificationModal(false);
+                }}
+                className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-primary/20"
+              >
+                是，使用最新答疑
+              </button>
+              <button 
+                onClick={() => setShowClarificationModal(false)}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition-all"
+              >
+                否，维持原文件
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };

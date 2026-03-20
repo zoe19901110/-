@@ -23,6 +23,14 @@ export default function App() {
   const [workbenchStage, setWorkbenchStage] = useState<string | undefined>(undefined);
   const [projectData, setProjectData] = useState<any>(null);
   const [autoImported, setAutoImported] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, boolean>>({});
+
+  const [enterprises, setEnterprises] = useState([
+    { id: '1', name: '杭州某某科技有限公司' },
+    { id: '2', name: '上海分公司' },
+    { id: '3', name: '北京研发中心' },
+  ]);
+  const [currentEnterprise, setCurrentEnterprise] = useState(enterprises[0]);
 
   const handleEnterWorkbench = (stage: string, data?: any) => {
     // Map status string to Phase type
@@ -43,46 +51,49 @@ export default function App() {
     // Handle enterprise sub-tabs
     if (activeTab.startsWith('ent-')) {
       const subTab = activeTab.replace('ent-', '');
-      return <EnterpriseInfo initialTab={subTab} />;
+      return <EnterpriseInfo initialTab={subTab} currentEnterprise={currentEnterprise} />;
     }
 
     if (activeTab === 'certificates' || activeTab === 'materials') {
-      return <EnterpriseInfo initialTab={activeTab} />;
+      return <EnterpriseInfo initialTab={activeTab} currentEnterprise={currentEnterprise} />;
     }
 
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard onEnterWorkbench={handleEnterWorkbench} setActiveTab={setActiveTab} />;
+        return <Dashboard onEnterWorkbench={handleEnterWorkbench} setActiveTab={setActiveTab} currentEnterprise={currentEnterprise} />;
       case 'business-dashboard':
-        return <BusinessDashboard />;
+        return <BusinessDashboard currentEnterprise={currentEnterprise} />;
       case 'workbench':
         return (
           <Workbench 
             onExit={() => setActiveTab('dashboard')} 
             initialPhase={workbenchStage as any} 
             initialProjectData={projectData}
+            currentEnterprise={currentEnterprise}
+            uploadedFiles={uploadedFiles}
+            setUploadedFiles={setUploadedFiles}
           />
         );
       case 'parsing':
-        return <BidParsing autoImported={autoImported} />;
+        return <BidParsing autoImported={autoImported} currentEnterprise={currentEnterprise} uploadedFiles={uploadedFiles} />;
       case 'inspection':
-        return <BidInspection />;
+        return <BidInspection currentEnterprise={currentEnterprise} uploadedFiles={uploadedFiles} />;
       case 'org':
-        return <OrgStructure />;
+        return <OrgStructure enterprisesList={enterprises} currentEnterprise={currentEnterprise} />;
       case 'enterprise':
-        return <EnterpriseInfo />;
+        return <EnterpriseInfo currentEnterprise={currentEnterprise} />;
       case 'knowledge-base':
-        return <Materials />;
+        return <Materials currentEnterprise={currentEnterprise} />;
       case 'project-registration':
-        return <TenderProjectRegistration onEnterWorkbench={handleEnterWorkbench} />;
+        return <TenderProjectRegistration onEnterWorkbench={handleEnterWorkbench} currentEnterprise={currentEnterprise} />;
       case 'deposit-management':
-        return <SecurityDepositManagement />;
+        return <SecurityDepositManagement currentEnterprise={currentEnterprise} />;
       case 'opening-management':
-        return <TenderOpeningStatusManagement />;
+        return <TenderOpeningStatusManagement currentEnterprise={currentEnterprise} />;
       case 'other-materials':
-        return <OtherProjectMaterials />;
+        return <OtherProjectMaterials currentEnterprise={currentEnterprise} />;
       case 'settings':
-        return <SystemSettings />;
+        return <SystemSettings currentEnterprise={currentEnterprise} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400 space-y-4">
@@ -104,10 +115,22 @@ export default function App() {
   return (
     <div className="flex h-screen overflow-hidden bg-bg-light">
       {activeTab !== 'workbench' && (
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Sidebar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          enterprises={enterprises} 
+          setEnterprises={setEnterprises}
+          currentEnterprise={currentEnterprise}
+          setCurrentEnterprise={setCurrentEnterprise}
+        />
       )}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar />
+        <TopBar 
+          setActiveTab={setActiveTab} 
+          enterprises={enterprises} 
+          currentEnterprise={currentEnterprise}
+          setCurrentEnterprise={setCurrentEnterprise}
+        />
         <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-[1600px] mx-auto w-full">
             <AnimatePresence mode="wait">

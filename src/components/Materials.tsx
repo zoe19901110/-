@@ -43,17 +43,25 @@ const initialFolders: FolderNode[] = [
   { id: '4', name: '人员证件' }
 ];
 
-const mockFiles = [
-  { id: 'f1', name: '2024版企业介绍PPT.pptx', type: 'ppt', size: '12.5MB', date: '2024-03-18' },
-  { id: 'f2', name: '施工现场标准化图集.pdf', type: 'pdf', size: '8.2MB', date: '2024-03-15' },
-  { id: 'f3', name: '项目经理部组织架构图.png', type: 'image', size: '2.1MB', date: '2024-03-12' },
-  { id: 'f4', name: '某省体育馆项目业绩证明.zip', type: 'zip', size: '156MB', date: '2024-03-10' },
-  { id: 'f5', name: '技术标通用模板-房建类.docx', type: 'word', size: '1.4MB', date: '2024-03-05' },
-  { id: 'f6', name: '安全生产许可证.pdf', type: 'pdf', size: '3.2MB', date: '2024-02-28' },
-  { id: 'f7', name: '质量管理体系认证.pdf', type: 'pdf', size: '2.8MB', date: '2024-02-25' },
-];
 
-const Materials: React.FC = () => {
+
+interface MaterialsProps {
+  currentEnterprise?: { id: string; name: string };
+}
+
+const Materials: React.FC<MaterialsProps> = ({ currentEnterprise }) => {
+  const enterpriseName = currentEnterprise?.name || '杭州某某科技有限公司';
+
+  const mockFiles = [
+    { id: 'f1', name: `2024版${enterpriseName}介绍PPT.pptx`, type: 'ppt', size: '12.5MB', date: '2024-03-18' },
+    { id: 'f2', name: `${enterpriseName}施工现场标准化图集.pdf`, type: 'pdf', size: '8.2MB', date: '2024-03-15' },
+    { id: 'f3', name: `${enterpriseName}项目经理部组织架构图.png`, type: 'image', size: '2.1MB', date: '2024-03-12' },
+    { id: 'f4', name: `${enterpriseName}某省体育馆项目业绩证明.zip`, type: 'zip', size: '156MB', date: '2024-03-10' },
+    { id: 'f5', name: `${enterpriseName}技术标通用模板-房建类.docx`, type: 'word', size: '1.4MB', date: '2024-03-05' },
+    { id: 'f6', name: `${enterpriseName}安全生产许可证.pdf`, type: 'pdf', size: '3.2MB', date: '2024-02-28' },
+    { id: 'f7', name: `${enterpriseName}质量管理体系认证.pdf`, type: 'pdf', size: '2.8MB', date: '2024-02-25' },
+  ];
+
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedFolders, setExpandedFolders] = useState<string[]>(['1', '1-2', '1-2-3']);
   const [selectedFolder, setSelectedFolder] = useState<string>('1-1');
@@ -112,14 +120,12 @@ const Materials: React.FC = () => {
   return (
     <div className="space-y-6 h-[calc(100vh-120px)] flex flex-col">
       {/* Header: Upload Button */}
-      <div className="flex items-center justify-between shrink-0">
+      <div className="flex items-center justify-end shrink-0">
         <div className="flex items-center gap-3">
           <button className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95">
             <Plus size={20} />
             上传文件
           </button>
-        </div>
-        <div className="flex items-center gap-3">
           <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-all active:scale-95">
             <Upload size={18} />
             批量导入

@@ -25,65 +25,96 @@ const trendData = [
   { name: '2026-03', count: 2 },
 ];
 
-const bidDetails = [
-  {
-    status: '投标中',
-    projectNo: 'XM-0004',
-    projectName: '轨道交通信号升级',
-    customerName: '辛辛',
-    manager: 'Admin',
-    hasFile: true,
-    deadline: '2026-03-20',
-    type: '公开招标',
-    progress: 65
-  },
-  {
-    status: '投标中',
-    projectNo: 'XM-0002',
-    projectName: '城建投资有限公司项目',
-    customerName: '辛辛',
-    manager: 'Admin',
-    hasFile: true,
-    deadline: '2026-03-25',
-    type: '公开招标',
-    progress: 40
-  },
-  {
-    status: '已中标',
-    projectNo: 'XM-0002',
-    projectName: '城建投资有限公司项目',
-    customerName: '辛辛',
-    manager: 'Admin',
-    hasFile: true,
-    deadline: '2026-01-07',
-    type: '公开招标',
-    progress: 100
-  },
-  {
-    status: '准备中',
-    projectNo: 'XM-0002',
-    projectName: '城建投资有限公司项目',
-    customerName: '辛辛',
-    manager: 'Admin',
-    hasFile: true,
-    deadline: '2026-04-07',
-    type: '公开招标',
-    progress: 20
-  },
-  {
-    status: '未中标',
-    projectNo: 'XM-0005',
-    projectName: '滨海新区景观工程',
-    customerName: '辛辛',
-    manager: 'Admin',
-    hasFile: true,
-    deadline: '2025-12-15',
-    type: '公开招标',
-    progress: 100
-  }
-];
+interface BusinessDashboardProps {
+  currentEnterprise: { id: string; name: string };
+}
 
-const BusinessDashboard: React.FC = () => {
+const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise }) => {
+  const generateStatsData = (enterpriseName: string) => {
+    // Generate some deterministic but dynamic-looking data based on the enterprise name length
+    const seed = enterpriseName.length;
+    return [
+      { label: '项目数', value: (seed * 3).toString(), unit: '个' },
+      { label: '投标数', value: (seed * 5).toString(), unit: '个' },
+      { label: '投标保证金/元', value: (seed * 150000).toFixed(2), unit: '元' },
+      { label: '待退还投标保证金/元', value: (seed * 50000).toFixed(2), unit: '元' },
+      { label: '已退还投标保证金/元', value: (seed * 100000).toFixed(2), unit: '元' },
+    ];
+  };
+
+  const generateStatusDistribution = (enterpriseName: string) => {
+    const seed = enterpriseName.length;
+    return [
+      { name: '未中标', value: seed, percentage: '20%', color: '#3b82f6' },
+      { name: '准备中', value: seed * 2, percentage: '40%', color: '#10b981' },
+      { name: '投标中', value: seed, percentage: '20%', color: '#f59e0b' },
+      { name: '已中标', value: seed, percentage: '20%', color: '#ef4444' },
+    ];
+  };
+
+  const generateBidDetails = (enterpriseName: string) => {
+    return [
+      {
+        status: '投标中',
+        projectNo: 'XM-0004',
+        projectName: `${enterpriseName}轨道交通信号升级`,
+        customerName: '辛辛',
+        manager: 'Admin',
+        hasFile: true,
+        deadline: '2026-03-20',
+        type: '公开招标',
+        progress: 65
+      },
+      {
+        status: '投标中',
+        projectNo: 'XM-0002',
+        projectName: `${enterpriseName}城建投资有限公司项目`,
+        customerName: '辛辛',
+        manager: 'Admin',
+        hasFile: true,
+        deadline: '2026-03-25',
+        type: '公开招标',
+        progress: 40
+      },
+      {
+        status: '已中标',
+        projectNo: 'XM-0002',
+        projectName: `${enterpriseName}城建投资有限公司项目`,
+        customerName: '辛辛',
+        manager: 'Admin',
+        hasFile: true,
+        deadline: '2026-01-07',
+        type: '公开招标',
+        progress: 100
+      },
+      {
+        status: '准备中',
+        projectNo: 'XM-0002',
+        projectName: `${enterpriseName}城建投资有限公司项目`,
+        customerName: '辛辛',
+        manager: 'Admin',
+        hasFile: true,
+        deadline: '2026-04-07',
+        type: '公开招标',
+        progress: 20
+      },
+      {
+        status: '未中标',
+        projectNo: 'XM-0005',
+        projectName: `${enterpriseName}滨海新区景观工程`,
+        customerName: '辛辛',
+        manager: 'Admin',
+        hasFile: true,
+        deadline: '2025-12-15',
+        type: '公开招标',
+        progress: 100
+      }
+    ];
+  };
+
+  const statsData = generateStatsData(currentEnterprise.name);
+  const statusDistribution = generateStatusDistribution(currentEnterprise.name);
+  const bidDetails = generateBidDetails(currentEnterprise.name);
   return (
     <motion.div 
       initial={{ opacity: 0, x: 20 }}
@@ -92,7 +123,7 @@ const BusinessDashboard: React.FC = () => {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">业务仪表盘</h2>
+          <h2 className="text-2xl font-bold text-slate-900">业务仪表盘 ({currentEnterprise.name})</h2>
           <p className="text-slate-500 text-sm mt-1">投标业务数据概览与分析</p>
         </div>
       </div>

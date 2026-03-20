@@ -18,41 +18,50 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-const OtherProjectMaterials: React.FC = () => {
+interface OtherProjectMaterialsProps {
+  currentEnterprise?: { id: string; name: string };
+}
+
+const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEnterprise }) => {
   const [view, setView] = useState<'projects' | 'detail'>('projects');
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const projects = [
-    {
-      id: '1',
-      name: '2024年智慧交通管理平台建设项目',
-      code: 'ZB-2024-001',
-      tenderer: 'XX市交通运输局',
-      manager: '张伟',
-      materialCount: 5,
-      lastUpdate: '2024-03-15'
-    },
-    {
-      id: '2',
-      name: '政务云扩容采购项目',
-      code: 'ZB-2024-005',
-      tenderer: 'XX市大数据局',
-      manager: '李芳',
-      materialCount: 3,
-      lastUpdate: '2024-03-12'
-    },
-    {
-      id: '3',
-      name: '城市绿化带自动灌溉系统',
-      code: 'ZB-2024-008',
-      tenderer: 'XX市园林局',
-      manager: '王强',
-      materialCount: 2,
-      lastUpdate: '2024-03-10'
-    }
-  ];
+  const [projects, setProjects] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    const enterprisePrefix = currentEnterprise ? `[${currentEnterprise.name}] ` : '';
+    setProjects([
+      {
+        id: '1',
+        name: `${enterprisePrefix}2024年智慧交通管理平台建设项目`,
+        code: 'ZB-2024-001',
+        tenderer: 'XX市交通运输局',
+        manager: '张伟',
+        materialCount: 5,
+        lastUpdate: '2024-03-15'
+      },
+      {
+        id: '2',
+        name: `${enterprisePrefix}政务云扩容采购项目`,
+        code: 'ZB-2024-005',
+        tenderer: 'XX市大数据局',
+        manager: '李芳',
+        materialCount: 3,
+        lastUpdate: '2024-03-12'
+      },
+      {
+        id: '3',
+        name: `${enterprisePrefix}城市绿化带自动灌溉系统`,
+        code: 'ZB-2024-008',
+        tenderer: 'XX市园林局',
+        manager: '王强',
+        materialCount: 2,
+        lastUpdate: '2024-03-10'
+      }
+    ]);
+  }, [currentEnterprise]);
 
   const projectMaterials = [
     {

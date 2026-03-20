@@ -21,69 +21,78 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-const SecurityDepositManagement: React.FC = () => {
+interface SecurityDepositManagementProps {
+  currentEnterprise?: { id: string; name: string };
+}
+
+const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ currentEnterprise }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [selectedDeposit, setSelectedDeposit] = useState<any>(null);
 
-  const deposits = [
-    {
-      id: 'DEP-2024-001',
-      projectName: '2024年智慧交通管理平台建设项目',
-      amount: '¥50,000.00',
-      type: '现金转账',
-      bank: '中国工商银行',
-      status: '已缴纳',
-      date: '2024-03-10',
-      refundStatus: '待退还',
-      voucher: '凭证_001.jpg'
-    },
-    {
-      id: 'DEP-2024-002',
-      projectName: '政务云扩容采购项目',
-      amount: '¥30,000.00',
-      type: '银行保函',
-      bank: '建设银行',
-      status: '已缴纳',
-      date: '2024-02-15',
-      refundStatus: '已退还',
-      voucher: '保函_002.pdf'
-    },
-    {
-      id: 'DEP-2024-003',
-      projectName: '城市绿化带自动灌溉系统',
-      amount: '¥15,000.00',
-      type: '现金转账',
-      bank: '农业银行',
-      status: '已缴纳',
-      date: '2024-03-05',
-      refundStatus: '待退还',
-      voucher: '凭证_003.png'
-    },
-    {
-      id: 'DEP-2024-004',
-      projectName: 'XX区智慧教育云平台二期',
-      amount: '¥80,000.00',
-      type: '银行保函',
-      bank: '招商银行',
-      status: '已缴纳',
-      date: '2024-03-12',
-      refundStatus: '待退还',
-      voucher: '保函_004.pdf'
-    },
-    {
-      id: 'DEP-2024-005',
-      projectName: '社区养老服务中心智能化改造',
-      amount: '¥20,000.00',
-      type: '现金转账',
-      bank: '中国银行',
-      status: '已缴纳',
-      date: '2024-01-20',
-      refundStatus: '已退还',
-      voucher: '凭证_005.jpg'
-    }
-  ];
+  const [deposits, setDeposits] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    const enterprisePrefix = currentEnterprise ? `[${currentEnterprise.name}] ` : '';
+    setDeposits([
+      {
+        id: 'DEP-2024-001',
+        projectName: `${enterprisePrefix}2024年智慧交通管理平台建设项目`,
+        amount: '¥50,000.00',
+        type: '现金转账',
+        bank: '中国工商银行',
+        status: '已缴纳',
+        date: '2024-03-10',
+        refundStatus: '待退还',
+        voucher: '凭证_001.jpg'
+      },
+      {
+        id: 'DEP-2024-002',
+        projectName: `${enterprisePrefix}政务云扩容采购项目`,
+        amount: '¥30,000.00',
+        type: '银行保函',
+        bank: '建设银行',
+        status: '已缴纳',
+        date: '2024-02-15',
+        refundStatus: '已退还',
+        voucher: '保函_002.pdf'
+      },
+      {
+        id: 'DEP-2024-003',
+        projectName: `${enterprisePrefix}城市绿化带自动灌溉系统`,
+        amount: '¥15,000.00',
+        type: '现金转账',
+        bank: '农业银行',
+        status: '已缴纳',
+        date: '2024-03-05',
+        refundStatus: '待退还',
+        voucher: '凭证_003.png'
+      },
+      {
+        id: 'DEP-2024-004',
+        projectName: `${enterprisePrefix}XX区智慧教育云平台二期`,
+        amount: '¥80,000.00',
+        type: '银行保函',
+        bank: '招商银行',
+        status: '已缴纳',
+        date: '2024-03-12',
+        refundStatus: '待退还',
+        voucher: '保函_004.pdf'
+      },
+      {
+        id: 'DEP-2024-005',
+        projectName: `${enterprisePrefix}社区养老服务中心智能化改造`,
+        amount: '¥20,000.00',
+        type: '现金转账',
+        bank: '中国银行',
+        status: '已缴纳',
+        date: '2024-01-20',
+        refundStatus: '已退还',
+        voucher: '凭证_005.jpg'
+      }
+    ]);
+  }, [currentEnterprise]);
 
   const handleOpenRefund = (deposit: any) => {
     setSelectedDeposit(deposit);

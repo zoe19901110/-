@@ -27,9 +27,10 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface TenderProjectRegistrationProps {
   onEnterWorkbench?: (stage: string, data?: any) => void;
+  currentEnterprise?: { id: string; name: string };
 }
 
-const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ onEnterWorkbench }) => {
+const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ onEnterWorkbench, currentEnterprise }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -119,10 +120,12 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
   const [statusFilter, setStatusFilter] = useState('全部');
   const [dateFilter, setDateFilter] = useState('');
 
+  const enterprisePrefix = currentEnterprise?.name ? `[${currentEnterprise.name}] ` : '';
+
   const [projects, setProjects] = useState([
     {
       id: '1',
-      name: '2024年智慧交通管理平台建设项目',
+      name: `${enterprisePrefix}2024年智慧交通管理平台建设项目`,
       code: 'ZB-2024-001',
       tenderer: 'XX市交通运输局',
       agent: 'XX招标代理有限公司',
@@ -142,7 +145,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
     },
     {
       id: '2',
-      name: '政务云扩容采购项目',
+      name: `${enterprisePrefix}政务云扩容采购项目`,
       code: 'ZB-2024-005',
       tenderer: 'XX市大数据局',
       agent: 'YY咨询管理公司',
@@ -162,7 +165,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
     },
     {
       id: '3',
-      name: '城市绿化带自动灌溉系统',
+      name: `${enterprisePrefix}城市绿化带自动灌溉系统`,
       code: 'ZB-2024-008',
       tenderer: 'XX市园林局',
       agent: 'ZZ工程咨询公司',
@@ -182,7 +185,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
     },
     {
       id: '4',
-      name: 'XX区智慧教育云平台二期',
+      name: `${enterprisePrefix}XX区智慧教育云平台二期`,
       code: 'ZB-2024-012',
       tenderer: 'XX区教育局',
       agent: 'AA招标代理公司',
@@ -202,7 +205,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
     },
     {
       id: '5',
-      name: '社区养老服务中心智能化改造',
+      name: `${enterprisePrefix}社区养老服务中心智能化改造`,
       code: 'ZB-2024-015',
       tenderer: 'XX市民政局',
       agent: 'BB项目管理公司',
@@ -221,6 +224,111 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
       otherRemarks: ''
     }
   ]);
+
+  React.useEffect(() => {
+    setProjects([
+      {
+        id: '1',
+        name: `${enterprisePrefix}2024年智慧交通管理平台建设项目`,
+        code: 'ZB-2024-001',
+        tenderer: 'XX市交通运输局',
+        agent: 'XX招标代理有限公司',
+        tendererContact: '张工 010-88888888',
+        agentContact: '李经理 010-66666666',
+        bidOpeningTime: '2024-05-20 10:00',
+        status: '进行中',
+        deposit: '¥50,000',
+        depositDeadline: '2024-05-15 17:00',
+        openingLocation: 'XX市公共资源交易中心 301 会议室',
+        collectionTime: '2024-04-15',
+        requirements: '关键招标要求、资质要求等...',
+        strategy: '投标策略、定价策略等...',
+        purchaseAmount: '¥500',
+        purchaseDate: '2024-04-10',
+        otherRemarks: ''
+      },
+      {
+        id: '2',
+        name: `${enterprisePrefix}政务云扩容采购项目`,
+        code: 'ZB-2024-005',
+        tenderer: 'XX市大数据局',
+        agent: 'YY咨询管理公司',
+        tendererContact: '王工 010-77777777',
+        agentContact: '赵经理 010-55555555',
+        bidOpeningTime: '2024-06-15 14:30',
+        status: '已完成',
+        deposit: '¥30,000',
+        depositDeadline: '2024-06-10 17:00',
+        openingLocation: 'XX省政务中心 2楼',
+        collectionTime: '2024-05-10',
+        requirements: '政务云相关资质要求...',
+        strategy: '高性价比策略...',
+        purchaseAmount: '¥300',
+        purchaseDate: '2024-05-05',
+        otherRemarks: ''
+      },
+      {
+        id: '3',
+        name: `${enterprisePrefix}城市绿化带自动灌溉系统`,
+        code: 'ZB-2024-008',
+        tenderer: 'XX市园林局',
+        agent: 'ZZ工程咨询公司',
+        tendererContact: '刘工 010-99999999',
+        agentContact: '孙经理 010-44444444',
+        bidOpeningTime: '2024-07-10 09:00',
+        status: '进行中',
+        deposit: '¥20,000',
+        depositDeadline: '2024-07-05 17:00',
+        openingLocation: 'XX市园林局 5楼会议室',
+        collectionTime: '2024-06-01',
+        requirements: '自动化灌溉系统技术指标...',
+        strategy: '技术领先策略...',
+        purchaseAmount: '¥200',
+        purchaseDate: '2024-05-20',
+        otherRemarks: ''
+      },
+      {
+        id: '4',
+        name: `${enterprisePrefix}XX区智慧教育云平台二期`,
+        code: 'ZB-2024-012',
+        tenderer: 'XX区教育局',
+        agent: 'AA招标代理公司',
+        tendererContact: '陈工 010-11111111',
+        agentContact: '周经理 010-22222222',
+        bidOpeningTime: '2024-08-05 15:00',
+        status: '进行中',
+        deposit: '¥80,000',
+        depositDeadline: '2024-08-01 17:00',
+        openingLocation: 'XX区教育局 1楼大厅',
+        collectionTime: '2024-07-01',
+        requirements: '教育云平台二期扩容需求...',
+        strategy: '综合实力展示...',
+        purchaseAmount: '¥800',
+        purchaseDate: '2024-06-15',
+        otherRemarks: ''
+      },
+      {
+        id: '5',
+        name: `${enterprisePrefix}社区养老服务中心智能化改造`,
+        code: 'ZB-2024-015',
+        tenderer: 'XX市民政局',
+        agent: 'BB项目管理公司',
+        tendererContact: '黄工 010-33333333',
+        agentContact: '吴经理 010-44444444',
+        bidOpeningTime: '2024-09-25 10:30',
+        status: '进行中',
+        deposit: '¥15,000',
+        depositDeadline: '2024-09-20 17:00',
+        openingLocation: 'XX市民政局 3楼',
+        collectionTime: '2024-08-15',
+        requirements: '适老化智能设备安装调试...',
+        strategy: '服务品质优先...',
+        purchaseAmount: '¥0',
+        purchaseDate: '2024-08-01',
+        otherRemarks: ''
+      }
+    ]);
+  }, [currentEnterprise]);
 
   const handleEditProject = (project: any) => {
     setIsEditing(true);
@@ -503,7 +611,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
                       </div>
                       <div className="text-center">
                         <p className="text-slate-600 font-bold">点击或拖拽招标文件至此处上传</p>
-                        <p className="text-slate-400 text-xs mt-1">支持 PDF, Word, ZIP 格式，AI将自动识别关键信息并填充表单</p>
+                        <p className="text-slate-400 text-xs mt-1">支持 PDF、Word、ZF、CF 格式，AI将自动识别关键信息并填充表单</p>
                       </div>
                     </div>
                   )}

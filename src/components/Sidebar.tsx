@@ -25,6 +25,10 @@ import { motion, AnimatePresence } from 'motion/react';
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  enterprises: { id: string; name: string }[];
+  setEnterprises: React.Dispatch<React.SetStateAction<{ id: string; name: string }[]>>;
+  currentEnterprise: { id: string; name: string };
+  setCurrentEnterprise: (enterprise: { id: string; name: string }) => void;
 }
 
 interface SubItem {
@@ -196,18 +200,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
           </div>
         </div>
       </nav>
-
-      <div className="p-4 border-t border-slate-200">
-        <button 
-          onClick={() => setActiveTab('settings')}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
-            activeTab === 'settings' ? 'sidebar-item-active shadow-sm' : 'text-slate-600 hover:bg-slate-50'
-          }`}
-        >
-          <Settings size={18} />
-          <span className="text-sm font-bold">系统设置</span>
-        </button>
-      </div>
     </motion.aside>
   );
 };

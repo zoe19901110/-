@@ -36,6 +36,7 @@ interface User {
   status: string;
   username?: string;
   hasAccount: boolean;
+  enterprises: string[];
 }
 
 interface Role {
@@ -45,7 +46,17 @@ interface Role {
   userCount: number;
 }
 
-const OrgStructure: React.FC = () => {
+interface Enterprise {
+  id: string;
+  name: string;
+}
+
+interface OrgStructureProps {
+  enterprisesList: Enterprise[];
+  currentEnterprise?: Enterprise;
+}
+
+const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnterprise }) => {
   const [activeSubTab, setActiveSubTab] = useState('dept');
   const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,7 +79,8 @@ const OrgStructure: React.FC = () => {
     status: '正常',
     createAccount: false,
     username: '',
-    password: ''
+    password: '',
+    enterprises: ['杭州某某科技有限公司'] as string[]
   });
 
   const [departments, setDepartments] = useState<Department[]>([
@@ -80,10 +92,10 @@ const OrgStructure: React.FC = () => {
   ]);
 
   const [users, setUsers] = useState<User[]>([
-    { id: '1', name: '陈经理', dept: '总经办', position: '项目总监', roleId: '1', email: 'chen@example.com', phone: '13800008888', status: '正常', hasAccount: true, username: '13800008888' },
-    { id: '2', name: '王志强', dept: '市场部', position: '市场经理', roleId: '2', email: 'wang@example.com', phone: '13900007777', status: '正常', hasAccount: true, username: '13900007777' },
-    { id: '3', name: '李晓明', dept: '技术部', position: '技术专家', roleId: '3', email: 'li@example.com', phone: '13700006666', status: '正常', hasAccount: false },
-    { id: '4', name: '张美玲', dept: '财务部', position: '财务主管', roleId: '4', email: 'zhang@example.com', phone: '13600005555', status: '正常', hasAccount: false },
+    { id: '1', name: '陈经理', dept: '总经办', position: '项目总监', roleId: '1', email: 'chen@example.com', phone: '13800008888', status: '正常', hasAccount: true, username: '13800008888', enterprises: ['杭州某某科技有限公司', '上海分公司'] },
+    { id: '2', name: '王志强', dept: '市场部', position: '市场经理', roleId: '2', email: 'wang@example.com', phone: '13900007777', status: '正常', hasAccount: true, username: '13900007777', enterprises: ['杭州某某科技有限公司'] },
+    { id: '3', name: '李晓明', dept: '技术部', position: '技术专家', roleId: '3', email: 'li@example.com', phone: '13700006666', status: '正常', hasAccount: false, enterprises: ['杭州某某科技有限公司'] },
+    { id: '4', name: '张美玲', dept: '财务部', position: '财务主管', roleId: '4', email: 'zhang@example.com', phone: '13600005555', status: '正常', hasAccount: false, enterprises: ['杭州某某科技有限公司', '北京研发中心'] },
   ]);
 
   const [roles] = useState<Role[]>([
@@ -208,7 +220,8 @@ const OrgStructure: React.FC = () => {
       status: '正常',
       createAccount: false,
       username: '',
-      password: ''
+      password: '',
+      enterprises: currentEnterprise ? [currentEnterprise.name] : ['杭州某某科技有限公司']
     });
     setShowUserModal(true);
   };
@@ -219,7 +232,8 @@ const OrgStructure: React.FC = () => {
       ...user, 
       createAccount: user.hasAccount,
       username: user.username || '',
-      password: '' 
+      password: '',
+      enterprises: user.enterprises || ['杭州某某科技有限公司']
     });
     setShowUserModal(true);
   };
@@ -305,9 +319,10 @@ const OrgStructure: React.FC = () => {
   };
 
   const filteredUsers = users.filter(user => {
+    const matchesEnterprise = currentEnterprise ? user.enterprises.includes(currentEnterprise.name) : true;
     const matchesDept = selectedDeptId ? user.dept === departments.find(d => d.id === selectedDeptId)?.name : true;
     const matchesSearch = user.name.includes(searchQuery) || user.email.includes(searchQuery) || user.position.includes(searchQuery);
-    return matchesDept && matchesSearch;
+    return matchesEnterprise && matchesDept && matchesSearch;
   });
 
   return (
@@ -469,6 +484,7 @@ const OrgStructure: React.FC = () => {
                     <thead>
                     <tr className="bg-slate-50/50 text-slate-400 text-[11px] font-bold uppercase tracking-wider">
                       <th className="px-6 py-4">姓名</th>
+                      <th className="px-6 py-4">所属企业</th>
                       <th className="px-6 py-4">部门/职位</th>
                       <th className="px-6 py-4">系统角色</th>
                       <th className="px-6 py-4">联系方式/账号</th>
@@ -486,6 +502,15 @@ const OrgStructure: React.FC = () => {
                               {user.name.charAt(0)}
                             </div>
                             <span className="text-sm font-bold text-slate-900">{user.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-1">
+                            {user.enterprises?.map((ent, idx) => (
+                              <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                                {ent}
+                              </span>
+                            ))}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -786,6 +811,28 @@ const OrgStructure: React.FC = () => {
                     <option value="正常">正常</option>
                     <option value="禁用">禁用</option>
                   </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">所属企业</label>
+                  <div className="flex flex-wrap gap-2">
+                    {enterprisesList.map(ent => (
+                      <label key={ent.id} className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                        <input 
+                          type="checkbox" 
+                          checked={userForm.enterprises.includes(ent.name)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setUserForm({ ...userForm, enterprises: [...userForm.enterprises, ent.name] });
+                            } else {
+                              setUserForm({ ...userForm, enterprises: userForm.enterprises.filter(name => name !== ent.name) });
+                            }
+                          }}
+                          className="rounded text-primary focus:ring-primary/20"
+                        />
+                        <span className="text-sm text-slate-700">{ent.name}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">联系电话 (即系统登录账号)</label>
