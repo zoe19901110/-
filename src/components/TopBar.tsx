@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, ChevronDown, User, Settings, LogOut, Building2 } from 'lucide-react';
+import { Bell, ChevronDown, User, LogOut, Building2 } from 'lucide-react';
 
 interface TopBarProps {
   setActiveTab: (tab: string) => void;
   enterprises: { id: string; name: string }[];
   currentEnterprise: { id: string; name: string };
   setCurrentEnterprise: (enterprise: { id: string; name: string }) => void;
+  onLogout: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnterprise, setCurrentEnterprise }) => {
+const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnterprise, setCurrentEnterprise, onLogout }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showEntSelect, setShowEntSelect] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -91,13 +92,6 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnter
                     <User size={16} />
                     个人中心
                   </button>
-                  <button
-                    onClick={() => { setActiveTab('settings'); setShowDropdown(false); }}
-                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md"
-                  >
-                    <Settings size={16} />
-                    系统设置
-                  </button>
                 </div>
 
                 <div className="p-2">
@@ -142,6 +136,7 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnter
 
                 <div className="border-t border-slate-100 p-2">
                   <button
+                    onClick={onLogout}
                     className="flex items-center gap-3 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
                   >
                     <LogOut size={16} />

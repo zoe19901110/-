@@ -27,15 +27,18 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [uploadFiles, setUploadFiles] = useState<{ file: File; name: string }[]>([]);
+  const [materialName, setMaterialName] = useState('');
+  const [uploadType, setUploadType] = useState('技术材料');
+  const [uploadRemarks, setUploadRemarks] = useState('');
 
   const [projects, setProjects] = useState<any[]>([]);
 
   React.useEffect(() => {
-    const enterprisePrefix = currentEnterprise ? `[${currentEnterprise.name}] ` : '';
     setProjects([
       {
         id: '1',
-        name: `${enterprisePrefix}2024年智慧交通管理平台建设项目`,
+        name: `2024年智慧交通管理平台建设项目`,
         code: 'ZB-2024-001',
         tenderer: 'XX市交通运输局',
         manager: '张伟',
@@ -44,7 +47,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
       },
       {
         id: '2',
-        name: `${enterprisePrefix}政务云扩容采购项目`,
+        name: `政务云扩容采购项目`,
         code: 'ZB-2024-005',
         tenderer: 'XX市大数据局',
         manager: '李芳',
@@ -53,7 +56,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
       },
       {
         id: '3',
-        name: `${enterprisePrefix}城市绿化带自动灌溉系统`,
+        name: `城市绿化带自动灌溉系统`,
         code: 'ZB-2024-008',
         tenderer: 'XX市园林局',
         manager: '王强',
@@ -87,16 +90,38 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
     setView('detail');
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newFiles = Array.from(files).map(f => ({
+        file: f,
+        name: f.name
+      }));
+      setUploadFiles([...uploadFiles, ...newFiles]);
+    }
+  };
+
+  const handleRemoveUploadFile = (index: number) => {
+    setUploadFiles(uploadFiles.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateFileName = (index: number, newName: string) => {
+    const updated = [...uploadFiles];
+    updated[index].name = newName;
+    setUploadFiles(updated);
+  };
+
+  const handleUpload = () => {
+    // Mock upload logic
+    setShowAddModal(false);
+    setUploadFiles([]);
+    setMaterialName('');
+    setUploadRemarks('');
+  };
+
   const renderProjectList = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <button 
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95"
-        >
-          <Plus size={20} />
-          新增材料
-        </button>
       </div>
 
       {/* Search & Filter */}
@@ -113,7 +138,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
         </div>
         
         <div className="flex gap-2">
-          <button className="px-8 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all">
+          <button className="px-8 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 shadow-sm hover:shadow-md transition-all">
             查询
           </button>
           <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
@@ -157,10 +182,10 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                 <td className="px-6 py-4 text-right">
                   <button 
                     onClick={() => handleEnterDetail(project)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 text-primary rounded-lg text-xs font-bold hover:bg-primary hover:text-white transition-all"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all shadow-sm shadow-primary/10"
                   >
                     <Upload size={14} />
-                    上传材料
+                    上传/详情
                   </button>
                 </td>
               </tr>
@@ -173,52 +198,29 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
 
   const renderDetailView = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => setView('projects')}
-            className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-all"
-          >
-            <ChevronLeft size={24} />
-          </button>
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">{selectedProject?.name}</h2>
-            <div className="flex items-center gap-6 mt-1">
-              <p className="text-xs text-slate-500 font-medium flex items-center gap-1">
-                <span className="text-slate-400">项目编号:</span> {selectedProject?.code}
-              </p>
-              <p className="text-xs text-slate-500 font-medium flex items-center gap-1">
-                <span className="text-slate-400">负责人:</span> {selectedProject?.manager}
-              </p>
-              <p className="text-xs text-slate-500 font-medium flex items-center gap-1">
-                <span className="text-slate-400">最后更新:</span> {selectedProject?.lastUpdate}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <button 
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95"
-          >
-            <Plus size={20} />
-            上传新材料
-          </button>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <h3 className="font-bold text-slate-900">已上传材料</h3>
-            <div className="flex items-center gap-2">
-              <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
-                <Search size={18} />
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all shadow-sm shadow-primary/10"
+              >
+                <Plus size={14} />
+                上传材料
               </button>
-              <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
-                <Filter size={18} />
-              </button>
+              <div className="flex items-center gap-2 border-l border-slate-100 pl-4">
+                <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                  <Search size={18} />
+                </button>
+                <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                  <Filter size={18} />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -307,10 +309,13 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                     <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white">
                       <Upload size={24} />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900">上传新材料</h3>
+                    <h3 className="text-xl font-bold text-slate-900">上传项目材料</h3>
                   </div>
                   <button 
-                    onClick={() => setShowAddModal(false)}
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setUploadFiles([]);
+                    }}
                     className="p-2 hover:bg-slate-200 rounded-full transition-colors"
                   >
                     <X size={20} className="text-slate-400" />
@@ -320,41 +325,102 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                 <div className="p-10 flex-1 flex flex-col overflow-hidden">
                   <div className="space-y-8 flex-1 overflow-y-auto pr-4 custom-scrollbar flex flex-col">
                     <div className="space-y-6">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-500 ml-1 uppercase">关联项目</label>
-                        <select 
-                          defaultValue={selectedProject?.name || "请选择项目..."}
-                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
-                        >
-                          <option disabled>请选择项目...</option>
-                          {projects.map(p => (
-                            <option key={p.id}>{p.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-500 ml-1 uppercase">材料类型</label>
-                        <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm">
-                          <option>技术材料</option>
-                          <option>商务材料</option>
-                          <option>资质文件</option>
-                          <option>补充说明</option>
-                          <option>其他</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-500 ml-1 uppercase">选择文件</label>
-                        <div className="border-2 border-dashed border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center gap-4 bg-slate-50/50 hover:bg-primary/5 hover:border-primary/30 transition-all cursor-pointer group">
-                          <div className="size-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
-                            <Paperclip size={32} />
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-500 ml-1 uppercase">关联项目</label>
+                          <div className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 shadow-sm">
+                            {selectedProject?.name || "未选择项目"}
                           </div>
-                          <p className="text-sm text-slate-600 font-bold">点击或拖拽文件上传</p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-500 ml-1 uppercase">材料类型</label>
+                          <select 
+                            value={uploadType}
+                            onChange={(e) => setUploadType(e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+                          >
+                            <option>技术材料</option>
+                            <option>商务材料</option>
+                            <option>资质文件</option>
+                            <option>补充说明</option>
+                            <option>其他</option>
+                          </select>
                         </div>
                       </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-500 ml-1 uppercase">材料名称 <span className="text-red-500">*</span></label>
+                        <input 
+                          type="text" 
+                          value={materialName}
+                          onChange={(e) => setMaterialName(e.target.value)}
+                          placeholder="请输入材料名称..."
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-500 ml-1 uppercase">选择文件 (支持多选)</label>
+                        <div className="relative group">
+                          <input 
+                            type="file" 
+                            multiple 
+                            accept=".pdf,image/*,.doc,.docx,.xls,.xlsx,.zip,.rar"
+                            onChange={handleFileSelect}
+                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                          />
+                          <div className="border-2 border-dashed border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center gap-4 bg-slate-50/50 group-hover:bg-primary/5 group-hover:border-primary/30 transition-all">
+                            <div className="size-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
+                              <Paperclip size={32} />
+                            </div>
+                            <div className="text-center">
+                              <p className="text-sm text-slate-600 font-bold">点击或拖拽文件上传</p>
+                              <p className="text-[10px] text-slate-400 mt-1">支持 PDF、图片、Word、Excel、压缩包等格式</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {uploadFiles.length > 0 && (
+                        <div className="space-y-3">
+                          <label className="text-xs font-bold text-slate-500 ml-1 uppercase">待上传列表 ({uploadFiles.length})</label>
+                          <div className="space-y-3">
+                            {uploadFiles.map((item, idx) => (
+                              <div key={idx} className="flex flex-col gap-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3 overflow-hidden">
+                                    <FileText size={18} className="text-primary shrink-0" />
+                                    <span className="text-xs text-slate-400 truncate">{item.file.name}</span>
+                                  </div>
+                                  <button 
+                                    onClick={() => handleRemoveUploadFile(idx)}
+                                    className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-all"
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <input 
+                                    type="text" 
+                                    value={item.name}
+                                    onChange={(e) => handleUpdateFileName(idx, e.target.value)}
+                                    placeholder="输入材料名称..."
+                                    className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                  />
+                                  <span className="text-[10px] text-slate-400 font-mono shrink-0">{(item.file.size / 1024 / 1024).toFixed(2)} MB</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 ml-1 uppercase">备注信息</label>
                         <textarea 
-                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm h-32 resize-none" 
+                          value={uploadRemarks}
+                          onChange={(e) => setUploadRemarks(e.target.value)}
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm h-24 resize-none" 
                           placeholder="请输入材料相关说明..."
                         ></textarea>
                       </div>
@@ -362,13 +428,18 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
 
                     <div className="flex gap-4 pt-8 mt-auto shrink-0 sticky bottom-0 bg-white pb-2">
                       <button 
-                        onClick={() => setShowAddModal(false)} 
-                        className="flex-1 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20"
+                        onClick={handleUpload} 
+                        disabled={uploadFiles.length === 0 || !materialName.trim()}
+                        className="flex-1 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         开始上传
                       </button>
                       <button 
-                        onClick={() => setShowAddModal(false)} 
+                        onClick={() => {
+                          setShowAddModal(false);
+                          setUploadFiles([]);
+                          setMaterialName('');
+                        }} 
                         className="px-10 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all"
                       >
                         取消

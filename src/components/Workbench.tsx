@@ -118,9 +118,25 @@ const Workbench: React.FC<WorkbenchProps> = ({
   const [showFileViewer, setShowFileViewer] = useState(false);
   const [activeViewerTab, setActiveViewerTab] = useState<'core' | 'risk' | 'custom'>('risk');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showDocDropdown, setShowDocDropdown] = useState(false);
+  const [viewingDoc, setViewingDoc] = useState<string>('tender-doc');
   const [notifIndex, setNotifIndex] = useState(0);
+
+  const isTenderUploaded = !!uploadedFiles?.['tender-doc'];
+
+  const clarDocs = Object.keys(uploadedFiles || {})
+    .filter(key => key.startsWith('clar-doc-') && uploadedFiles[key])
+    .sort((a, b) => {
+      const numA = parseInt(a.split('-')[2]);
+      const numB = parseInt(b.split('-')[2]);
+      return numB - numA; // Latest first
+    });
+
+  const hasAnyDoc = isTenderUploaded || clarDocs.length > 0;
+  const hasMultipleDocs = (isTenderUploaded && clarDocs.length > 0) || clarDocs.length > 1;
+  const latestDocKey = clarDocs.length > 0 ? clarDocs[0] : (isTenderUploaded ? 'tender-doc' : null);
+
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
-  const [isTenderUploaded, setIsTenderUploaded] = useState(initialProjectData?.isTenderUploaded || false);
   const [refreshKey, setRefreshKey] = useState(0); // Dummy state for forcing re-render
   const [projectData, setProjectData] = useState(initialProjectData || {
     projectName: `城市基础设施二期项目 (${currentEnterprise.name})`,
@@ -230,23 +246,87 @@ const Workbench: React.FC<WorkbenchProps> = ({
       <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-100 space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 relative">
               <h2 className="text-2xl font-bold text-slate-900">{projectData.projectName}</h2>
               <span className="px-2.5 py-0.5 rounded bg-blue-50 text-blue-500 text-xs font-medium">进行中</span>
-              <button 
-                onClick={() => {
-                  if (isTenderUploaded) {
-                    setActiveRightTab('annotation');
-                  }
-                }}
-                className={`ml-4 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 border ${
-                  isTenderUploaded 
-                    ? "bg-slate-100 text-slate-600 hover:bg-primary hover:text-white border-slate-200" 
-                    : "bg-red-50 text-red-500 border-red-100"
-                }`}
-              >
-                <FileText size={14} /> {isTenderUploaded ? "查看招标文件" : "还未上传招标文件"}
-              </button>
+              
+              <div className="relative flex items-center gap-0">
+                <button 
+                  onClick={() => {
+                    if (hasAnyDoc) {
+                      setViewingDoc(latestDocKey!);
+                      setActiveRightTab('annotation');
+                    }
+                  }}
+                  className={`ml-4 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 border ${
+                    hasAnyDoc 
+                      ? "bg-slate-100 text-slate-600 hover:bg-primary hover:text-white border-slate-200" 
+                      : "bg-red-50 text-red-500 border-red-100"
+                  } ${hasMultipleDocs ? 'rounded-r-none border-r-0' : ''}`}
+                >
+                  <FileText size={14} /> 
+                  {!hasAnyDoc && "未上传招标文件"}
+                  {hasAnyDoc && !hasMultipleDocs && (isTenderUploaded ? "查看招标文件" : `查看第${parseInt(clarDocs[0].split('-')[2]) + 1}次答疑文件`)}
+                  {hasMultipleDocs && (clarDocs.length > 0 ? `查看第${parseInt(clarDocs[0].split('-')[2]) + 1}次答疑文件` : "查看招标文件")}
+                </button>
+                
+                {hasMultipleDocs && (
+                  <button
+                    onClick={() => setShowDocDropdown(!showDocDropdown)}
+                    onBlur={() => setTimeout(() => setShowDocDropdown(false), 200)}
+                    className="px-1.5 py-1.5 bg-slate-100 text-slate-600 hover:bg-primary hover:text-white border border-slate-200 rounded-r-lg transition-all"
+                  >
+                    <ChevronDown size={12} className={`transition-transform ${showDocDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+                )}
+
+                <AnimatePresence>
+                  {showDocDropdown && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute left-4 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden"
+                    >
+                      <div className="py-1">
+                        {isTenderUploaded && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setViewingDoc('tender-doc');
+                                setActiveRightTab('annotation');
+                                setShowDocDropdown(false);
+                              }}
+                              className="w-full px-4 py-2.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-primary flex items-center gap-2 group"
+                            >
+                              <FileText size={14} className="text-slate-400 group-hover:text-primary" />
+                              <span>原始招标文件</span>
+                            </button>
+                            <div className="h-px bg-slate-50 my-1 mx-2" />
+                          </>
+                        )}
+                        {clarDocs.map((doc, idx) => (
+                          <button
+                            key={doc}
+                            onClick={() => {
+                              setViewingDoc(doc);
+                              setActiveRightTab('annotation');
+                              setShowDocDropdown(false);
+                            }}
+                            className="w-full px-4 py-2.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-primary flex items-center justify-between group"
+                          >
+                            <div className="flex items-center gap-2">
+                              <FileText size={14} className="text-slate-400 group-hover:text-primary" />
+                              <span>第{parseInt(doc.split('-')[2]) + 1}次答疑文件</span>
+                            </div>
+                            {idx === 0 && <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-500 text-[10px]">最新</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
             <div className="flex items-center gap-6 text-slate-400 text-sm">
               <span className="flex items-center gap-1.5">
@@ -429,7 +509,6 @@ const Workbench: React.FC<WorkbenchProps> = ({
                   activeRightTab={activeRightTab}
                   initialProjectData={initialProjectData}
                   isTenderUploaded={isTenderUploaded}
-                  setIsTenderUploaded={setIsTenderUploaded}
                   projectData={projectData}
                   handleProjectDataChange={handleProjectDataChange}
                   uploadedFiles={uploadedFiles}
@@ -532,10 +611,12 @@ const Workbench: React.FC<WorkbenchProps> = ({
                         
                         <div className="text-center mb-16">
                           <h1 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">城市基础设施二期项目</h1>
-                          <h2 className="text-2xl font-bold text-slate-500">招标文件</h2>
+                          <h2 className="text-2xl font-bold text-slate-500">
+                            {viewingDoc === 'tender-doc' ? '招标文件' : `第${viewingDoc.split('-')[2]}次答疑文件`}
+                          </h2>
                           <div className="mt-8 flex justify-center gap-8 text-sm text-slate-400 font-medium">
                             <span>项目编号：BID-2023-00892</span>
-                            <span>发布日期：2023-11-15</span>
+                            <span>发布日期：{viewingDoc === 'tender-doc' ? '2023-11-15' : '2023-12-05'}</span>
                           </div>
                         </div>
 
@@ -1642,14 +1723,13 @@ const ArchiveRegisterView = ({ onBack }: { onBack: () => void }) => (
 );
 
 
-const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRightTab, initialProjectData, isTenderUploaded, setIsTenderUploaded, projectData, handleProjectDataChange, uploadedFiles, setUploadedFiles }: { 
+const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRightTab, initialProjectData, isTenderUploaded, projectData, handleProjectDataChange, uploadedFiles, setUploadedFiles }: { 
   onNavigate: (view: SubView) => void, 
   onSelect: (id: string | null) => void,
   setActiveRightTab: (id: string | null) => void,
   activeRightTab: string | null,
   initialProjectData?: any,
   isTenderUploaded: boolean,
-  setIsTenderUploaded: (val: boolean) => void,
   projectData: any,
   handleProjectDataChange: (field: string, value: string) => void,
   uploadedFiles: Record<string, boolean>,
@@ -1675,44 +1755,10 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
   };
 
   const startUploadFlow = (cat: { id: string; label: string }) => {
-    // Only tender-doc and clar-doc trigger the parsing flow
-    if (cat.id === 'tender-doc' || cat.id.startsWith('clar-doc-')) {
-      setActiveUpload(cat);
-      setIsUploading(true);
-      setUploadStep('uploading');
-      setUploadProgress(0);
-      
-      // Step 1: Uploading
-      let progress = 0;
-      const uploadInterval = setInterval(() => {
-        progress += 5;
-        setUploadProgress(progress);
-        if (progress >= 100) {
-          clearInterval(uploadInterval);
-          setUploadStep('parsing');
-          setUploadProgress(0);
-          
-          // Step 2: Parsing
-          let parseProgress = 0;
-          const parseInterval = setInterval(() => {
-            parseProgress += 2;
-            setUploadProgress(parseProgress);
-            if (parseProgress >= 100) {
-              clearInterval(parseInterval);
-              
-              // Mock differences
-              const mockDiffs = [
-                { field: 'openingTime', label: '开标时间', oldVal: projectData.openingTime, newVal: '2024-05-20 09:30' },
-                { field: 'depositAmount', label: '保证金金额', oldVal: projectData.depositAmount, newVal: '500,000.00' }
-              ];
-              setDiffData(mockDiffs);
-              setUploadStep('comparing');
-            }
-          }, 50);
-        }
-      }, 30)
-    } else {
-      handleToggleUpload(cat.id);
+    // Just toggle the upload status directly for all documents
+    handleToggleUpload(cat.id);
+    if (cat.id === 'tender-doc') {
+      setUploadedFiles(prev => ({ ...prev, 'tender-doc': true }));
     }
   };
 
@@ -1723,7 +1769,7 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
     if (activeUpload) {
       handleToggleUpload(activeUpload.id);
       if (activeUpload.id === 'tender-doc') {
-        setIsTenderUploaded(true);
+        setUploadedFiles(prev => ({ ...prev, 'tender-doc': true }));
       }
     }
     setIsUploading(false);
@@ -1734,7 +1780,7 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
     if (activeUpload) {
       handleToggleUpload(activeUpload.id);
       if (activeUpload.id === 'tender-doc') {
-        setIsTenderUploaded(true);
+        setUploadedFiles(prev => ({ ...prev, 'tender-doc': true }));
       }
     }
     setIsUploading(false);
@@ -2120,7 +2166,7 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
                         } else {
                           handleToggleUpload(cat.id);
                           if (cat.id === 'tender-doc') {
-                            setIsTenderUploaded(!isTenderUploaded);
+                            setUploadedFiles(prev => ({ ...prev, 'tender-doc': !isTenderUploaded }));
                           }
                         }
                       }}
@@ -2389,15 +2435,15 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
             <div className="size-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4 shadow-inner">
               <FileSearch size={24} className="text-white" />
             </div>
-            <h3 className="text-xl font-black mb-2">一键解析招标文件</h3>
+            <h3 className="text-xl font-black mb-2">一键上传招标文件</h3>
             <p className="text-blue-100 text-sm mb-6 leading-relaxed">
-              使用AI智能解析功能，快速提取关键信息、核查资质要求并评估潜在风险。
+              快速上传招标文件，系统将自动识别并关联至当前项目，方便后续查阅与管理。
             </p>
             <button 
               onClick={() => setShowParsingPage(true)}
               className="w-full py-3 bg-white text-blue-600 rounded-xl font-black text-sm shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
             >
-              进入解析页面 <ArrowRight size={16} />
+              进入上传页面 <ArrowRight size={16} />
             </button>
           </div>
         </div>

@@ -14,12 +14,12 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-interface SystemSettingsProps {
+interface PersonalCenterProps {
   currentEnterprise?: { id: string; name: string };
   initialSection?: 'profile' | 'password';
 }
 
-const SystemSettings: React.FC<SystemSettingsProps> = ({ currentEnterprise, initialSection = 'profile' }) => {
+const PersonalCenter: React.FC<PersonalCenterProps> = ({ currentEnterprise, initialSection = 'profile' }) => {
   const [activeSection, setActiveSection] = useState<'profile' | 'password'>(initialSection);
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -203,7 +203,7 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({ currentEnterprise, init
       className="space-y-8"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-900">系统设置</h2>
+        <h2 className="text-2xl font-bold text-slate-900">个人中心</h2>
         <AnimatePresence>
           {saveSuccess && (
             <motion.div 
@@ -276,4 +276,4 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({ currentEnterprise, init
   );
 };
 
-export default SystemSettings;
+export default PersonalCenter;

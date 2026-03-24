@@ -17,7 +17,14 @@ import {
   RefreshCcw,
   FileText,
   History,
-  X
+  X,
+  Edit3,
+  Eye,
+  Trash2,
+  Paperclip,
+  File,
+  Image as ImageIcon,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -27,76 +34,87 @@ interface SecurityDepositManagementProps {
 
 const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ currentEnterprise }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(false);
   const [selectedDeposit, setSelectedDeposit] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  const [deposits, setDeposits] = useState<any[]>([]);
+  const [deposits, setDeposits] = useState<any[]>([
+    {
+      id: 'DEP-2024-001',
+      projectName: '2024年智慧交通管理平台建设项目',
+      amount: '¥ 200,000.00',
+      type: '现金转账',
+      bank: '中国工商银行北京分行',
+      date: '2024-03-15',
+      status: '已缴纳',
+      refundStatus: '待退还',
+      vouchers: ['payment_voucher_01.pdf']
+    },
+    {
+      id: 'DEP-2024-002',
+      projectName: '政务云扩容采购项目',
+      amount: '¥ 150,000.00',
+      type: '银行保函',
+      bank: '招商银行上海支行',
+      date: '2024-03-10',
+      status: '已缴纳',
+      refundStatus: '已退还',
+      vouchers: ['guarantee_letter.jpg']
+    }
+  ]);
 
-  React.useEffect(() => {
-    const enterprisePrefix = currentEnterprise ? `[${currentEnterprise.name}] ` : '';
-    setDeposits([
-      {
-        id: 'DEP-2024-001',
-        projectName: `${enterprisePrefix}2024年智慧交通管理平台建设项目`,
-        amount: '¥50,000.00',
-        type: '现金转账',
-        bank: '中国工商银行',
-        status: '已缴纳',
-        date: '2024-03-10',
-        refundStatus: '待退还',
-        voucher: '凭证_001.jpg'
-      },
-      {
-        id: 'DEP-2024-002',
-        projectName: `${enterprisePrefix}政务云扩容采购项目`,
-        amount: '¥30,000.00',
-        type: '银行保函',
-        bank: '建设银行',
-        status: '已缴纳',
-        date: '2024-02-15',
-        refundStatus: '已退还',
-        voucher: '保函_002.pdf'
-      },
-      {
-        id: 'DEP-2024-003',
-        projectName: `${enterprisePrefix}城市绿化带自动灌溉系统`,
-        amount: '¥15,000.00',
-        type: '现金转账',
-        bank: '农业银行',
-        status: '已缴纳',
-        date: '2024-03-05',
-        refundStatus: '待退还',
-        voucher: '凭证_003.png'
-      },
-      {
-        id: 'DEP-2024-004',
-        projectName: `${enterprisePrefix}XX区智慧教育云平台二期`,
-        amount: '¥80,000.00',
-        type: '银行保函',
-        bank: '招商银行',
-        status: '已缴纳',
-        date: '2024-03-12',
-        refundStatus: '待退还',
-        voucher: '保函_004.pdf'
-      },
-      {
-        id: 'DEP-2024-005',
-        projectName: `${enterprisePrefix}社区养老服务中心智能化改造`,
-        amount: '¥20,000.00',
-        type: '现金转账',
-        bank: '中国银行',
-        status: '已缴纳',
-        date: '2024-01-20',
-        refundStatus: '已退还',
-        voucher: '凭证_005.jpg'
-      }
-    ]);
-  }, [currentEnterprise]);
+  const [formData, setFormData] = useState({
+    projectName: '',
+    amount: '',
+    type: '现金转账',
+    bank: '',
+    date: '',
+    refundStatus: '待退还',
+    vouchers: [] as string[]
+  });
 
-  const handleOpenRefund = (deposit: any) => {
-    setSelectedDeposit(deposit);
-    setShowRefundModal(true);
+  const handleOpenModal = (deposit?: any) => {
+    if (deposit) {
+      setSelectedDeposit(deposit);
+      setFormData({
+        projectName: deposit.projectName,
+        amount: deposit.amount,
+        type: deposit.type,
+        bank: deposit.bank,
+        date: deposit.date,
+        refundStatus: deposit.refundStatus,
+        vouchers: deposit.vouchers || [deposit.voucher].filter(Boolean)
+      });
+      setIsEditing(true);
+    } else {
+      setSelectedDeposit(null);
+      setFormData({
+        projectName: '',
+        amount: '',
+        type: '现金转账',
+        bank: '',
+        date: '',
+        refundStatus: '待退还',
+        vouchers: []
+      });
+      setIsEditing(false);
+    }
+    setShowDepositModal(true);
+  };
+
+  const handleSave = () => {
+    if (isEditing && selectedDeposit) {
+      setDeposits(deposits.map(d => d.id === selectedDeposit.id ? { ...d, ...formData } : d));
+    } else {
+      const newDeposit = {
+        id: `DEP-2024-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+        ...formData,
+        status: '已缴纳'
+      };
+      setDeposits([newDeposit, ...deposits]);
+    }
+    setShowDepositModal(false);
   };
 
   return (
@@ -105,15 +123,6 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
       animate={{ opacity: 1, x: 0 }}
       className="space-y-6"
     >
-      <div className="flex items-center justify-between">
-        <button 
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95"
-        >
-          <Plus size={20} />
-          缴纳保证金
-        </button>
-      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -124,8 +133,10 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
               <ArrowUpRight size={20} />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900">¥1,250,000.00</h3>
-          <p className="text-xs text-slate-400 mt-2">较上月 +12.5%</p>
+          <h3 className="text-2xl font-bold text-slate-900">
+            ¥{deposits.reduce((acc, d) => acc + parseFloat(d.amount.replace(/[^\d.]/g, '') || '0'), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          </h3>
+          <p className="text-xs text-slate-400 mt-2">涉及 {deposits.length} 个项目</p>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -134,8 +145,10 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
               <Clock size={20} />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900">¥450,000.00</h3>
-          <p className="text-xs text-slate-400 mt-2">涉及 8 个项目</p>
+          <h3 className="text-2xl font-bold text-slate-900">
+            ¥{deposits.filter(d => d.refundStatus === '待退还').reduce((acc, d) => acc + parseFloat(d.amount.replace(/[^\d.]/g, '') || '0'), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          </h3>
+          <p className="text-xs text-slate-400 mt-2">涉及 {deposits.filter(d => d.refundStatus === '待退还').length} 个项目</p>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -144,8 +157,10 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
               <ArrowDownLeft size={20} />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900">¥800,000.00</h3>
-          <p className="text-xs text-slate-400 mt-2">退还率 64%</p>
+          <h3 className="text-2xl font-bold text-slate-900">
+            ¥{deposits.filter(d => d.refundStatus === '已退还').reduce((acc, d) => acc + parseFloat(d.amount.replace(/[^\d.]/g, '') || '0'), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          </h3>
+          <p className="text-xs text-slate-400 mt-2">退还率 {deposits.length > 0 ? Math.round((deposits.filter(d => d.refundStatus === '已退还').length / deposits.length) * 100) : 0}%</p>
         </div>
       </div>
 
@@ -163,7 +178,7 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
         </div>
         
         <div className="flex gap-2">
-          <button className="px-8 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all">
+          <button className="px-8 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 shadow-sm hover:shadow-md transition-all">
             查询
           </button>
           <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
@@ -222,17 +237,12 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
-                    {deposit.refundStatus === '待退还' && (
-                      <button 
-                        onClick={() => handleOpenRefund(deposit)}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-orange-600 rounded-lg text-xs font-bold hover:bg-orange-100 transition-colors"
-                      >
-                        <RefreshCcw size={14} />
-                        发起退款
-                      </button>
-                    )}
-                    <button className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all">
-                      <MoreHorizontal size={20} />
+                    <button 
+                      onClick={() => handleOpenModal(deposit)}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all shadow-sm shadow-primary/10"
+                    >
+                      <Edit3 size={14} />
+                      登记/详情
                     </button>
                   </div>
                 </td>
@@ -242,9 +252,9 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
         </table>
       </div>
 
-      {/* Add Modal */}
+      {/* Deposit Modal */}
       <AnimatePresence>
-        {showAddModal && (
+        {showDepositModal && (
           <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm">
             <div className="min-h-screen px-4 py-8 flex items-center justify-center">
               <motion.div 
@@ -258,10 +268,10 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
                     <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white">
                       <Wallet size={24} />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900">缴纳保证金</h3>
+                    <h3 className="text-xl font-bold text-slate-900">{isEditing ? '修改保证金信息' : '登记保证金'}</h3>
                   </div>
                   <button 
-                    onClick={() => setShowAddModal(false)}
+                    onClick={() => setShowDepositModal(false)}
                     className="p-2 hover:bg-slate-200 rounded-full transition-colors"
                   >
                     <X size={20} className="text-slate-400" />
@@ -273,56 +283,178 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
                     <div className="grid grid-cols-2 gap-6">
                       <div className="col-span-2 space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 ml-1">关联投标项目 <span className="text-red-500">*</span></label>
-                        <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm">
-                          <option>请选择投标项目...</option>
-                          <option>2024年智慧交通管理平台建设项目</option>
-                          <option>政务云扩容采购项目</option>
-                        </select>
+                        <div className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 shadow-sm">
+                          {formData.projectName || '未关联项目'}
+                        </div>
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 ml-1">保证金金额 <span className="text-red-500">*</span></label>
                         <input 
                           type="text" 
+                          value={formData.amount}
+                          onChange={(e) => setFormData({...formData, amount: e.target.value})}
                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" 
                           placeholder="¥ 0.00" 
                         />
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 ml-1">缴纳方式 <span className="text-red-500">*</span></label>
-                        <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm">
+                        <select 
+                          value={formData.type}
+                          onChange={(e) => setFormData({...formData, type: e.target.value})}
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+                        >
                           <option>现金转账</option>
                           <option>银行保函</option>
                           <option>保险保函</option>
                         </select>
                       </div>
-                      <div className="col-span-2 space-y-1.5">
+                      <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 ml-1">缴纳银行</label>
                         <input 
                           type="text" 
+                          value={formData.bank}
+                          onChange={(e) => setFormData({...formData, bank: e.target.value})}
                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" 
                           placeholder="请输入银行名称" 
                         />
                       </div>
-                      <div className="col-span-2 space-y-1.5">
-                        <label className="text-xs font-bold text-slate-500 ml-1">缴纳凭证上传</label>
-                        <div className="border-2 border-dashed border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center gap-4 bg-slate-50/50 hover:bg-primary/5 hover:border-primary/30 transition-all cursor-pointer group">
-                          <div className="size-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
-                            <Upload size={32} />
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-500 ml-1">缴纳时间</label>
+                        <input 
+                          type="date" 
+                          value={formData.date}
+                          onChange={(e) => setFormData({...formData, date: e.target.value})}
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" 
+                        />
+                      </div>
+
+                      {isEditing && (
+                        <div className="col-span-2 space-y-1.5">
+                          <label className="text-xs font-bold text-slate-500 ml-1">退还状态</label>
+                          <div className="flex gap-8 px-2 py-2">
+                            {['待退还', '已退还'].map((status) => (
+                              <label key={status} className="flex items-center gap-2 cursor-pointer group">
+                                <div className="relative flex items-center justify-center">
+                                  <input
+                                    type="radio"
+                                    name="refundStatus"
+                                    checked={formData.refundStatus === status}
+                                    onChange={() => setFormData({...formData, refundStatus: status})}
+                                    className="sr-only"
+                                  />
+                                  <div className={`size-5 rounded-full border-2 transition-all ${
+                                    formData.refundStatus === status 
+                                      ? 'border-primary bg-primary' 
+                                      : 'border-slate-300 bg-white group-hover:border-slate-400'
+                                  }`}>
+                                    {formData.refundStatus === status && (
+                                      <div className="size-2 bg-white rounded-full" />
+                                    )}
+                                  </div>
+                                </div>
+                                <span className={`text-sm font-bold transition-colors ${
+                                  formData.refundStatus === status ? 'text-slate-900' : 'text-slate-500'
+                                }`}>
+                                  {status}
+                                </span>
+                              </label>
+                            ))}
                           </div>
-                          <p className="text-sm text-slate-600 font-bold">点击或拖拽缴纳凭证或保函扫描件至此处</p>
+                        </div>
+                      )}
+
+                      <div className="col-span-2 space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                          <div className="flex items-center gap-2 text-slate-900 font-bold">
+                            <Paperclip size={18} className="text-primary" />
+                            <label className="text-sm">缴纳凭证附件</label>
+                          </div>
+                          <div className="relative">
+                            <input 
+                              type="file" 
+                              multiple 
+                              accept=".pdf,image/*"
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                              onChange={(e) => {
+                                const files = e.target.files;
+                                if (files) {
+                                  const newVouchers = Array.from(files).map((f: any) => f.name);
+                                  setFormData({...formData, vouchers: [...formData.vouchers, ...newVouchers]});
+                                }
+                              }}
+                            />
+                            <button className="px-4 py-2 bg-primary/10 text-primary rounded-lg text-xs font-bold hover:bg-primary/20 transition-all flex items-center gap-2">
+                              <Upload size={14} /> 上传附件
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 gap-4">
+                          {formData.vouchers.map((v, idx) => (
+                            <div key={idx} className="group flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:border-primary/30 hover:shadow-md transition-all">
+                              <div className="flex items-center gap-3 overflow-hidden">
+                                <div className={`size-10 rounded-lg flex items-center justify-center shrink-0 ${
+                                  v.toLowerCase().endsWith('.pdf') ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'
+                                }`}>
+                                  {v.toLowerCase().endsWith('.pdf') ? <File size={20} /> : <ImageIcon size={20} />}
+                                </div>
+                                <div className="overflow-hidden">
+                                  <p className="text-sm font-bold text-slate-900 truncate" title={v}>{v}</p>
+                                  <p className="text-[10px] text-slate-400 flex items-center gap-2">
+                                    <span>2.4 MB</span>
+                                    <span className="size-1 bg-slate-200 rounded-full" />
+                                    <span>2024-03-24</span>
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button 
+                                  onClick={() => setPreviewImage('https://picsum.photos/seed/voucher/800/1200')}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold hover:bg-primary hover:text-white transition-all"
+                                >
+                                  <Eye size={14} />
+                                  查看
+                                </button>
+                                <button className="p-2 text-slate-400 hover:text-primary hover:bg-slate-50 rounded-lg transition-all">
+                                  <Download size={16} />
+                                </button>
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setFormData({
+                                      ...formData,
+                                      vouchers: formData.vouchers.filter((_, i) => i !== idx)
+                                    });
+                                  }}
+                                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                  title="删除"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          {formData.vouchers.length === 0 && (
+                            <div className="col-span-full py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                              <Paperclip size={32} className="text-slate-300 mb-3" />
+                              <p className="text-sm text-slate-400">暂无附件</p>
+                              <p className="text-[10px] text-slate-400 mt-1">点击右上角按钮上传缴纳凭证</p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
 
                     <div className="flex gap-4 pt-8 mt-auto shrink-0 sticky bottom-0 bg-white pb-2">
                       <button 
-                        onClick={() => setShowAddModal(false)} 
+                        onClick={handleSave} 
                         className="flex-1 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20"
                       >
                         确认提交
                       </button>
                       <button 
-                        onClick={() => setShowAddModal(false)} 
+                        onClick={() => setShowDepositModal(false)} 
                         className="px-10 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all"
                       >
                         取消
@@ -336,86 +468,36 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
         )}
       </AnimatePresence>
 
-      {/* Refund Modal */}
-      {showRefundModal && selectedDeposit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden"
+      {/* Image Preview Modal */}
+      <AnimatePresence>
+        {previewImage && (
+          <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onClick={() => setPreviewImage(null)}
           >
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-orange-50/30">
-              <div className="flex items-center gap-2">
-                <RefreshCcw size={20} className="text-orange-600" />
-                <h3 className="text-lg font-bold text-slate-900">发起退款申请</h3>
-              </div>
-              <button onClick={() => setShowRefundModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                <Plus size={20} className="rotate-45 text-slate-400" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative max-w-4xl w-full max-h-full flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={previewImage} 
+                alt="Voucher Preview" 
+                className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                referrerPolicy="no-referrer"
+              />
+              <button 
+                onClick={() => setPreviewImage(null)}
+                className="absolute -top-12 right-0 p-2 text-white hover:bg-white/10 rounded-full transition-all"
+              >
+                <X size={32} />
               </button>
-            </div>
-            <div className="p-6 space-y-6">
-              {/* Associated Record Info */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">关联缴纳记录</span>
-                  <span className="text-xs font-bold text-primary">{selectedDeposit.id}</span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-bold text-slate-900">{selectedDeposit.projectName}</p>
-                  <div className="flex items-center gap-4 text-xs text-slate-500">
-                    <span className="flex items-center gap-1"><Wallet size={12} /> {selectedDeposit.amount}</span>
-                    <span className="flex items-center gap-1"><Calendar size={12} /> {selectedDeposit.date}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase">退款申请说明</label>
-                  <textarea className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all h-24 resize-none" placeholder="请输入退款原因，如：项目已结束、未中标等..."></textarea>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase">退款凭证/申请表</label>
-                  <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center gap-2 bg-slate-50 hover:bg-orange-50/50 hover:border-orange-200 transition-all cursor-pointer group">
-                    <Upload size={20} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
-                    <p className="text-[10px] text-slate-500 font-medium">上传退款申请表扫描件</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Process Tracking */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                  <History size={14} />
-                  流程跟踪预览
-                </h4>
-                <div className="flex items-center gap-2">
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="size-4 rounded-full bg-primary flex items-center justify-center text-[8px] text-white">1</div>
-                    <div className="w-0.5 h-4 bg-slate-200"></div>
-                  </div>
-                  <span className="text-xs text-slate-600 font-medium">提交申请 (当前)</span>
-                </div>
-                <div className="flex items-center gap-2 opacity-50">
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="size-4 rounded-full bg-slate-200 flex items-center justify-center text-[8px] text-slate-500">2</div>
-                    <div className="w-0.5 h-4 bg-slate-200"></div>
-                  </div>
-                  <span className="text-xs text-slate-500">财务审核</span>
-                </div>
-                <div className="flex items-center gap-2 opacity-50">
-                  <div className="size-4 rounded-full bg-slate-200 flex items-center justify-center text-[8px] text-slate-500">3</div>
-                  <span className="text-xs text-slate-500">退款完成</span>
-                </div>
-              </div>
-            </div>
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3">
-              <button onClick={() => setShowRefundModal(false)} className="flex-1 py-2.5 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg shadow-orange-200">提交退款申请</button>
-              <button onClick={() => setShowRefundModal(false)} className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-all">取消</button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

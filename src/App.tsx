@@ -11,19 +11,23 @@ import TenderProjectRegistration from './components/TenderProjectRegistration';
 import SecurityDepositManagement from './components/SecurityDepositManagement';
 import TenderOpeningStatusManagement from './components/TenderOpeningStatusManagement';
 import OtherProjectMaterials from './components/OtherProjectMaterials';
-import SystemSettings from './components/SystemSettings';
+import PersonalCenter from './components/PersonalCenter';
 import EnterpriseInfo from './components/EnterpriseInfo';
 import Certificates from './components/Certificates';
 import Materials from './components/Materials';
+import Login from './components/Login';
 
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [workbenchStage, setWorkbenchStage] = useState<string | undefined>(undefined);
   const [projectData, setProjectData] = useState<any>(null);
   const [autoImported, setAutoImported] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<Record<string, boolean>>({});
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, boolean>>({
+    'tender-doc': true
+  });
 
   const [enterprises, setEnterprises] = useState([
     { id: '1', name: '杭州某某科技有限公司' },
@@ -75,7 +79,7 @@ export default function App() {
           />
         );
       case 'parsing':
-        return <BidParsing autoImported={autoImported} currentEnterprise={currentEnterprise} uploadedFiles={uploadedFiles} />;
+        return <BidParsing onEnterWorkbench={handleEnterWorkbench} currentEnterprise={currentEnterprise} />;
       case 'inspection':
         return <BidInspection currentEnterprise={currentEnterprise} uploadedFiles={uploadedFiles} />;
       case 'org':
@@ -92,8 +96,8 @@ export default function App() {
         return <TenderOpeningStatusManagement currentEnterprise={currentEnterprise} />;
       case 'other-materials':
         return <OtherProjectMaterials currentEnterprise={currentEnterprise} />;
-      case 'settings':
-        return <SystemSettings currentEnterprise={currentEnterprise} />;
+      case 'personal-center':
+        return <PersonalCenter currentEnterprise={currentEnterprise} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400 space-y-4">
@@ -111,6 +115,10 @@ export default function App() {
         );
     }
   };
+
+  if (!isLoggedIn) {
+    return <Login onLogin={() => setIsLoggedIn(true)} />;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg-light">
@@ -130,6 +138,7 @@ export default function App() {
           enterprises={enterprises} 
           currentEnterprise={currentEnterprise}
           setCurrentEnterprise={setCurrentEnterprise}
+          onLogout={() => setIsLoggedIn(false)}
         />
         <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-[1600px] mx-auto w-full">
@@ -146,7 +155,7 @@ export default function App() {
             </AnimatePresence>
           </div>
           <footer className="mt-12 py-8 text-center text-slate-400 text-xs border-t border-slate-200">
-            <p>© 2023 招标管理智能分析系统 - 数字化招采效能提升平台</p>
+            <p>© 2023 招标管理智能分析系统 - 数字化招采效能提升系统</p>
           </footer>
         </main>
       </div>

@@ -45,9 +45,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [isTenderUploaded, setIsTenderUploaded] = useState(false);
   const [analyzedData, setAnalyzedData] = useState({
-    strategy: '',
-    purchaseAmount: '',
-    purchaseDate: '',
     projectName: '',
     projectNumber: '',
     tenderer: '',
@@ -163,7 +160,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
         tenderAgentContact: '李经理 010-66666666',
         openingTime: '2024-01-15T09:30',
         depositDeadline: '2024-01-12T17:00',
-        openingLocation: 'XX市公共资源交易中心 301 会议室',
+        openingLocation: 'XX市公共资源交易中心 301 会育室',
         depositAmount: '¥ 500,000.00',
         collectionTime: '2023-12-25',
         tenderRequirements: '1. 资质要求：具备市政公用工程施工总承包一级及以上资质；\n2. 业绩要求：近三年内具有类似智慧交通项目业绩；\n3. 技术要求：支持国产化适配。',
@@ -550,34 +547,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
                         type="text" 
                         value={analyzedData.tenderAgentContact || ''}
                         onChange={(e) => handleDataChange('tenderAgentContact', e.target.value)}
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
-                      />
-                    </div>
-                    <div className="space-y-1.5 col-span-3">
-                      <label className="text-xs font-bold text-slate-500 ml-1">投标策略</label>
-                      <textarea 
-                        value={analyzedData.strategy || ''}
-                        onChange={(e) => handleDataChange('strategy', e.target.value)}
-                        placeholder="请输入投标策略、定价策略等..."
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm h-24 resize-none"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 ml-1">购买金额</label>
-                      <input 
-                        type="text" 
-                        value={analyzedData.purchaseAmount || ''}
-                        onChange={(e) => handleDataChange('purchaseAmount', e.target.value)}
-                        placeholder="¥ 0.00"
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 ml-1">购买日期</label>
-                      <input 
-                        type="date" 
-                        value={analyzedData.purchaseDate || ''}
-                        onChange={(e) => handleDataChange('purchaseDate', e.target.value)}
                         className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
                       />
                     </div>

@@ -39,9 +39,6 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [isTenderUploaded, setIsTenderUploaded] = useState(false);
   const [analyzedData, setAnalyzedData] = useState({
-    strategy: '',
-    purchaseAmount: '',
-    purchaseDate: '',
     projectName: '',
     projectNumber: '',
     tenderer: '',
@@ -74,10 +71,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
         depositAmount: '¥ 500,000.00',
         collectionTime: '2023-12-25',
         tenderRequirements: '1. 资质要求：具备市政公用工程施工总承包一级及以上资质；\n2. 业绩要求：近三年内具有类似智慧交通项目业绩；\n3. 技术要求：支持国产化适配。',
-        otherRemarks: '',
-        strategy: '',
-        purchaseAmount: '',
-        purchaseDate: ''
+        otherRemarks: ''
       });
       setIsAnalyzing(false);
       setIsAnalyzed(true);
@@ -110,22 +104,17 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
         depositAmount: '',
         collectionTime: '',
         tenderRequirements: '',
-        otherRemarks: '',
-        strategy: '',
-        purchaseAmount: '',
-        purchaseDate: ''
+        otherRemarks: ''
       });
     }, 300);
   };
   const [statusFilter, setStatusFilter] = useState('全部');
   const [dateFilter, setDateFilter] = useState('');
 
-  const enterprisePrefix = currentEnterprise?.name ? `[${currentEnterprise.name}] ` : '';
-
   const [projects, setProjects] = useState([
     {
       id: '1',
-      name: `${enterprisePrefix}2024年智慧交通管理平台建设项目`,
+      name: `2024年智慧交通管理平台建设项目`,
       code: 'ZB-2024-001',
       tenderer: 'XX市交通运输局',
       agent: 'XX招标代理有限公司',
@@ -138,14 +127,11 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
       openingLocation: 'XX市公共资源交易中心 301 会议室',
       collectionTime: '2024-04-15',
       requirements: '关键招标要求、资质要求等...',
-      strategy: '投标策略、定价策略等...',
-      purchaseAmount: '¥500',
-      purchaseDate: '2024-04-10',
       otherRemarks: ''
     },
     {
       id: '2',
-      name: `${enterprisePrefix}政务云扩容采购项目`,
+      name: `政务云扩容采购项目`,
       code: 'ZB-2024-005',
       tenderer: 'XX市大数据局',
       agent: 'YY咨询管理公司',
@@ -158,14 +144,11 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
       openingLocation: 'XX省政务中心 2楼',
       collectionTime: '2024-05-10',
       requirements: '政务云相关资质要求...',
-      strategy: '高性价比策略...',
-      purchaseAmount: '¥300',
-      purchaseDate: '2024-05-05',
       otherRemarks: ''
     },
     {
       id: '3',
-      name: `${enterprisePrefix}城市绿化带自动灌溉系统`,
+      name: `城市绿化带自动灌溉系统`,
       code: 'ZB-2024-008',
       tenderer: 'XX市园林局',
       agent: 'ZZ工程咨询公司',
@@ -178,14 +161,11 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
       openingLocation: 'XX市园林局 5楼会议室',
       collectionTime: '2024-06-01',
       requirements: '自动化灌溉系统技术指标...',
-      strategy: '技术领先策略...',
-      purchaseAmount: '¥200',
-      purchaseDate: '2024-05-20',
       otherRemarks: ''
     },
     {
       id: '4',
-      name: `${enterprisePrefix}XX区智慧教育云平台二期`,
+      name: `XX区智慧教育云平台二期`,
       code: 'ZB-2024-012',
       tenderer: 'XX区教育局',
       agent: 'AA招标代理公司',
@@ -198,14 +178,11 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
       openingLocation: 'XX区教育局 1楼大厅',
       collectionTime: '2024-07-01',
       requirements: '教育云平台二期扩容需求...',
-      strategy: '综合实力展示...',
-      purchaseAmount: '¥800',
-      purchaseDate: '2024-06-15',
       otherRemarks: ''
     },
     {
       id: '5',
-      name: `${enterprisePrefix}社区养老服务中心智能化改造`,
+      name: `社区养老服务中心智能化改造`,
       code: 'ZB-2024-015',
       tenderer: 'XX市民政局',
       agent: 'BB项目管理公司',
@@ -218,9 +195,6 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
       openingLocation: 'XX市民政局 3楼',
       collectionTime: '2024-08-15',
       requirements: '适老化智能设备安装调试...',
-      strategy: '服务品质优先...',
-      purchaseAmount: '¥0',
-      purchaseDate: '2024-08-01',
       otherRemarks: ''
     }
   ]);
@@ -229,11 +203,11 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
     setProjects([
       {
         id: '1',
-        name: `${enterprisePrefix}2024年智慧交通管理平台建设项目`,
+        name: `2024年智慧交通管理平台建设项目`,
         code: 'ZB-2024-001',
         tenderer: 'XX市交通运输局',
-        agent: 'XX招标代理有限公司',
         tendererContact: '张工 010-88888888',
+        agent: 'XX招标代理有限公司',
         agentContact: '李经理 010-66666666',
         bidOpeningTime: '2024-05-20 10:00',
         status: '进行中',
@@ -242,18 +216,15 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
         openingLocation: 'XX市公共资源交易中心 301 会议室',
         collectionTime: '2024-04-15',
         requirements: '关键招标要求、资质要求等...',
-        strategy: '投标策略、定价策略等...',
-        purchaseAmount: '¥500',
-        purchaseDate: '2024-04-10',
         otherRemarks: ''
       },
       {
         id: '2',
-        name: `${enterprisePrefix}政务云扩容采购项目`,
+        name: `政务云扩容采购项目`,
         code: 'ZB-2024-005',
         tenderer: 'XX市大数据局',
-        agent: 'YY咨询管理公司',
         tendererContact: '王工 010-77777777',
+        agent: 'YY咨询管理公司',
         agentContact: '赵经理 010-55555555',
         bidOpeningTime: '2024-06-15 14:30',
         status: '已完成',
@@ -262,18 +233,15 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
         openingLocation: 'XX省政务中心 2楼',
         collectionTime: '2024-05-10',
         requirements: '政务云相关资质要求...',
-        strategy: '高性价比策略...',
-        purchaseAmount: '¥300',
-        purchaseDate: '2024-05-05',
         otherRemarks: ''
       },
       {
         id: '3',
-        name: `${enterprisePrefix}城市绿化带自动灌溉系统`,
+        name: `城市绿化带自动灌溉系统`,
         code: 'ZB-2024-008',
         tenderer: 'XX市园林局',
-        agent: 'ZZ工程咨询公司',
         tendererContact: '刘工 010-99999999',
+        agent: 'ZZ工程咨询公司',
         agentContact: '孙经理 010-44444444',
         bidOpeningTime: '2024-07-10 09:00',
         status: '进行中',
@@ -282,18 +250,15 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
         openingLocation: 'XX市园林局 5楼会议室',
         collectionTime: '2024-06-01',
         requirements: '自动化灌溉系统技术指标...',
-        strategy: '技术领先策略...',
-        purchaseAmount: '¥200',
-        purchaseDate: '2024-05-20',
         otherRemarks: ''
       },
       {
         id: '4',
-        name: `${enterprisePrefix}XX区智慧教育云平台二期`,
+        name: `XX区智慧教育云平台二期`,
         code: 'ZB-2024-012',
         tenderer: 'XX区教育局',
-        agent: 'AA招标代理公司',
         tendererContact: '陈工 010-11111111',
+        agent: 'AA招标代理公司',
         agentContact: '周经理 010-22222222',
         bidOpeningTime: '2024-08-05 15:00',
         status: '进行中',
@@ -302,18 +267,15 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
         openingLocation: 'XX区教育局 1楼大厅',
         collectionTime: '2024-07-01',
         requirements: '教育云平台二期扩容需求...',
-        strategy: '综合实力展示...',
-        purchaseAmount: '¥800',
-        purchaseDate: '2024-06-15',
         otherRemarks: ''
       },
       {
         id: '5',
-        name: `${enterprisePrefix}社区养老服务中心智能化改造`,
+        name: `社区养老服务中心智能化改造`,
         code: 'ZB-2024-015',
         tenderer: 'XX市民政局',
-        agent: 'BB项目管理公司',
         tendererContact: '黄工 010-33333333',
+        agent: 'BB项目管理公司',
         agentContact: '吴经理 010-44444444',
         bidOpeningTime: '2024-09-25 10:30',
         status: '进行中',
@@ -322,9 +284,6 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
         openingLocation: 'XX市民政局 3楼',
         collectionTime: '2024-08-15',
         requirements: '适老化智能设备安装调试...',
-        strategy: '服务品质优先...',
-        purchaseAmount: '¥0',
-        purchaseDate: '2024-08-01',
         otherRemarks: ''
       }
     ]);
@@ -346,19 +305,14 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
       depositAmount: project.deposit,
       collectionTime: project.collectionTime,
       tenderRequirements: project.requirements,
-      otherRemarks: project.otherRemarks || '',
-      strategy: project.strategy,
-      purchaseAmount: project.purchaseAmount,
-      purchaseDate: project.purchaseDate
+      otherRemarks: project.otherRemarks || ''
     });
     setIsAnalyzed(true);
     setShowAddModal(true);
   };
 
   const handleDeleteProject = (id: string) => {
-    if (window.confirm('确定要删除该项目吗？')) {
-      setProjects(projects.filter(p => p.id !== id));
-    }
+    setProjects(projects.filter(p => p.id !== id));
   };
 
   const handleSaveProject = () => {
@@ -377,9 +331,6 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
       openingLocation: analyzedData.openingLocation,
       collectionTime: analyzedData.collectionTime,
       requirements: analyzedData.tenderRequirements,
-      strategy: analyzedData.strategy,
-      purchaseAmount: analyzedData.purchaseAmount,
-      purchaseDate: analyzedData.purchaseDate,
       otherRemarks: analyzedData.otherRemarks
     };
 
@@ -417,7 +368,6 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
             </div>
           </div>
           <h3 className="text-2xl font-bold text-slate-900">12 个</h3>
-          <p className="text-xs text-slate-400 mt-2">预计投标金额 ¥450万</p>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -505,12 +455,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
             {projects.filter(p => p.name.includes(searchTerm) || p.code.includes(searchTerm)).map((project) => (
               <tr key={project.id} className="hover:bg-slate-50/50 transition-colors group">
                 <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="size-8 bg-blue-50 text-primary rounded-lg flex items-center justify-center shrink-0">
-                      <Briefcase size={16} />
-                    </div>
-                    <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{project.name}</p>
-                  </div>
+                  <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{project.name}</p>
                 </td>
                 <td className="px-6 py-4 text-sm text-slate-500">
                   {project.code}
@@ -522,17 +467,11 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
                   {project.agent}
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <Calendar size={14} className="text-slate-400" />
-                    {project.bidOpeningTime}
-                  </div>
+                  <span className="text-sm text-slate-600">{project.bidOpeningTime}</span>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    project.status === '进行中' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'
-                  }`}>
-                    {project.status === '进行中' ? <Clock size={10} /> : <CheckCircle2 size={10} />}
-                    {project.status}
+                  <span className="text-sm text-slate-600">
+                    {project.status === '进行中' ? '投标中' : (project.status === '已完成' ? '已开标' : project.status)}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
@@ -552,7 +491,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
                     <button 
                       onClick={() => handleEditProject(project)}
                       className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                      title="编辑"
+                      title="修改"
                     >
                       <Edit size={16} />
                     </button>
@@ -653,10 +592,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
                             depositAmount: '',
                             collectionTime: '',
                             tenderRequirements: '',
-                            otherRemarks: '',
-                            strategy: '',
-                            purchaseAmount: '',
-                            purchaseDate: ''
+                            otherRemarks: ''
                           });
                         }}
                         className="text-sm font-bold text-slate-500 hover:text-slate-700 underline"
@@ -722,34 +658,6 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
                         type="text" 
                         value={analyzedData.tenderAgentContact || ''}
                         onChange={(e) => handleDataChange('tenderAgentContact', e.target.value)}
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
-                      />
-                    </div>
-                    <div className="space-y-1.5 col-span-3">
-                      <label className="text-xs font-bold text-slate-500 ml-1">投标策略</label>
-                      <textarea 
-                        value={analyzedData.strategy || ''}
-                        onChange={(e) => handleDataChange('strategy', e.target.value)}
-                        placeholder="请输入投标策略、定价策略等..."
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm h-24 resize-none"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 ml-1">购买金额</label>
-                      <input 
-                        type="text" 
-                        value={analyzedData.purchaseAmount || ''}
-                        onChange={(e) => handleDataChange('purchaseAmount', e.target.value)}
-                        placeholder="¥ 0.00"
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 ml-1">购买日期</label>
-                      <input 
-                        type="date" 
-                        value={analyzedData.purchaseDate || ''}
-                        onChange={(e) => handleDataChange('purchaseDate', e.target.value)}
                         className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
                       />
                     </div>
