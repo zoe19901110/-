@@ -120,10 +120,10 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
       agent: 'XX招标代理有限公司',
       tendererContact: '张工 010-88888888',
       agentContact: '李经理 010-66666666',
-      bidOpeningTime: '2024-05-20 10:00',
+      bidOpeningTime: '2026-03-28 10:00',
       status: '进行中',
       deposit: '¥50,000',
-      depositDeadline: '2024-05-15 17:00',
+      depositDeadline: '2026-03-25 17:00',
       openingLocation: 'XX市公共资源交易中心 301 会议室',
       collectionTime: '2024-04-15',
       requirements: '关键招标要求、资质要求等...',
@@ -137,10 +137,10 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
       agent: 'YY咨询管理公司',
       tendererContact: '王工 010-77777777',
       agentContact: '赵经理 010-55555555',
-      bidOpeningTime: '2024-06-15 14:30',
+      bidOpeningTime: '2026-02-28 14:30',
       status: '已完成',
       deposit: '¥30,000',
-      depositDeadline: '2024-06-10 17:00',
+      depositDeadline: '2026-02-25 17:00',
       openingLocation: 'XX省政务中心 2楼',
       collectionTime: '2024-05-10',
       requirements: '政务云相关资质要求...',
@@ -154,10 +154,10 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
       agent: 'ZZ工程咨询公司',
       tendererContact: '刘工 010-99999999',
       agentContact: '孙经理 010-44444444',
-      bidOpeningTime: '2024-07-10 09:00',
+      bidOpeningTime: '2026-03-24 09:00',
       status: '进行中',
       deposit: '¥20,000',
-      depositDeadline: '2024-07-05 17:00',
+      depositDeadline: '2026-03-20 17:00',
       openingLocation: 'XX市园林局 5楼会议室',
       collectionTime: '2024-06-01',
       requirements: '自动化灌溉系统技术指标...',
@@ -171,10 +171,10 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
       agent: 'AA招标代理公司',
       tendererContact: '陈工 010-11111111',
       agentContact: '周经理 010-22222222',
-      bidOpeningTime: '2024-08-05 15:00',
+      bidOpeningTime: '2026-04-10 15:00',
       status: '进行中',
       deposit: '¥80,000',
-      depositDeadline: '2024-08-01 17:00',
+      depositDeadline: '2026-04-05 17:00',
       openingLocation: 'XX区教育局 1楼大厅',
       collectionTime: '2024-07-01',
       requirements: '教育云平台二期扩容需求...',
@@ -188,10 +188,10 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
       agent: 'BB项目管理公司',
       tendererContact: '黄工 010-33333333',
       agentContact: '吴经理 010-44444444',
-      bidOpeningTime: '2024-09-25 10:30',
+      bidOpeningTime: '2026-03-30 10:30',
       status: '进行中',
       deposit: '¥15,000',
-      depositDeadline: '2024-09-20 17:00',
+      depositDeadline: '2026-03-26 17:00',
       openingLocation: 'XX市民政局 3楼',
       collectionTime: '2024-08-15',
       requirements: '适老化智能设备安装调试...',
@@ -367,7 +367,17 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
               <Clock size={20} />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900">12 个</h3>
+          <h3 className="text-2xl font-bold text-slate-900">{projects.filter(p => p.status === '进行中').length} 个</h3>
+          <div className="mt-3 space-y-1.5">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-slate-400">7天内开标</span>
+              <span className="font-bold text-slate-600">3 个</span>
+            </div>
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-slate-400">今日开标</span>
+              <span className="font-bold text-orange-600">1 个</span>
+            </div>
+          </div>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -413,6 +423,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
             <option value="全部">全部状态</option>
             <option value="进行中">进行中</option>
             <option value="已完成">已完成</option>
+            <option value="放弃投标">放弃投标</option>
           </select>
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-primary transition-colors" size={16} />
         </div>
@@ -470,37 +481,64 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
                   <span className="text-sm text-slate-600">{project.bidOpeningTime}</span>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-sm text-slate-600">
-                    {project.status === '进行中' ? '投标中' : (project.status === '已完成' ? '已开标' : project.status)}
-                  </span>
+                  {project.status === '进行中' || project.status === '放弃投标' ? (
+                    <select
+                      value={project.status}
+                      onChange={(e) => {
+                        const newStatus = e.target.value;
+                        setProjects(projects.map(p => p.id === project.id ? { ...p, status: newStatus } : p));
+                      }}
+                      className={`text-xs font-bold px-2 py-1 rounded-full border-none outline-none cursor-pointer transition-colors ${
+                        project.status === '进行中' 
+                          ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' 
+                          : 'bg-red-50 text-red-600 hover:bg-red-100'
+                      }`}
+                    >
+                      <option value="进行中">投标中</option>
+                      <option value="放弃投标">放弃投标</option>
+                    </select>
+                  ) : (
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
+                      project.status === '已完成' 
+                        ? 'bg-emerald-50 text-emerald-600' 
+                        : 'bg-slate-50 text-slate-600'
+                    }`}>
+                      {project.status === '已完成' ? '已开标' : project.status}
+                    </span>
+                  )}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex items-center justify-end gap-1">
                     <button 
                       onClick={() => onEnterWorkbench?.('preparation', { 
+                        ...project,
                         projectName: project.name, 
                         projectNumber: project.code,
                         isTenderUploaded: true 
                       })}
-                      className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all flex items-center gap-1"
+                      className="px-3 py-1.5 text-primary hover:bg-primary/5 rounded-lg transition-all flex items-center gap-1.5 group/btn"
                       title="进入工作台"
                     >
-                      <ExternalLink size={16} />
+                      <ExternalLink size={14} className="group-hover/btn:scale-110 transition-transform" />
                       <span className="text-xs font-bold">进入工作台</span>
                     </button>
+                    
+                    <div className="w-px h-4 bg-slate-200 mx-1" />
+                    
                     <button 
                       onClick={() => handleEditProject(project)}
-                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                       title="修改"
                     >
-                      <Edit size={16} />
+                      <Edit size={14} />
                     </button>
+
                     <button 
                       onClick={() => handleDeleteProject(project.id)}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                       title="删除"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </td>

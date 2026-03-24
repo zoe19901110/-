@@ -12,6 +12,7 @@ import {
   UploadCloud, 
   AlertTriangle, 
   History, 
+  Trash2,
   MoreHorizontal, 
   ChevronRight,
   Search,
@@ -523,7 +524,7 @@ const BidInspectionDetail: React.FC<BidInspectionDetailProps> = ({ onBack, proje
                 >
                   开始检查
                 </button>
-                <button className="p-1 text-slate-400 hover:text-primary"><MoreHorizontal size={18} /></button>
+                <button className="p-1 text-slate-400 hover:text-red-600 transition-colors" title="删除"><Trash2 size={18} /></button>
                 <ChevronRight className="text-slate-300" size={18} />
               </div>
             </div>

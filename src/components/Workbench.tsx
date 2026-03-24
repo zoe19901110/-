@@ -248,7 +248,15 @@ const Workbench: React.FC<WorkbenchProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-3 relative">
               <h2 className="text-2xl font-bold text-slate-900">{projectData.projectName}</h2>
-              <span className="px-2.5 py-0.5 rounded bg-blue-50 text-blue-500 text-xs font-medium">进行中</span>
+              <span className={`px-2.5 py-0.5 rounded text-xs font-medium ${
+                projectData.status === '进行中' 
+                  ? 'bg-blue-50 text-blue-500' 
+                  : projectData.status === '放弃投标'
+                    ? 'bg-red-50 text-red-500'
+                    : 'bg-emerald-50 text-emerald-500'
+              }`}>
+                {projectData.status === '进行中' ? '投标中' : (projectData.status === '已完成' ? '已开标' : projectData.status)}
+              </span>
               
               <div className="relative flex items-center gap-0">
                 <button 
@@ -1346,7 +1354,7 @@ const InspectionDetailView = ({ onBack, uploadedFiles }: { onBack: () => void, u
                 >
                   开始检查
                 </button>
-                <button className="p-1 text-slate-400 hover:text-primary"><MoreHorizontal size={18} /></button>
+                <button className="p-1 text-slate-400 hover:text-red-600 transition-colors" title="删除"><Trash2 size={18} /></button>
                 <ChevronRight className="text-slate-300" size={18} />
               </div>
             </div>

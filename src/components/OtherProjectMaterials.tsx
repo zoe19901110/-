@@ -14,6 +14,8 @@ import {
   ChevronLeft,
   Briefcase,
   User,
+  Edit3,
+  Trash2,
   MoreHorizontal
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -43,7 +45,8 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
         tenderer: 'XX市交通运输局',
         manager: '张伟',
         materialCount: 5,
-        lastUpdate: '2024-03-15'
+        lastUpdate: '2024-03-15',
+        hasMaterials: true
       },
       {
         id: '2',
@@ -52,7 +55,8 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
         tenderer: 'XX市大数据局',
         manager: '李芳',
         materialCount: 3,
-        lastUpdate: '2024-03-12'
+        lastUpdate: '2024-03-12',
+        hasMaterials: true
       },
       {
         id: '3',
@@ -60,8 +64,9 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
         code: 'ZB-2024-008',
         tenderer: 'XX市园林局',
         manager: '王强',
-        materialCount: 2,
-        lastUpdate: '2024-03-10'
+        materialCount: 0,
+        lastUpdate: '--',
+        hasMaterials: false
       }
     ]);
   }, [currentEnterprise]);
@@ -93,7 +98,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newFiles = Array.from(files).map(f => ({
+      const newFiles = Array.from(files).map((f: any) => ({
         file: f,
         name: f.name
       }));
@@ -182,10 +187,14 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                 <td className="px-6 py-4 text-right">
                   <button 
                     onClick={() => handleEnterDetail(project)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all shadow-sm shadow-primary/10"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                      project.hasMaterials 
+                        ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
+                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
                   >
-                    <Upload size={14} />
-                    上传/详情
+                    {project.hasMaterials ? <Edit3 size={14} /> : <Plus size={14} />}
+                    {project.hasMaterials ? '修改记录' : '新增记录'}
                   </button>
                 </td>
               </tr>
@@ -270,8 +279,8 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                       <button className="p-2 text-slate-400 hover:text-primary transition-colors" title="下载">
                         <Download size={16} />
                       </button>
-                      <button className="p-2 text-slate-400 hover:text-red-500 transition-colors" title="更多">
-                        <MoreHorizontal size={16} />
+                      <button className="p-2 text-slate-400 hover:text-red-500 transition-colors" title="删除">
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>

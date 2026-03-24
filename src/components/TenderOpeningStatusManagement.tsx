@@ -50,15 +50,15 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
   // Modal State
   const [isEditing, setIsEditing] = useState(true);
   const [openingRecords, setOpeningRecords] = useState([
-    { units: '某某建设集团有限公司', price: '¥1,210.5万', rank: '1', isWinner: true, isSelf: false },
-    { units: '中建某局有限公司', price: '¥1,250.0万', rank: '2', isWinner: false, isSelf: false },
-    { units: '省建工集团', price: '¥1,280.0万', rank: '3', isWinner: false, isSelf: false },
+    { units: '某某建设集团有限公司', price: 12105000, rank: '1', isWinner: true, isSelf: false },
+    { units: '中建某局有限公司', price: 12500000, rank: '2', isWinner: false, isSelf: false },
+    { units: '省建工集团', price: 12800000, rank: '3', isWinner: false, isSelf: false },
   ]);
   const [winningRecords, setWinningRecords] = useState([
-    { unit: '某某建设集团有限公司', amount: '¥1,210.5万', date: '2024-03-25', url: 'http://ggzy.example.com/...' },
+    { unit: '某某建设集团有限公司', amount: 12105000, date: '2024-03-25', url: 'http://ggzy.example.com/...' },
   ]);
   const [contractRecords, setContractRecords] = useState([
-    { id: 'HT-2024-001', name: '城市基础设施施工合同', date: '2024-04-05', amount: '¥1,180.0万', owner: '陈经理', status: '履行中' },
+    { id: 'HT-2024-001', name: '城市基础设施施工合同', date: '2024-04-05', amount: 11800000, owner: '陈经理', status: '履行中', fulfillmentDate: '2024-04-10' },
   ]);
   const [contractAttachments, setContractAttachments] = useState<Attachment[]>([
     { id: '1', name: '中标通知书.pdf', size: '1.2MB', type: 'pdf', date: '2024-03-25' },
@@ -84,6 +84,11 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
     } else if (field === 'isWinner' && value === false) {
       // If unmarking the winner, clear winning records
       setWinningRecords([]);
+    } else if (field === 'isSelf' && value === true) {
+      // If marking as self, unmark others
+      newRecords.forEach((r, i) => {
+        if (i !== index) r.isSelf = false;
+      });
     } else if (newRecords[index].isWinner && (field === 'units' || field === 'price')) {
       // If updating the name or price of the current winner, sync to winning records
       setWinningRecords([{
@@ -97,13 +102,13 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
     setOpeningRecords(newRecords);
   };
 
-  const updateWinning = (index: number, field: string, value: string) => {
+  const updateWinning = (index: number, field: string, value: any) => {
     const newRecords = [...winningRecords];
     (newRecords[index] as any)[field] = value;
     setWinningRecords(newRecords);
   };
 
-  const updateContract = (index: number, field: string, value: string) => {
+  const updateContract = (index: number, field: string, value: any) => {
     const newRecords = [...contractRecords];
     (newRecords[index] as any)[field] = value;
     setContractRecords(newRecords);
@@ -123,59 +128,107 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
 
   const [records, setRecords] = useState<any[]>([]);
 
+  const formatCurrency = (value: number | string) => {
+    if (typeof value === 'string') return value;
+    return new Intl.NumberFormat('zh-CN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
+  };
+
   React.useEffect(() => {
-    setRecords([
+    const rawRecords = [
       {
         id: '1',
+        projectCode: 'ZB-2024-001',
         projectName: `2024年智慧交通管理平台建设项目`,
         openingDate: '2024-03-20',
         result: '中标',
-        bidPrice: '¥4,450,000.00',
+        bidPrice: 4450000.00,
         competitors: 5,
         ranking: 1,
-        remarks: '技术分第一，商务分第二'
+        remarks: '技术分第一，商务分第二',
+        fulfillmentStatus: '履行中',
+        fulfillmentStartDate: '2024-04-01',
+        hasOpeningInfo: true
       },
       {
         id: '2',
+        projectCode: 'ZB-2024-005',
         projectName: `政务云扩容采购项目`,
         openingDate: '2024-02-28',
         result: '未中标',
-        bidPrice: '¥2,750,000.00',
+        bidPrice: 2750000.00,
         competitors: 8,
         ranking: 3,
-        remarks: '价格偏高，技术方案获优'
+        remarks: '价格偏高，技术方案获优',
+        fulfillmentStatus: '无需履行',
+        hasOpeningInfo: true
       },
       {
         id: '3',
+        projectCode: 'ZB-2024-008',
         projectName: `XX市智慧医疗信息系统`,
         openingDate: '2024-03-15',
         result: '中标',
-        bidPrice: '¥8,200,000.00',
+        bidPrice: 8200000.00,
         competitors: 4,
         ranking: 1,
-        remarks: '方案优势明显，价格适中'
+        remarks: '方案优势明显，价格适中',
+        fulfillmentStatus: '未开始',
+        hasOpeningInfo: true
       },
       {
         id: '4',
+        projectCode: 'ZB-2024-012',
         projectName: `工业园区污水处理自动化改造`,
         openingDate: '2024-03-05',
         result: '未中标',
-        bidPrice: '¥1,500,000.00',
+        bidPrice: 1500000.00,
         competitors: 12,
         ranking: 5,
-        remarks: '竞争激烈，价格分较低'
+        remarks: '竞争激烈，价格分较低',
+        fulfillmentStatus: '无需履行',
+        hasOpeningInfo: true
       },
       {
         id: '5',
+        projectCode: 'ZB-2024-015',
         projectName: `省图书馆数字化二期工程`,
         openingDate: '2024-01-25',
         result: '中标',
-        bidPrice: '¥3,100,000.00',
+        bidPrice: 3100000.00,
         competitors: 3,
         ranking: 1,
-        remarks: '唯一通过技术初审的单位'
+        remarks: '唯一通过技术初审的单位',
+        fulfillmentStatus: '已完成',
+        hasOpeningInfo: true
+      },
+      {
+        id: '6',
+        projectCode: 'ZB-2024-020',
+        projectName: `智慧园区二期弱电工程`,
+        openingDate: '2024-04-10',
+        result: '',
+        bidPrice: 0,
+        competitors: 0,
+        ranking: 0,
+        remarks: '',
+        fulfillmentStatus: '',
+        hasOpeningInfo: false
       }
-    ]);
+    ];
+
+    // Sort: Won first, then by date descending
+    const sortedRecords = [...rawRecords].sort((a, b) => {
+      if (a.hasOpeningInfo && !b.hasOpeningInfo) return -1;
+      if (!a.hasOpeningInfo && b.hasOpeningInfo) return 1;
+      if (a.result === '中标' && b.result !== '中标') return -1;
+      if (a.result !== '中标' && b.result === '中标') return 1;
+      return new Date(b.openingDate).getTime() - new Date(a.openingDate).getTime();
+    });
+
+    setRecords(sortedRecords);
   }, [currentEnterprise]);
 
   return (
@@ -235,9 +288,9 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
             <tr className="bg-slate-50/50 border-b border-slate-100">
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目名称</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">开标日期</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">结果</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">投标价</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">投标报价（元）</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">单位数量</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">合同履行状态</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">操作</th>
             </tr>
           </thead>
@@ -248,28 +301,45 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                 className="hover:bg-slate-50/50 transition-colors group"
               >
                 <td className="px-6 py-4">
-                  <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{record.projectName}</p>
-                  <p className="text-[10px] text-slate-400 mt-1 italic">{record.remarks}</p>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] text-slate-400`}>{record.projectCode}</span>
+                      {record.hasOpeningInfo && (
+                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                          record.result === '中标' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                        }`}>
+                          {record.result}
+                        </span>
+                      )}
+                    </div>
+                    <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{record.projectName}</p>
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-slate-600">
                   {record.openingDate}
                 </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                    record.result === '中标' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
-                  }`}>
-                    {record.result === '中标' ? <Trophy size={12} /> : <Frown size={12} />}
-                    {record.result}
-                  </span>
-                </td>
                 <td className="px-6 py-4 text-sm font-bold text-slate-700">
-                  {record.bidPrice}
+                  {record.hasOpeningInfo ? formatCurrency(record.bidPrice) : '--'}
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-sm text-slate-600">{record.competitors} 家单位</p>
-                    <p className="text-xs text-slate-400">排名: 第 {record.ranking} 名</p>
-                  </div>
+                  {record.hasOpeningInfo ? (
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm text-slate-600">{record.competitors} 家单位</p>
+                      <p className="text-xs text-slate-400">排名: 第 {record.ranking} 名</p>
+                    </div>
+                  ) : '--'}
+                </td>
+                <td className="px-6 py-4">
+                  {record.hasOpeningInfo ? (
+                    <div className="flex flex-col gap-0.5">
+                      <p className="text-xs font-bold text-slate-600">
+                        {record.fulfillmentStatus}
+                      </p>
+                      {record.fulfillmentStatus === '履行中' && record.fulfillmentStartDate && (
+                        <p className="text-[10px] text-slate-400">开始: {record.fulfillmentStartDate}</p>
+                      )}
+                    </div>
+                  ) : '--'}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <button 
@@ -277,10 +347,14 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                       setIsEditing(true);
                       setShowAddModal(true);
                     }}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all shadow-sm shadow-primary/10"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                      record.hasOpeningInfo 
+                        ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
+                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
                   >
-                    <Edit3 size={14} />
-                    登记/详情
+                    {record.hasOpeningInfo ? <Edit3 size={14} /> : <Plus size={14} />}
+                    {record.hasOpeningInfo ? '修改记录' : '新增记录'}
                   </button>
                 </td>
               </tr>
@@ -339,11 +413,11 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                     <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
                       <div className="grid grid-cols-2 gap-8">
                         <div className="space-y-1">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">关联项目</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">关联项目 <span className="text-red-500">*</span></p>
                           <p className="text-sm font-bold text-slate-900">2024年智慧交通管理平台建设项目</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">开标日期</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">开标日期 <span className="text-red-500">*</span></p>
                           <p className="text-sm font-bold text-slate-900">2024-03-20</p>
                         </div>
                       </div>
@@ -369,11 +443,11 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                           <table className="w-full text-left border-collapse">
                             <thead>
                               <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
-                                <th className="px-6 py-4">参标单位</th>
-                                <th className="px-6 py-4">投标报价</th>
-                                <th className="px-6 py-4">排名</th>
-                                <th className="px-6 py-4 text-center">是否中标</th>
-                                <th className="px-6 py-4 text-center">是否本单位</th>
+                                <th className="px-6 py-4">参标单位 <span className="text-red-500">*</span></th>
+                                <th className="px-6 py-4">投标报价（元） <span className="text-red-500">*</span></th>
+                                <th className="px-6 py-4">排名 <span className="text-red-500">*</span></th>
+                                <th className="px-6 py-4 text-center">是否中标 <span className="text-red-500">*</span></th>
+                                <th className="px-6 py-4 text-center">是否本单位 <span className="text-red-500">*</span></th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -397,13 +471,14 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                   <td className="px-6 py-4">
                                     {isEditing ? (
                                       <input 
+                                        type="number"
                                         value={row.price} 
-                                        onChange={(e) => updateOpening(i, 'price', e.target.value)}
+                                        onChange={(e) => updateOpening(i, 'price', parseFloat(e.target.value) || 0)}
                                         className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono"
-                                        placeholder="¥ 0.00"
+                                        placeholder="0.00"
                                       />
                                     ) : (
-                                      <span className="font-mono text-sm text-primary font-bold">{row.price || '--'}</span>
+                                      <span className="font-mono text-sm text-primary font-bold">{formatCurrency(row.price)}</span>
                                     )}
                                   </td>
                                   <td className="px-6 py-4">
@@ -423,10 +498,11 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                   <td className="px-6 py-4 text-center">
                                     {isEditing ? (
                                       <input 
-                                        type="checkbox"
+                                        type="radio"
+                                        name="isWinner"
                                         checked={row.isWinner}
-                                        onChange={(e) => updateOpening(i, 'isWinner', e.target.checked)}
-                                        className="size-4 rounded border-slate-300 text-primary focus:ring-primary"
+                                        onChange={() => updateOpening(i, 'isWinner', true)}
+                                        className="size-4 rounded-full border-slate-300 text-primary focus:ring-primary"
                                       />
                                     ) : (
                                       row.isWinner && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-bold">中标单位</span>
@@ -435,10 +511,11 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                   <td className="px-6 py-4 text-center">
                                     {isEditing ? (
                                       <input 
-                                        type="checkbox"
+                                        type="radio"
+                                        name="isSelf"
                                         checked={row.isSelf}
-                                        onChange={(e) => updateOpening(i, 'isSelf', e.target.checked)}
-                                        className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                        onChange={() => updateOpening(i, 'isSelf', true)}
+                                        className="size-4 rounded-full border-slate-300 text-blue-600 focus:ring-blue-500"
                                       />
                                     ) : (
                                       row.isSelf && <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-[10px] font-bold">是</span>
@@ -471,7 +548,7 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                             <thead>
                               <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
                                 <th className="px-6 py-4">中标单位</th>
-                                <th className="px-6 py-4">中标金额</th>
+                                <th className="px-6 py-4">中标金额（元）</th>
                                 <th className="px-6 py-4">通知书日期</th>
                                 <th className="px-6 py-4">公示链接</th>
                               </tr>
@@ -494,13 +571,14 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                   <td className="px-6 py-4">
                                     {isEditing ? (
                                       <input 
+                                        type="number"
                                         value={row.amount} 
-                                        onChange={(e) => updateWinning(i, 'amount', e.target.value)}
+                                        onChange={(e) => updateWinning(i, 'amount', parseFloat(e.target.value) || 0)}
                                         className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono"
-                                        placeholder="¥ 0.00"
+                                        placeholder="0.00"
                                       />
                                     ) : (
-                                      <span className="font-mono text-sm text-green-600 font-bold">{row.amount || '--'}</span>
+                                      <span className="font-mono text-sm text-green-600 font-bold">{formatCurrency(row.amount)}</span>
                                     )}
                                   </td>
                                   <td className="px-6 py-4">
@@ -534,16 +612,6 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                             </tbody>
                           </table>
                         </div>
-                        {isEditing && (
-                          <div className="flex justify-end">
-                            <button 
-                              onClick={() => setWinningRecords([...winningRecords, { unit: '', amount: '', date: '', url: '' }])}
-                              className="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-1"
-                            >
-                              <Plus size={14} /> 添加中标单位
-                            </button>
-                          </div>
-                        )}
                       </div>
                     </section>
 
@@ -561,8 +629,9 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                             <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
                               <th className="px-6 py-4">合同编号/名称</th>
                               <th className="px-6 py-4">签署日期</th>
-                              <th className="px-6 py-4">合同金额</th>
+                              <th className="px-6 py-4">合同金额（元）</th>
                               <th className="px-6 py-4">负责人</th>
+                              <th className="px-6 py-4">履行时间</th>
                               <th className="px-6 py-4">履行状态</th>
                             </tr>
                           </thead>
@@ -607,13 +676,14 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                 <td className="px-6 py-4">
                                   {isEditing ? (
                                     <input 
+                                      type="number"
                                       value={row.amount} 
-                                      onChange={(e) => updateContract(i, 'amount', e.target.value)}
+                                      onChange={(e) => updateContract(i, 'amount', parseFloat(e.target.value) || 0)}
                                       className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold"
-                                      placeholder="¥ 0.00"
+                                      placeholder="0.00"
                                     />
                                   ) : (
-                                    <span className="font-mono text-sm text-slate-900 font-bold">{row.amount || '--'}</span>
+                                    <span className="font-mono text-sm text-slate-900 font-bold">{formatCurrency(row.amount)}</span>
                                   )}
                                 </td>
                                 <td className="px-6 py-4">
@@ -626,6 +696,18 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                     />
                                   ) : (
                                     <span className="text-sm text-slate-600">{row.owner || '--'}</span>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4">
+                                  {isEditing ? (
+                                    <input 
+                                      type="date"
+                                      value={row.fulfillmentDate} 
+                                      onChange={(e) => updateContract(i, 'fulfillmentDate', e.target.value)}
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                                    />
+                                  ) : (
+                                    <span className="text-sm text-slate-600">{row.fulfillmentDate || '--'}</span>
                                   )}
                                 </td>
                                 <td className="px-6 py-4">
@@ -657,7 +739,7 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                       {isEditing && (
                         <div className="flex justify-end">
                           <button 
-                            onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: '', owner: '', status: '履行中' }])}
+                            onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: '', owner: '', status: '履行中', fulfillmentDate: '' }])}
                             className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
                           >
                             <Plus size={14} /> 添加合同

@@ -49,7 +49,9 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
       date: '2024-03-15',
       status: '已缴纳',
       refundStatus: '待退还',
-      vouchers: ['payment_voucher_01.pdf']
+      refundDate: '',
+      vouchers: ['payment_voucher_01.pdf'],
+      hasDepositInfo: true
     },
     {
       id: 'DEP-2024-002',
@@ -60,7 +62,22 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
       date: '2024-03-10',
       status: '已缴纳',
       refundStatus: '已退还',
-      vouchers: ['guarantee_letter.jpg']
+      refundDate: '2024-03-20',
+      vouchers: ['guarantee_letter.jpg'],
+      hasDepositInfo: true
+    },
+    {
+      id: 'DEP-2024-003',
+      projectName: 'XX市智慧医疗信息系统',
+      amount: '',
+      type: '',
+      bank: '',
+      date: '',
+      status: '',
+      refundStatus: '',
+      refundDate: '',
+      vouchers: [],
+      hasDepositInfo: false
     }
   ]);
 
@@ -70,7 +87,9 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
     type: '现金转账',
     bank: '',
     date: '',
+    remarks: '',
     refundStatus: '待退还',
+    refundDate: '',
     vouchers: [] as string[]
   });
 
@@ -83,7 +102,9 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
         type: deposit.type,
         bank: deposit.bank,
         date: deposit.date,
+        remarks: deposit.remarks || '',
         refundStatus: deposit.refundStatus,
+        refundDate: deposit.refundDate || '',
         vouchers: deposit.vouchers || [deposit.voucher].filter(Boolean)
       });
       setIsEditing(true);
@@ -95,7 +116,9 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
         type: '现金转账',
         bank: '',
         date: '',
+        remarks: '',
         refundStatus: '待退还',
+        refundDate: '',
         vouchers: []
       });
       setIsEditing(false);
@@ -170,7 +193,7 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
           <input 
             type="text" 
-            placeholder="搜索项目名称、银行、单号..."
+            placeholder="搜索项目名称、银行、项目编号..."
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -192,10 +215,10 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">单号/项目</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目编号/名称</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">金额/方式</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">缴纳银行/日期</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">状态</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">退还状态</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">操作</th>
             </tr>
           </thead>
@@ -203,46 +226,62 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
             {deposits.map((deposit) => (
               <tr key={deposit.id} className="hover:bg-slate-50/50 transition-colors group">
                 <td className="px-6 py-4">
-                  <p className="text-xs font-bold text-primary mb-1">{deposit.id}</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-xs font-bold text-primary">{deposit.id}</p>
+                    {deposit.hasDepositInfo && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-50 text-green-600">
+                        {deposit.status}
+                      </span>
+                    )}
+                  </div>
                   <p className="font-bold text-slate-900 group-hover:text-primary transition-colors max-w-xs truncate">{deposit.projectName}</p>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="space-y-1">
-                    <p className="text-sm font-bold text-slate-700">{deposit.amount}</p>
-                    <p className="text-xs text-slate-400">{deposit.type}</p>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Building2 size={14} className="text-slate-400" />
-                      {deposit.bank}
+                  {deposit.hasDepositInfo ? (
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-slate-700">{deposit.amount}</p>
+                      <p className="text-xs text-slate-400">{deposit.type}</p>
                     </div>
-                    <p className="text-xs text-slate-400">{deposit.date}</p>
-                  </div>
+                  ) : '--'}
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex flex-col gap-1.5">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-600 w-fit">
-                      <CheckCircle2 size={10} />
-                      {deposit.status}
-                    </span>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${
-                      deposit.refundStatus === '已退还' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'
-                    }`}>
-                      {deposit.refundStatus === '已退还' ? <CheckCircle2 size={10} /> : <Clock size={10} />}
-                      {deposit.refundStatus}
-                    </span>
-                  </div>
+                  {deposit.hasDepositInfo ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <Building2 size={14} className="text-slate-400" />
+                        {deposit.bank}
+                      </div>
+                      <p className="text-xs text-slate-400">{deposit.date}</p>
+                    </div>
+                  ) : '--'}
+                </td>
+                <td className="px-6 py-4">
+                  {deposit.hasDepositInfo ? (
+                    <div className="flex flex-col gap-1.5">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${
+                        deposit.refundStatus === '已退还' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'
+                      }`}>
+                        {deposit.refundStatus === '已退还' ? <CheckCircle2 size={10} /> : <Clock size={10} />}
+                        {deposit.refundStatus}
+                      </span>
+                      {deposit.refundStatus === '已退还' && deposit.refundDate && (
+                        <p className="text-[10px] text-slate-400">退还: {deposit.refundDate}</p>
+                      )}
+                    </div>
+                  ) : '--'}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
                     <button 
                       onClick={() => handleOpenModal(deposit)}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all shadow-sm shadow-primary/10"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                        deposit.hasDepositInfo 
+                          ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
+                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
                     >
-                      <Edit3 size={14} />
-                      登记/详情
+                      {deposit.hasDepositInfo ? <Edit3 size={14} /> : <Plus size={14} />}
+                      {deposit.hasDepositInfo ? '修改记录' : '新增记录'}
                     </button>
                   </div>
                 </td>
@@ -282,7 +321,7 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
                   <div className="space-y-8 flex-1 overflow-y-auto pr-4 custom-scrollbar flex flex-col">
                     <div className="grid grid-cols-2 gap-6">
                       <div className="col-span-2 space-y-1.5">
-                        <label className="text-xs font-bold text-slate-500 ml-1">关联投标项目 <span className="text-red-500">*</span></label>
+                        <label className="text-xs font-bold text-slate-500 ml-1">关联投标项目</label>
                         <div className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 shadow-sm">
                           {formData.projectName || '未关联项目'}
                         </div>
@@ -310,7 +349,7 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
                         </select>
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-500 ml-1">缴纳银行</label>
+                        <label className="text-xs font-bold text-slate-500 ml-1">缴纳银行 <span className="text-red-500">*</span></label>
                         <input 
                           type="text" 
                           value={formData.bank}
@@ -320,7 +359,7 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-500 ml-1">缴纳时间</label>
+                        <label className="text-xs font-bold text-slate-500 ml-1">缴纳时间 <span className="text-red-500">*</span></label>
                         <input 
                           type="date" 
                           value={formData.date}
@@ -330,45 +369,58 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
                       </div>
 
                       {isEditing && (
-                        <div className="col-span-2 space-y-1.5">
-                          <label className="text-xs font-bold text-slate-500 ml-1">退还状态</label>
-                          <div className="flex gap-8 px-2 py-2">
-                            {['待退还', '已退还'].map((status) => (
-                              <label key={status} className="flex items-center gap-2 cursor-pointer group">
-                                <div className="relative flex items-center justify-center">
-                                  <input
-                                    type="radio"
-                                    name="refundStatus"
-                                    checked={formData.refundStatus === status}
-                                    onChange={() => setFormData({...formData, refundStatus: status})}
-                                    className="sr-only"
-                                  />
-                                  <div className={`size-5 rounded-full border-2 transition-all ${
-                                    formData.refundStatus === status 
-                                      ? 'border-primary bg-primary' 
-                                      : 'border-slate-300 bg-white group-hover:border-slate-400'
-                                  }`}>
-                                    {formData.refundStatus === status && (
-                                      <div className="size-2 bg-white rounded-full" />
-                                    )}
+                        <>
+                          <div className="col-span-2 space-y-1.5">
+                            <label className="text-xs font-bold text-slate-500 ml-1">退还状态 <span className="text-red-500">*</span></label>
+                            <div className="flex gap-8 px-2 py-2">
+                              {['待退还', '已退还'].map((status) => (
+                                <label key={status} className="flex items-center gap-2 cursor-pointer group">
+                                  <div className="relative flex items-center justify-center">
+                                    <input
+                                      type="radio"
+                                      name="refundStatus"
+                                      checked={formData.refundStatus === status}
+                                      onChange={() => setFormData({...formData, refundStatus: status})}
+                                      className="sr-only"
+                                    />
+                                    <div className={`size-5 rounded-full border-2 transition-all ${
+                                      formData.refundStatus === status 
+                                        ? 'border-primary bg-primary' 
+                                        : 'border-slate-300 bg-white group-hover:border-slate-400'
+                                    }`}>
+                                      {formData.refundStatus === status && (
+                                        <div className="size-2 bg-white rounded-full" />
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                                <span className={`text-sm font-bold transition-colors ${
-                                  formData.refundStatus === status ? 'text-slate-900' : 'text-slate-500'
-                                }`}>
-                                  {status}
-                                </span>
-                              </label>
-                            ))}
+                                  <span className={`text-sm font-bold transition-colors ${
+                                    formData.refundStatus === status ? 'text-slate-900' : 'text-slate-500'
+                                  }`}>
+                                    {status}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
                           </div>
-                        </div>
+                          {formData.refundStatus === '已退还' && (
+                            <div className="col-span-2 space-y-1.5">
+                              <label className="text-xs font-bold text-slate-500 ml-1">退还时间 <span className="text-red-500">*</span></label>
+                              <input 
+                                type="date" 
+                                value={formData.refundDate}
+                                onChange={(e) => setFormData({...formData, refundDate: e.target.value})}
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" 
+                              />
+                            </div>
+                          )}
+                        </>
                       )}
 
                       <div className="col-span-2 space-y-4">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                           <div className="flex items-center gap-2 text-slate-900 font-bold">
                             <Paperclip size={18} className="text-primary" />
-                            <label className="text-sm">缴纳凭证附件</label>
+                            <label className="text-sm">缴纳凭证附件 <span className="text-red-500">*</span></label>
                           </div>
                           <div className="relative">
                             <input 
@@ -443,6 +495,17 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
                             </div>
                           )}
                         </div>
+                      </div>
+
+                      <div className="col-span-2 space-y-1.5">
+                        <label className="text-xs font-bold text-slate-500 ml-1">备注</label>
+                        <textarea 
+                          value={formData.remarks}
+                          onChange={(e) => setFormData({...formData, remarks: e.target.value})}
+                          rows={3}
+                          placeholder="请输入其他备注信息..."
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm resize-none"
+                        />
                       </div>
                     </div>
 
