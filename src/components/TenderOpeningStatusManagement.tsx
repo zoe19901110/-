@@ -32,6 +32,7 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface TenderOpeningStatusManagementProps {
   currentEnterprise?: { id: string; name: string };
+  projects?: any[];
 }
 
 interface Attachment {
@@ -42,10 +43,26 @@ interface Attachment {
   date: string;
 }
 
-const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps> = ({ currentEnterprise }) => {
+const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps> = ({ currentEnterprise, projects = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  const handleOpenModal = (record?: any) => {
+    // Check if the project is paused
+    const project = projects.find(p => p.code === record?.projectCode || p.name === record?.projectName);
+    if (project?.status === '放弃投标') {
+      alert('此项目已暂停');
+      return;
+    }
+    
+    if (record) {
+      setIsEditing(true);
+    } else {
+      setIsEditing(false);
+    }
+    setShowAddModal(true);
+  };
 
   // Modal State
   const [isEditing, setIsEditing] = useState(true);
@@ -311,6 +328,11 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                           {record.result}
                         </span>
                       )}
+                      {projects.find(p => p.code === record.projectCode || p.name === record.projectName)?.status === '放弃投标' && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500">
+                          已暂停
+                        </span>
+                      )}
                     </div>
                     <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{record.projectName}</p>
                   </div>
@@ -343,14 +365,13 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                 </td>
                 <td className="px-6 py-4 text-right">
                   <button 
-                    onClick={() => {
-                      setIsEditing(true);
-                      setShowAddModal(true);
-                    }}
+                    onClick={() => handleOpenModal(record)}
                     className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                      record.hasOpeningInfo 
-                        ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
-                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      projects.find(p => p.code === record.projectCode || p.name === record.projectName)?.status === '放弃投标'
+                        ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                        : record.hasOpeningInfo 
+                          ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
+                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
                     {record.hasOpeningInfo ? <Edit3 size={14} /> : <Plus size={14} />}

@@ -7,6 +7,7 @@ import {
   RefreshCw,
   AlertTriangle,
   MessageSquare,
+  ChevronLeft,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -15,9 +16,10 @@ interface BidParsingDetailProps {
   onBack: () => void;
   onViewReport?: () => void;
   currentEnterprise?: { id: string; name: string };
+  isPaused?: boolean;
 }
 
-const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, onViewReport, currentEnterprise }) => {
+const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, onViewReport, currentEnterprise, isPaused = false }) => {
   const enterpriseName = currentEnterprise?.name || '杭州某某科技有限公司';
   
   // Initialize files based on project
@@ -50,42 +52,75 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
       animate={{ opacity: 1, y: 0 }}
       className="space-y-8"
     >
-      <div className="flex items-center justify-between">
+      <div className={`flex items-center justify-between ${isPaused ? 'opacity-60' : ''}`}>
         <div className="flex items-center gap-4">
+          <button 
+            onClick={onBack} 
+            className="size-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:border-primary hover:text-primary transition-all shadow-sm group"
+            title="返回"
+          >
+            <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+          </button>
           <div className="flex flex-col">
             <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
               <span className="w-1.5 h-6 bg-primary rounded-full"></span>
-              招标文件上传
+              招标文件解析
+              {isPaused && (
+                <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] rounded-full font-bold">已暂停</span>
+              )}
             </h3>
-            <p className="text-xs text-slate-400 ml-3.5 mt-0.5">当前项目：{project.name}</p>
           </div>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50">
+        <button 
+          onClick={() => {
+            if (isPaused) {
+              alert('此项目已暂停');
+              return;
+            }
+          }}
+          className={`flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium transition-all ${isPaused ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:bg-slate-50'}`}
+        >
           <Download size={16} /> 导出报告
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-12 space-y-8">
-          <div className="bg-white rounded-xl p-8 border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-bold mb-6">招标文件上传</h3>
+          <div className={`bg-white rounded-xl p-8 border border-slate-100 shadow-sm ${isPaused ? 'opacity-75 grayscale-[0.5]' : ''}`}>
+            <h3 className="text-lg font-bold mb-6">招标文件解析</h3>
             {isImported ? (
               isParsed ? (
                 <div className="border-2 border-green-100 bg-green-50/30 rounded-xl p-12 flex flex-col items-center justify-center">
                   <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
                     <CheckCircle2 size={32} />
                   </div>
-                  <p className="font-black text-lg text-slate-900 mb-2">招标文件上传成功</p>
+                  <p className="font-black text-lg text-slate-900 mb-2">招标文件解析成功</p>
                   <p className="text-slate-500 text-sm mb-6">{latestFileDisplay}</p>
                   <div className="flex gap-4">
-                    <button onClick={onViewReport} className="bg-primary hover:bg-primary/90 text-white font-bold py-2.5 px-8 rounded-lg transition-all shadow-lg shadow-primary/20">
+                    <button 
+                      onClick={() => {
+                        if (isPaused) {
+                          alert('此项目已暂停');
+                          return;
+                        }
+                        onViewReport?.();
+                      }} 
+                      className={`bg-primary text-white font-bold py-2.5 px-8 rounded-lg transition-all shadow-lg shadow-primary/20 ${isPaused ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/90'}`}
+                    >
                       查看文件详情
                     </button>
                     <button 
-                      onClick={() => { setIsImported(false); setIsParsed(false); }}
-                      className="bg-white border border-slate-200 text-slate-600 font-bold py-2.5 px-8 rounded-lg transition-all hover:bg-slate-50"
+                      onClick={() => { 
+                        if (isPaused) {
+                          alert('此项目已暂停');
+                          return;
+                        }
+                        setIsImported(false); 
+                        setIsParsed(false); 
+                      }}
+                      className={`bg-white border border-slate-200 text-slate-600 font-bold py-2.5 px-8 rounded-lg transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`}
                     >
-                      重新上传
+                      重新解析
                     </button>
                   </div>
                 </div>
@@ -99,6 +134,10 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
                   <div className="flex gap-4">
                     <button 
                       onClick={() => {
+                        if (isPaused) {
+                          alert('此项目已暂停');
+                          return;
+                        }
                         setIsParsing(true);
                         setTimeout(() => {
                           setIsParsing(false);
@@ -106,35 +145,50 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
                           setFiles(prev => {
                             const newFiles = [...prev];
                             if (newFiles.length > 0) {
-                              newFiles[0].status = '上传成功';
+                              newFiles[0].status = '解析成功';
                             }
                             return newFiles;
                           });
                         }, 1000);
                       }}
-                      disabled={isParsing}
-                      className="bg-primary hover:bg-primary/90 text-white font-bold py-2.5 px-8 rounded-lg transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
+                      disabled={isParsing || isPaused}
+                      className={`bg-primary text-white font-bold py-2.5 px-8 rounded-lg transition-all shadow-lg shadow-primary/20 flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/90'}`}
                     >
-                      {isParsing ? <><RefreshCw className="animate-spin" size={18} /> 正在上传...</> : '确认上传'}
+                      {isParsing ? <><RefreshCw className="animate-spin" size={18} /> 正在解析...</> : '确认解析'}
                     </button>
                     <button 
-                      onClick={() => setIsImported(false)}
-                      className="bg-white border border-slate-200 text-slate-600 font-bold py-2.5 px-8 rounded-lg transition-all hover:bg-slate-50"
+                      onClick={() => {
+                        if (isPaused) {
+                          alert('此项目已暂停');
+                          return;
+                        }
+                        setIsImported(false);
+                      }}
+                      className={`bg-white border border-slate-200 text-slate-600 font-bold py-2.5 px-8 rounded-lg transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`}
                     >
-                      重新上传
+                      重新解析
                     </button>
                   </div>
                 </div>
               )
             ) : (
-              <div className="border-2 border-dashed border-slate-100 rounded-xl p-16 flex flex-col items-center justify-center hover:border-primary/50 transition-colors cursor-pointer group" onClick={() => setIsImported(true)}>
+              <div 
+                className={`border-2 border-dashed border-slate-100 rounded-xl p-16 flex flex-col items-center justify-center transition-colors group ${isPaused ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary/50 cursor-pointer'}`} 
+                onClick={() => {
+                  if (isPaused) {
+                    alert('此项目已暂停');
+                    return;
+                  }
+                  setIsImported(true);
+                }}
+              >
                 <div className="size-14 bg-blue-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <UploadCloud className="text-primary" size={28} />
                 </div>
-                <p className="font-bold mb-1">点击或拖拽招标文件至此处上传</p>
-                <p className="text-slate-400 text-sm mb-8">支持 PDF、Word、ZF、CF 格式，上传后可直接查看文件内容</p>
-                <button className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-10 rounded-lg transition-all shadow-lg shadow-primary/20">
-                  立即上传文件
+                <p className="font-bold mb-1">点击或拖拽招标文件至此处解析</p>
+                <p className="text-slate-400 text-sm mb-8">支持 PDF、Word、ZF、CF 格式，解析后可直接查看文件内容</p>
+                <button className={`bg-primary text-white font-bold py-3 px-10 rounded-lg transition-all shadow-lg shadow-primary/20 ${isPaused ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/90'}`}>
+                  立即解析文件
                 </button>
               </div>
             )}
@@ -172,8 +226,28 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
                     </td>
                     <td className="px-6 py-5 text-right">
                       <div className="flex justify-end gap-4">
-                        <button className="text-primary hover:text-primary/80 text-sm font-bold">查看</button>
-                        <button className="text-slate-400 hover:text-red-500 text-sm font-bold">删除</button>
+                        <button 
+                          onClick={() => {
+                            if (isPaused) {
+                              alert('此项目已暂停');
+                              return;
+                            }
+                          }}
+                          className={`text-sm font-bold transition-all ${isPaused ? 'text-slate-300 cursor-not-allowed' : 'text-primary hover:text-primary/80'}`}
+                        >
+                          查看
+                        </button>
+                        <button 
+                          onClick={() => {
+                            if (isPaused) {
+                              alert('此项目已暂停');
+                              return;
+                            }
+                          }}
+                          className={`text-sm font-bold transition-all ${isPaused ? 'text-slate-300 cursor-not-allowed' : 'text-slate-400 hover:text-red-500'}`}
+                        >
+                          删除
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -195,16 +269,26 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
             <div className="flex gap-3">
               <button 
                 onClick={() => {
+                  if (isPaused) {
+                    alert('此项目已暂停');
+                    return;
+                  }
                   setUseClarification(true);
                   setShowClarificationModal(false);
                 }}
-                className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-primary/20"
+                className={`flex-1 font-bold py-3 rounded-xl transition-all shadow-lg shadow-primary/20 ${isPaused ? 'bg-slate-300 text-white cursor-not-allowed' : 'bg-primary hover:bg-primary/90 text-white'}`}
               >
-                是，上传答疑文件
+                是，解析答疑文件
               </button>
               <button 
-                onClick={() => setShowClarificationModal(false)}
-                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition-all"
+                onClick={() => {
+                  if (isPaused) {
+                    alert('此项目已暂停');
+                    return;
+                  }
+                  setShowClarificationModal(false);
+                }}
+                className={`flex-1 font-bold py-3 rounded-xl transition-all ${isPaused ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
               >
                 否，维持原文件
               </button>

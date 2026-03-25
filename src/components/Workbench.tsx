@@ -64,7 +64,12 @@ import {
   Square,
   Circle,
   Eraser,
-  Play
+  Play,
+  Ban,
+  Wallet,
+  Medal,
+  Archive,
+  Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -78,14 +83,22 @@ interface WorkbenchProps {
   currentEnterprise: { id: string; name: string };
   uploadedFiles: Record<string, boolean>;
   setUploadedFiles: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  onUpdateProject?: (updatedProject: any) => void;
 }
 
-const ParsingReportView = ({ onBack, projectData }: { onBack: () => void, projectData: any }) => (
-  <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
+const ParsingReportView = ({ onBack, projectData, isPaused }: { onBack: () => void, projectData: any, isPaused: boolean }) => (
+  <div className={`bg-white p-8 rounded-xl shadow-sm border border-slate-100 ${isPaused ? 'opacity-75' : ''}`}>
     <button onClick={onBack} className="mb-4 flex items-center gap-2 text-slate-500 hover:text-primary">
       <ChevronLeft size={16} /> 返回
     </button>
-    <h2 className="text-2xl font-bold">解析报告</h2>
+    <div className="flex items-center justify-between mb-6">
+      <h2 className="text-2xl font-bold">解析报告</h2>
+      {isPaused && (
+        <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full flex items-center gap-1">
+          <Ban size={14} /> 此项目已暂停
+        </span>
+      )}
+    </div>
     <div className="mt-6 p-6 bg-slate-50 rounded-lg border border-slate-200">
       <h3 className="font-bold text-lg mb-4">项目核心信息</h3>
       <div className="grid grid-cols-2 gap-4">
@@ -108,7 +121,8 @@ const Workbench: React.FC<WorkbenchProps> = ({
   initialProjectData, 
   currentEnterprise,
   uploadedFiles,
-  setUploadedFiles
+  setUploadedFiles,
+  onUpdateProject
 }) => {
   const [currentPhase, setCurrentPhase] = useState<Phase>(initialPhase || 'preparation');
   const [subView, setSubView] = useState<SubView>('main');
@@ -152,8 +166,27 @@ const Workbench: React.FC<WorkbenchProps> = ({
     depositAmount: '¥ 500,000.00',
     collectionTime: '2023-12-25',
     tenderRequirements: '1. 资质要求：具备市政公用工程施工总承包一级及以上资质；\n2. 业绩要求：近三年内具有类似智慧交通项目业绩；\n3. 技术要求：支持国产化适配。',
-    otherRemarks: ''
+    otherRemarks: '',
+    status: '进行中'
   });
+
+  const isPaused = projectData.status === '放弃投标';
+
+  const handlePauseProject = () => {
+    if (window.confirm('确定要放弃该项目的投标吗？')) {
+      const newData = { ...projectData, status: '放弃投标' };
+      setProjectData(newData);
+      onUpdateProject?.(newData);
+    }
+  };
+
+  const handleRestartProject = () => {
+    if (window.confirm('确定要重启该项目的投标吗？')) {
+      const newData = { ...projectData, status: '进行中' };
+      setProjectData(newData);
+      onUpdateProject?.(newData);
+    }
+  };
 
   useEffect(() => {
     if (!initialProjectData) {
@@ -165,6 +198,10 @@ const Workbench: React.FC<WorkbenchProps> = ({
   }, [currentEnterprise.name, initialProjectData]);
 
   const handleProjectDataChange = (field: string, value: string) => {
+    if (isPaused) {
+      alert('此项目已暂停');
+      return;
+    }
     setProjectData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -248,14 +285,8 @@ const Workbench: React.FC<WorkbenchProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-3 relative">
               <h2 className="text-2xl font-bold text-slate-900">{projectData.projectName}</h2>
-              <span className={`px-2.5 py-0.5 rounded text-xs font-medium ${
-                projectData.status === '进行中' 
-                  ? 'bg-blue-50 text-blue-500' 
-                  : projectData.status === '放弃投标'
-                    ? 'bg-red-50 text-red-500'
-                    : 'bg-emerald-50 text-emerald-500'
-              }`}>
-                {projectData.status === '进行中' ? '投标中' : (projectData.status === '已完成' ? '已开标' : projectData.status)}
+              <span className="ml-3 px-3 py-1 bg-slate-100 text-slate-600 rounded text-sm font-bold">
+                {projectData.status === '进行中' ? '进行中' : (projectData.status === '已完成' ? '已开标' : (projectData.status === '放弃投标' ? '放弃投标' : projectData.status))}
               </span>
               
               <div className="relative flex items-center gap-0">
@@ -345,8 +376,15 @@ const Workbench: React.FC<WorkbenchProps> = ({
 
           <div className="flex items-center gap-3">
             <button 
-              onClick={() => setActiveRightTab(activeRightTab === 'resource-center' ? null : 'resource-center')}
+              onClick={() => {
+                if (isPaused) {
+                  alert('此项目已暂停');
+                  return;
+                }
+                setActiveRightTab(activeRightTab === 'resource-center' ? null : 'resource-center');
+              }}
               className={`px-6 py-2 border rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
+                isPaused ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed' :
                 activeRightTab === 'resource-center' 
                   ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20' 
                   : 'bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100'
@@ -354,10 +392,26 @@ const Workbench: React.FC<WorkbenchProps> = ({
             >
               <FolderOpen size={16} /> 资源中心
             </button>
-            <button className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors flex items-center gap-2">
+            <button 
+              onClick={() => {
+                if (isPaused) {
+                  alert('此项目已暂停');
+                  return;
+                }
+              }}
+              className={`px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
               <History size={16} /> 操作日志
             </button>
-            <button className="px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-2">
+            <button 
+              onClick={() => {
+                if (isPaused) {
+                  alert('此项目已暂停');
+                  return;
+                }
+              }}
+              className={`px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
               <Share2 size={16} /> 协作分享
             </button>
           </div>
@@ -473,10 +527,14 @@ const Workbench: React.FC<WorkbenchProps> = ({
               <React.Fragment key={phase.id}>
                 <div 
                   onClick={() => {
+                    if (isPaused) {
+                      alert('此项目已暂停');
+                      return;
+                    }
                     setCurrentPhase(phase.id as Phase);
                     setSubView('main');
                   }}
-                  className="flex flex-col items-center cursor-pointer group px-4"
+                  className={`flex flex-col items-center cursor-pointer group px-4 ${isPaused ? 'opacity-50' : ''}`}
                 >
                   <span className={`text-sm font-bold transition-all duration-300 mb-2 ${
                     isActive ? 'text-primary' : 'text-slate-400 group-hover:text-slate-600'
@@ -521,22 +579,23 @@ const Workbench: React.FC<WorkbenchProps> = ({
                   handleProjectDataChange={handleProjectDataChange}
                   uploadedFiles={uploadedFiles}
                   setUploadedFiles={setUploadedFiles}
+                  isPaused={isPaused}
                 />
               )}
-              {currentPhase === 'production' && <ProductionPhase onNavigate={handleStartProduction} onSelect={setSelectedCard} />}
-              {currentPhase === 'inspection' && <InspectionPhase onNavigate={() => setSubView('inspection-detail')} onSelect={setSelectedCard} />}
-              {currentPhase === 'archiving' && <ArchivingPhase onNavigate={() => setSubView('archive-register')} />}
+              {currentPhase === 'production' && <ProductionPhase onNavigate={handleStartProduction} onSelect={setSelectedCard} isPaused={isPaused} />}
+              {currentPhase === 'inspection' && <InspectionPhase onNavigate={() => setSubView('inspection-detail')} onSelect={setSelectedCard} isPaused={isPaused} />}
+              {currentPhase === 'archiving' && <ArchivingPhase onNavigate={() => setSubView('archive-register')} isPaused={isPaused} />}
             </div>
           ) : (
             <>
-              {subView === 'annotation-view' && <AnnotationView onBack={() => setSubView('main')} />}
-              {subView === 'key-info-view' && <KeyInfoView onBack={() => setSubView('main')} />}
-              {subView === 'qualification-view' && <QualificationView onBack={() => setSubView('main')} />}
-              {subView === 'risk-view' && <RiskView onBack={() => setSubView('main')} />}
-              {subView === 'file-production' && <FileProductionView onBack={() => setSubView('main')} />}
-              {subView === 'inspection-detail' && <InspectionDetailView onBack={() => setSubView('main')} uploadedFiles={uploadedFiles} />}
-              {subView === 'archive-register' && <ArchiveRegisterView onBack={() => setSubView('main')} />}
-              {subView === 'parsing-report' && <ParsingReportView onBack={() => setSubView('main')} projectData={projectData} />}
+              {subView === 'annotation-view' && <AnnotationView onBack={() => setSubView('main')} isPaused={isPaused} />}
+              {subView === 'key-info-view' && <KeyInfoView onBack={() => setSubView('main')} isPaused={isPaused} />}
+              {subView === 'qualification-view' && <QualificationView onBack={() => setSubView('main')} isPaused={isPaused} />}
+              {subView === 'risk-view' && <RiskView onBack={() => setSubView('main')} isPaused={isPaused} />}
+              {subView === 'file-production' && <FileProductionView onBack={() => setSubView('main')} isPaused={isPaused} />}
+              {subView === 'inspection-detail' && <InspectionDetailView onBack={() => setSubView('main')} uploadedFiles={uploadedFiles} isPaused={isPaused} />}
+              {subView === 'archive-register' && <ArchiveRegisterView onBack={() => setSubView('main')} isPaused={isPaused} />}
+              {subView === 'parsing-report' && <ParsingReportView onBack={() => setSubView('main')} projectData={projectData} isPaused={isPaused} />}
               {subView === 'bid-parsing' && (
                 <BidParsing 
                   onBack={() => setSubView('main')} 
@@ -725,12 +784,40 @@ const Workbench: React.FC<WorkbenchProps> = ({
                             </div>
 
                             <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button className="text-[10px] font-bold text-primary hover:underline">回复</button>
-                              <button className="text-[10px] font-bold text-slate-400 hover:text-red-500">删除</button>
+                              <button 
+                                onClick={() => {
+                                  if (isPaused) {
+                                    alert('此项目已暂停');
+                                    return;
+                                  }
+                                }}
+                                className={`text-[10px] font-bold text-primary hover:underline ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              >
+                                回复
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  if (isPaused) {
+                                    alert('此项目已暂停');
+                                    return;
+                                  }
+                                }}
+                                className={`text-[10px] font-bold text-slate-400 hover:text-red-500 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              >
+                                删除
+                              </button>
                             </div>
                           </div>
                         ))}
-                        <button className="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 text-xs font-black hover:border-primary hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => {
+                            if (isPaused) {
+                              alert('此项目已暂停');
+                              return;
+                            }
+                          }}
+                          className={`w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 text-xs font-black hover:border-primary hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
                           <Plus size={16} /> 添加新批注
                         </button>
                       </div>
@@ -740,7 +827,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
 
                 {activeRightTab === 'resource-center' && (
                   <div className="h-full flex flex-col bg-slate-50">
-                    <ResourceCenterView onBack={() => setActiveRightTab(null)} />
+                    <ResourceCenterView onBack={() => setActiveRightTab(null)} isPaused={isPaused} />
                   </div>
                 )}
 
@@ -1180,8 +1267,8 @@ const Workbench: React.FC<WorkbenchProps> = ({
   );
 };
 
-const FileProductionView = ({ onBack }: { onBack: () => void }) => (
-  <div className="space-y-8">
+const FileProductionView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => (
+  <div className={`space-y-8 ${isPaused ? 'opacity-75' : ''}`}>
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <button 
@@ -1197,8 +1284,33 @@ const FileProductionView = ({ onBack }: { onBack: () => void }) => (
         </h3>
       </div>
       <div className="flex gap-3">
-        <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50">多人协作</button>
-        <button className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90">导出标书</button>
+        {isPaused && (
+          <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full flex items-center gap-1 mr-2">
+            <Ban size={14} /> 此项目已暂停
+          </span>
+        )}
+        <button 
+          onClick={() => {
+            if (isPaused) {
+              alert('此项目已暂停');
+              return;
+            }
+          }}
+          className={`px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          多人协作
+        </button>
+        <button 
+          onClick={() => {
+            if (isPaused) {
+              alert('此项目已暂停');
+              return;
+            }
+          }}
+          className={`px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          导出标书
+        </button>
       </div>
     </div>
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm h-[600px] flex items-center justify-center text-slate-400">
@@ -1210,7 +1322,7 @@ const FileProductionView = ({ onBack }: { onBack: () => void }) => (
   </div>
 );
 
-const InspectionDetailView = ({ onBack, uploadedFiles }: { onBack: () => void, uploadedFiles: Record<string, boolean> }) => {
+const InspectionDetailView = ({ onBack, uploadedFiles, isPaused }: { onBack: () => void, uploadedFiles: Record<string, boolean>, isPaused: boolean }) => {
   const [showClarificationModal, setShowClarificationModal] = useState(false);
   const [useClarification, setUseClarification] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<any>(null);
@@ -1218,6 +1330,10 @@ const InspectionDetailView = ({ onBack, uploadedFiles }: { onBack: () => void, u
   const hasClarification = Object.keys(uploadedFiles || {}).some(key => key.startsWith('clar-doc-') && uploadedFiles[key]);
 
   const handleStartCheck = (version: any) => {
+    if (isPaused) {
+      alert('此项目已暂停');
+      return;
+    }
     setSelectedVersion(version);
     if (hasClarification && !useClarification) {
       setShowClarificationModal(true);
@@ -1228,7 +1344,7 @@ const InspectionDetailView = ({ onBack, uploadedFiles }: { onBack: () => void, u
   };
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 ${isPaused ? 'opacity-75' : ''}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button 
@@ -1243,6 +1359,11 @@ const InspectionDetailView = ({ onBack, uploadedFiles }: { onBack: () => void, u
             标书检查
           </h3>
         </div>
+        {isPaused && (
+          <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full flex items-center gap-1">
+            <Ban size={14} /> 此项目已暂停
+          </span>
+        )}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 bg-white rounded-xl p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
@@ -1297,7 +1418,15 @@ const InspectionDetailView = ({ onBack, uploadedFiles }: { onBack: () => void, u
               <p className="text-[11px] text-slate-400">招标文件 • 11.9 MB</p>
             </div>
           </div>
-          <div className="p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50/30 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-blue-50/50 transition-colors">
+          <div 
+            onClick={() => {
+              if (isPaused) {
+                alert('此项目已暂停');
+                return;
+              }
+            }}
+            className={`p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50/30 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-blue-50/50 transition-colors ${isPaused ? 'opacity-60 grayscale-[0.5]' : ''}`}
+          >
             <UploadCloud className="text-primary" size={24} />
             <div className="text-center">
               <p className="text-[13px] text-primary font-bold">点击上传控制价文件</p>
@@ -1311,8 +1440,26 @@ const InspectionDetailView = ({ onBack, uploadedFiles }: { onBack: () => void, u
         <div className="px-6 py-4 flex items-center justify-between border-b border-slate-50">
           <h3 className="font-bold text-sm">投标文件版本</h3>
           <div className="flex gap-2">
-            <button className="px-3 py-1.5 border border-slate-200 text-slate-600 rounded text-xs font-medium hover:bg-slate-50">+ 添加版本</button>
-            <button className="px-3 py-1.5 bg-primary text-white rounded text-xs font-medium hover:bg-primary/90 flex items-center gap-1">
+            <button 
+              onClick={() => {
+                if (isPaused) {
+                  alert('此项目已暂停');
+                  return;
+                }
+              }}
+              className={`px-3 py-1.5 border border-slate-200 text-slate-600 rounded text-xs font-medium hover:bg-slate-50 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              + 添加版本
+            </button>
+            <button 
+              onClick={() => {
+                if (isPaused) {
+                  alert('此项目已暂停');
+                  return;
+                }
+              }}
+              className={`px-3 py-1.5 bg-primary text-white rounded text-xs font-medium hover:bg-primary/90 flex items-center gap-1 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
               <CheckCircle2 size={14} /> 全部检查
             </button>
           </div>
@@ -1421,31 +1568,45 @@ const InspectionDetailView = ({ onBack, uploadedFiles }: { onBack: () => void, u
   );
 };
 
-const ResourceCenterView = ({ onBack }: { onBack: () => void }) => {
-  const [activeTab, setActiveTab] = useState<'receipts' | 'personnel' | 'performance'>('receipts');
+const ResourceCenterView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => {
+  const [activeTab, setActiveTab] = useState<'receipts' | 'personnel' | 'performance' | 'finance' | 'rewards' | 'honors' | 'materials' | 'disclosure' | 'credit' | 'qualifications'>('receipts');
 
   return (
-    <div className="flex flex-col h-full">
+    <div className={`flex flex-col h-full ${isPaused ? 'opacity-75' : ''}`}>
       <div className="p-8 border-b border-slate-100 bg-white">
-        <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
-          {[
-            { id: 'receipts', label: '项目回执', icon: Receipt },
-            { id: 'personnel', label: '人员库', icon: Users },
-            { id: 'performance', label: '业绩库', icon: Trophy },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                activeTab === tab.id 
-                  ? 'bg-white text-primary shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              <tab.icon size={18} />
-              {tab.label}
-            </button>
-          ))}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-wrap bg-slate-100 p-1 rounded-xl gap-1">
+            {[
+              { id: 'receipts', label: '项目回执', icon: Receipt },
+              { id: 'personnel', label: '人员库', icon: Users },
+              { id: 'performance', label: '业绩库', icon: Trophy },
+              { id: 'qualifications', label: '企业资质', icon: Building2 },
+              { id: 'finance', label: '企业财务', icon: Wallet },
+              { id: 'rewards', label: '奖惩信息', icon: Medal },
+              { id: 'honors', label: '荣誉奖项', icon: Award },
+              { id: 'materials', label: '投标所需材料', icon: Archive },
+              { id: 'disclosure', label: '信息披露', icon: Globe },
+              { id: 'credit', label: '信用评价', icon: ShieldCheck },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                  activeTab === tab.id 
+                    ? 'bg-white text-primary shadow-sm' 
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <tab.icon size={18} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          {isPaused && (
+            <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full flex items-center gap-1">
+              <Ban size={14} /> 此项目已暂停
+            </span>
+          )}
         </div>
       </div>
 
@@ -1481,9 +1642,7 @@ const ResourceCenterView = ({ onBack }: { onBack: () => void }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
-              { title: '标书费缴纳回执', status: '已上传', date: '2026-03-10', amount: '¥500.00', file: 'receipt_bid_fee.pdf' },
               { title: '投标保证金缴纳回执', status: '已上传', date: '2026-03-12', amount: '¥250,000.00', file: 'receipt_security_deposit.pdf' },
-              { title: '开标记录表回执', status: '待上传', date: '-', amount: '-', file: null },
             ].map((item, i) => (
               <div key={i} className="bg-white border border-slate-200 rounded-xl p-6 hover:shadow-md transition-all">
                 <div className="flex items-start justify-between mb-4">
@@ -1510,11 +1669,7 @@ const ResourceCenterView = ({ onBack }: { onBack: () => void }) => {
                         <button className="p-2 text-slate-400 hover:text-primary transition-colors" title="查看"><Eye size={18} /></button>
                         <button className="p-2 text-slate-400 hover:text-primary transition-colors" title="下载"><Download size={18} /></button>
                       </>
-                    ) : (
-                      <button className="px-3 py-1.5 bg-primary text-white text-xs font-bold rounded hover:bg-primary/90 flex items-center gap-1">
-                        <UploadCloud size={14} /> 立即上传
-                      </button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -1562,9 +1717,6 @@ const ResourceCenterView = ({ onBack }: { onBack: () => void }) => {
                   className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
-              <button className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 flex items-center gap-2">
-                <Plus size={16} /> 新增人员
-              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
@@ -1608,7 +1760,6 @@ const ResourceCenterView = ({ onBack }: { onBack: () => void }) => {
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button className="p-2 text-slate-400 hover:text-primary transition-colors"><Eye size={18} /></button>
-                          <button className="p-2 text-slate-400 hover:text-primary transition-colors"><Edit3 size={18} /></button>
                         </div>
                       </td>
                     </tr>
@@ -1691,14 +1842,36 @@ const ResourceCenterView = ({ onBack }: { onBack: () => void }) => {
             </div>
           </motion.div>
         )}
+
+        {['finance', 'rewards', 'honors', 'materials', 'disclosure', 'credit', 'qualifications'].includes(activeTab) && (
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-xl"
+          >
+            <div className="size-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 mb-4">
+              {activeTab === 'qualifications' && <Building2 size={32} />}
+              {activeTab === 'finance' && <Wallet size={32} />}
+              {activeTab === 'rewards' && <Medal size={32} />}
+              {activeTab === 'honors' && <Award size={32} />}
+              {activeTab === 'materials' && <Archive size={32} />}
+              {activeTab === 'disclosure' && <Globe size={32} />}
+              {activeTab === 'credit' && <ShieldCheck size={32} />}
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">暂无数据</h3>
+            <p className="text-sm text-slate-500">该模块内容正在建设中</p>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   </div>
 );
 };
 
-const ArchiveRegisterView = ({ onBack }: { onBack: () => void }) => (
-  <div className="space-y-8">
+const ArchiveRegisterView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => (
+  <div className={`space-y-8 ${isPaused ? 'opacity-75' : ''}`}>
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <button 
@@ -1713,17 +1886,34 @@ const ArchiveRegisterView = ({ onBack }: { onBack: () => void }) => (
           项目归档登记
         </h3>
       </div>
-      <button className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90">提交归档</button>
+      <div className="flex gap-3">
+        {isPaused && (
+          <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full flex items-center gap-1 mr-2">
+            <Ban size={14} /> 此项目已暂停
+          </span>
+        )}
+        <button 
+          onClick={() => {
+            if (isPaused) {
+              alert('此项目已暂停');
+              return;
+            }
+          }}
+          className={`px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          提交归档
+        </button>
+      </div>
     </div>
     <div className="bg-white rounded-xl p-8 border border-slate-100 shadow-sm">
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">中标单位</label>
-          <input type="text" className="w-full p-2 border border-slate-200 rounded-lg" placeholder="请输入中标单位全称" />
+          <input type="text" className="w-full p-2 border border-slate-200 rounded-lg" placeholder="请输入中标单位全称" disabled={isPaused} />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">中标金额 (万元)</label>
-          <input type="number" className="w-full p-2 border border-slate-200 rounded-lg" placeholder="0.00" />
+          <input type="number" className="w-full p-2 border border-slate-200 rounded-lg" placeholder="0.00" disabled={isPaused} />
         </div>
       </div>
     </div>
@@ -1731,7 +1921,7 @@ const ArchiveRegisterView = ({ onBack }: { onBack: () => void }) => (
 );
 
 
-const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRightTab, initialProjectData, isTenderUploaded, projectData, handleProjectDataChange, uploadedFiles, setUploadedFiles }: { 
+const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRightTab, initialProjectData, isTenderUploaded, projectData, handleProjectDataChange, uploadedFiles, setUploadedFiles, isPaused }: { 
   onNavigate: (view: SubView) => void, 
   onSelect: (id: string | null) => void,
   setActiveRightTab: (id: string | null) => void,
@@ -1741,7 +1931,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
   projectData: any,
   handleProjectDataChange: (field: string, value: string) => void,
   uploadedFiles: Record<string, boolean>,
-  setUploadedFiles: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  setUploadedFiles: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
+  isPaused: boolean
 }) => {
   const [isParsed, setIsParsed] = useState(!!initialProjectData);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -1884,9 +2075,15 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
             <p className="text-slate-400 text-sm mb-8">支持 PDF、Word、ZF、CF 格式，AI将自动识别关键信息并填充表单</p>
             
             <button 
-              onClick={handleStartAnalysis}
+              onClick={() => {
+                if (isPaused) {
+                  alert('此项目已暂停');
+                  return;
+                }
+                handleStartAnalysis();
+              }}
               disabled={isAnalyzing}
-              className={`px-10 py-4 bg-primary text-white rounded-full font-black text-lg shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-3 ${isAnalyzing ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`px-10 py-4 bg-primary text-white rounded-full font-black text-lg shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-3 ${isAnalyzing || isPaused ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               {isAnalyzing ? (
                 <>
@@ -1969,7 +2166,7 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
               </div>
             </div>
             <h5 className="text-lg font-black text-slate-900 mb-3">检查完成 查看检查结果</h5>
-            <p className="text-sm text-slate-400 leading-relaxed mb-8">上传招标文件后，系统将自动进行深度解析，提取关键信息并识别潜在风险。</p>
+            <p className="text-sm text-slate-400 leading-relaxed mb-8">解析招标文件后，系统将自动进行深度解析，提取关键信息并识别潜在风险。</p>
             
             <div className="w-full space-y-4 text-left">
               {[
@@ -1995,7 +2192,7 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
   }
 
   if (showParsingPage) {
-    return <BidParsing autoImported={isTenderUploaded} uploadedFiles={uploadedFiles} onBack={() => setShowParsingPage(false)} />;
+    return <BidParsing autoImported={isTenderUploaded} uploadedFiles={uploadedFiles} onBack={() => setShowParsingPage(false)} isPaused={isPaused} />;
   }
 
   return (
@@ -2011,17 +2208,16 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
             <span className="text-xs text-slate-400 font-medium italic">所有字段均可编辑</span>
             <button 
               onClick={() => {
+                if (isPaused) {
+                  alert('此项目已暂停');
+                  return;
+                }
                 // Mock save action
                 const btn = document.getElementById('save-btn');
                 if (btn) {
                   btn.innerHTML = '<span class="flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> 已保存</span>';
                   btn.classList.add('bg-green-500', 'text-white', 'border-green-500');
                   btn.classList.remove('bg-white', 'text-primary', 'border-primary/20');
-                  
-                  // Force a re-render by updating a dummy state or just relying on the existing projectData state
-                  // Since projectData is already in state, it should re-render automatically.
-                  // The issue might be that the header is using a different object or not observing the change.
-                  // Let's ensure the component re-renders.
                   
                   setTimeout(() => {
                     btn.innerHTML = '保存修改';
@@ -2031,7 +2227,7 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
                 }
               }}
               id="save-btn"
-              className="px-4 py-1.5 bg-white border border-primary/20 text-primary rounded-lg text-xs font-bold hover:bg-primary/5 transition-all"
+              className={`px-4 py-1.5 bg-white border border-primary/20 text-primary rounded-lg text-xs font-bold hover:bg-primary/5 transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               保存修改
             </button>
@@ -2045,7 +2241,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
               type="text" 
               value={projectData.projectName}
               onChange={(e) => handleProjectDataChange('projectName', e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+              disabled={isPaused}
+              className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
             />
           </div>
           <div className="space-y-1.5">
@@ -2054,7 +2251,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
               type="text" 
               value={projectData.projectNumber}
               onChange={(e) => handleProjectDataChange('projectNumber', e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+              disabled={isPaused}
+              className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
             />
           </div>
           <div className="space-y-1.5">
@@ -2063,7 +2261,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
               type="text" 
               value={projectData.openingTime}
               onChange={(e) => handleProjectDataChange('openingTime', e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+              disabled={isPaused}
+              className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
             />
           </div>
           <div className="space-y-1.5">
@@ -2072,7 +2271,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
               type="text" 
               value={projectData.tendererAndContact || projectData.tenderer}
               onChange={(e) => handleProjectDataChange('tendererAndContact', e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+              disabled={isPaused}
+              className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
             />
           </div>
           <div className="space-y-1.5">
@@ -2081,7 +2281,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
               type="text" 
               value={projectData.tenderAgentAndContact || projectData.tenderAgent}
               onChange={(e) => handleProjectDataChange('tenderAgentAndContact', e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+              disabled={isPaused}
+              className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
             />
           </div>
           <div className="space-y-1.5">
@@ -2090,7 +2291,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
               type="text" 
               value={projectData.depositAmount}
               onChange={(e) => handleProjectDataChange('depositAmount', e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+              disabled={isPaused}
+              className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
             />
           </div>
           <div className="space-y-1.5">
@@ -2099,7 +2301,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
               type="text" 
               value={projectData.collectionTime}
               onChange={(e) => handleProjectDataChange('collectionTime', e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+              disabled={isPaused}
+              className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
             />
           </div>
           <div className="space-y-1.5">
@@ -2108,7 +2311,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
               type="text" 
               value={projectData.depositDeadline}
               onChange={(e) => handleProjectDataChange('depositDeadline', e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+              disabled={isPaused}
+              className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
             />
           </div>
           <div className="space-y-1.5">
@@ -2117,7 +2321,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
               type="text" 
               value={projectData.openingLocation}
               onChange={(e) => handleProjectDataChange('openingLocation', e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+              disabled={isPaused}
+              className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
             />
           </div>
           <div className="col-span-2 space-y-1.5">
@@ -2125,8 +2330,9 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
             <textarea 
               value={projectData.tenderRequirements}
               onChange={(e) => handleProjectDataChange('tenderRequirements', e.target.value)}
+              disabled={isPaused}
               rows={4}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm resize-none"
+              className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm resize-none ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
             />
           </div>
           <div className="col-span-2 space-y-1.5">
@@ -2134,8 +2340,9 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
             <textarea 
               value={projectData.otherRemarks}
               onChange={(e) => handleProjectDataChange('otherRemarks', e.target.value)}
+              disabled={isPaused}
               rows={2}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm resize-none"
+              className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm resize-none ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
             />
           </div>
         </div>
@@ -2147,8 +2354,14 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
               准备阶段文件上传
             </h3>
             <button 
-              onClick={() => setClarificationRounds(prev => prev + 1)}
-              className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-xs font-bold hover:bg-primary/20 transition-all flex items-center gap-1.5"
+              onClick={() => {
+                if (isPaused) {
+                  alert('此项目已暂停');
+                  return;
+                }
+                setClarificationRounds(prev => prev + 1);
+              }}
+              className={`px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-xs font-bold hover:bg-primary/20 transition-all flex items-center gap-1.5 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <Plus size={14} />
               添加答疑环节
@@ -2169,6 +2382,10 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
                     <div 
                       key={cat.id} 
                       onClick={() => {
+                        if (isPaused) {
+                          alert('此项目已暂停');
+                          return;
+                        }
                         if (!isUploaded) {
                           startUploadFlow(cat);
                         } else {
@@ -2182,7 +2399,7 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
                         isUploaded 
                           ? 'bg-blue-50/50 border-blue-200 hover:border-blue-300' 
                           : 'bg-white border-slate-100 hover:border-primary/30 hover:shadow-md'
-                      }`}
+                      } ${isPaused ? 'opacity-60 grayscale-[0.5]' : ''}`}
                     >
                       <div className="flex items-center gap-3 mb-3">
                         <div className={`size-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${
@@ -2210,8 +2427,14 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
             {Array.from({ length: clarificationRounds }).map((_, index) => (
               <div key={index} className="bg-purple-50/30 p-6 rounded-2xl border border-purple-100 relative group/round">
                 <button 
-                  onClick={() => setClarificationRounds(prev => Math.max(0, prev - 1))}
-                  className="absolute top-4 right-4 text-slate-400 hover:text-red-500 opacity-0 group-hover/round:opacity-100 transition-opacity"
+                  onClick={() => {
+                    if (isPaused) {
+                      alert('此项目已暂停');
+                      return;
+                    }
+                    setClarificationRounds(prev => Math.max(0, prev - 1));
+                  }}
+                  className={`absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-opacity ${isPaused ? 'cursor-not-allowed' : 'opacity-0 group-hover/round:opacity-100'}`}
                 >
                   <Trash2 size={16} />
                 </button>
@@ -2230,6 +2453,10 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
                       <div 
                         key={cat.id} 
                         onClick={() => {
+                          if (isPaused) {
+                            alert('此项目已暂停');
+                            return;
+                          }
                           if (!isUploaded) {
                             startUploadFlow(cat);
                           } else {
@@ -2240,7 +2467,7 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
                           isUploaded 
                             ? 'bg-purple-100/50 border-purple-200 hover:border-purple-300' 
                             : 'bg-white border-purple-100/50 hover:border-purple-300 hover:shadow-md'
-                        }`}
+                        } ${isPaused ? 'opacity-60 grayscale-[0.5]' : ''}`}
                       >
                         <div className="flex items-center gap-3 mb-3">
                           <div className={`size-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${
@@ -2277,12 +2504,18 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
                   return (
                     <div 
                       key={cat.id} 
-                      onClick={() => handleToggleUpload(cat.id)}
+                      onClick={() => {
+                        if (isPaused) {
+                          alert('此项目已暂停');
+                          return;
+                        }
+                        handleToggleUpload(cat.id);
+                      }}
                       className={`p-4 rounded-2xl border transition-all group cursor-pointer ${
                         isUploaded 
                           ? 'bg-blue-50/50 border-blue-200 hover:border-blue-300' 
                           : 'bg-white border-slate-100 hover:border-primary/30 hover:shadow-md'
-                      }`}
+                      } ${isPaused ? 'opacity-60 grayscale-[0.5]' : ''}`}
                     >
                       <div className="flex items-center gap-3 mb-3">
                         <div className={`size-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${
@@ -2443,15 +2676,15 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
             <div className="size-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4 shadow-inner">
               <FileSearch size={24} className="text-white" />
             </div>
-            <h3 className="text-xl font-black mb-2">一键上传招标文件</h3>
+            <h3 className="text-xl font-black mb-2">一键解析招标文件</h3>
             <p className="text-blue-100 text-sm mb-6 leading-relaxed">
-              快速上传招标文件，系统将自动识别并关联至当前项目，方便后续查阅与管理。
+              快速解析招标文件，系统将自动识别并关联至当前项目，方便后续查阅与管理。
             </p>
             <button 
               onClick={() => setShowParsingPage(true)}
               className="w-full py-3 bg-white text-blue-600 rounded-xl font-black text-sm shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
             >
-              进入上传页面 <ArrowRight size={16} />
+              进入解析页面 <ArrowRight size={16} />
             </button>
           </div>
         </div>
@@ -2460,7 +2693,7 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
   );
 };
 
-const ProductionPhase = ({ onNavigate, onSelect }: { onNavigate: () => void, onSelect: (id: string | null) => void }) => {
+const ProductionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () => void, onSelect: (id: string | null) => void, isPaused: boolean }) => {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -2484,8 +2717,14 @@ const ProductionPhase = ({ onNavigate, onSelect }: { onNavigate: () => void, onS
           <h4 className="text-xl font-bold mb-3">文件制作</h4>
           <p className="text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem]">跳转至在线编辑器，进行投标文件正文编写，支持多人协同实时编辑。</p>
           <button 
-            onClick={onNavigate}
-            className="w-full py-3.5 bg-white text-primary font-bold rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
+            onClick={() => {
+              if (isPaused) {
+                alert('此项目已暂停');
+                return;
+              }
+              onNavigate();
+            }}
+            className={`w-full py-3.5 bg-white text-primary font-bold rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             立即开始 <ArrowRight size={16} />
           </button>
@@ -2507,7 +2746,16 @@ const ProductionPhase = ({ onNavigate, onSelect }: { onNavigate: () => void, onS
           </div>
           <h4 className="text-xl font-bold mb-3">{card.title}</h4>
           <p className="text-slate-400 text-sm mb-10 leading-relaxed min-h-[4.5rem]">{card.desc}</p>
-          <button className="mt-auto w-full py-3.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-primary hover:text-primary transition-all">
+          <button 
+            onClick={() => {
+              if (isPaused) {
+                alert('此项目已暂停');
+                return;
+              }
+              onNavigate();
+            }}
+            className={`mt-auto w-full py-3.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-primary hover:text-primary transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
             {card.btn}
           </button>
         </div>
@@ -2517,7 +2765,7 @@ const ProductionPhase = ({ onNavigate, onSelect }: { onNavigate: () => void, onS
   );
 };
 
-const InspectionPhase = ({ onNavigate, onSelect }: { onNavigate: () => void, onSelect: (id: string | null) => void }) => (
+const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () => void, onSelect: (id: string | null) => void, isPaused: boolean }) => (
   <div className="space-y-8">
     <div className="flex items-center justify-between mb-4">
       <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
@@ -2532,7 +2780,15 @@ const InspectionPhase = ({ onNavigate, onSelect }: { onNavigate: () => void, onS
         </div>
         <h4 className="text-xl font-bold mb-3">保证金回执上传</h4>
         <p className="text-slate-400 text-sm mb-10 leading-relaxed min-h-[4.5rem]">上传保证金缴纳回执，确保投标资格有效性。</p>
-        <button className="mt-auto w-full py-3.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-primary hover:text-primary transition-all">
+        <button 
+          onClick={() => {
+            if (isPaused) {
+              alert('此项目已暂停');
+              return;
+            }
+          }}
+          className={`mt-auto w-full py-3.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-primary hover:text-primary transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
           立即上传
         </button>
       </div>
@@ -2550,12 +2806,18 @@ const InspectionPhase = ({ onNavigate, onSelect }: { onNavigate: () => void, onS
         </div>
         <h4 className="text-xl font-bold mb-3">标书检查</h4>
         <p className="text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem]">系统将自动扫描标书完整性、雷同性及格式规范，确保投标文件的有效性，降低废标风险。</p>
-        <button 
-          onClick={onNavigate}
-          className="mt-auto w-full py-3.5 bg-white text-primary font-bold rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
-        >
-          开始检查 <ArrowRight size={16} />
-        </button>
+          <button 
+            onClick={() => {
+              if (isPaused) {
+                alert('此项目已暂停');
+                return;
+              }
+              onNavigate();
+            }}
+            className={`mt-auto w-full py-3.5 bg-white text-primary font-bold rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            开始检查 <ArrowRight size={16} />
+          </button>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl p-8 hover:shadow-lg transition-all group cursor-pointer flex flex-col">
@@ -2564,7 +2826,15 @@ const InspectionPhase = ({ onNavigate, onSelect }: { onNavigate: () => void, onS
         </div>
         <h4 className="text-xl font-bold mb-3">标书查重</h4>
         <p className="text-slate-400 text-sm mb-10 leading-relaxed min-h-[4.5rem]">对标书内容进行深度查重分析，自动识别重复段落，有效降低废标风险。</p>
-        <button className="mt-auto w-full py-3.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-primary hover:text-primary transition-all">
+        <button 
+          onClick={() => {
+            if (isPaused) {
+              alert('此项目已暂停');
+              return;
+            }
+          }}
+          className={`mt-auto w-full py-3.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-primary hover:text-primary transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
           开始检测
         </button>
       </div>
@@ -2575,7 +2845,15 @@ const InspectionPhase = ({ onNavigate, onSelect }: { onNavigate: () => void, onS
         </div>
         <h4 className="text-xl font-bold mb-3">模拟开标</h4>
         <p className="text-slate-400 text-sm mb-10 leading-relaxed min-h-[4.5rem]">模拟线上开标流程，提前熟悉系统操作，进行数字证书（CA）验证及加解密测试，确保正式开标顺利进行。</p>
-        <button className="mt-auto w-full py-3.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-primary hover:text-primary transition-all">
+        <button 
+          onClick={() => {
+            if (isPaused) {
+              alert('此项目已暂停');
+              return;
+            }
+          }}
+          className={`mt-auto w-full py-3.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-primary hover:text-primary transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
           进入模拟
         </button>
       </div>
@@ -2583,7 +2861,7 @@ const InspectionPhase = ({ onNavigate, onSelect }: { onNavigate: () => void, onS
   </div>
 );
 
-const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
+const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPaused: boolean }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [openingRecords, setOpeningRecords] = useState([
     { name: '城市基础设施二期项目', time: '2023-12-20', loc: '市公共资源交易中心', units: '5家', price: '¥1,210.5万', rank: '1' },
@@ -2637,23 +2915,42 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
         </h3>
         <div className="flex gap-3">
           <button 
-            className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all flex items-center gap-2"
+            onClick={() => {
+              if (isPaused) {
+                alert('此项目已暂停');
+                return;
+              }
+              // Export logic
+            }}
+            className={`px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Download size={16} />
             导出记录
           </button>
           {!isEditing ? (
             <button 
-              onClick={() => setIsEditing(true)}
-              className="px-4 py-2 border border-primary text-primary rounded-lg text-sm font-bold hover:bg-primary/5 transition-all flex items-center gap-2"
+              onClick={() => {
+                if (isPaused) {
+                  alert('此项目已暂停');
+                  return;
+                }
+                setIsEditing(true);
+              }}
+              className={`px-4 py-2 border border-primary text-primary rounded-lg text-sm font-bold hover:bg-primary/5 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <Edit3 size={16} />
               修改记录
             </button>
           ) : (
             <button 
-              onClick={handleSave}
-              className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2"
+              onClick={() => {
+                if (isPaused) {
+                  alert('此项目已暂停');
+                  return;
+                }
+                handleSave();
+              }}
+              className={`px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <Check size={16} />
               保存全部
@@ -2686,7 +2983,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.units} 
                           onChange={(e) => updateOpening(i, 'units', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="text-sm text-slate-600">{row.units}</span>
@@ -2697,7 +2995,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.price} 
                           onChange={(e) => updateOpening(i, 'price', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="font-mono text-sm text-primary font-bold">{row.price}</span>
@@ -2708,7 +3007,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.rank} 
                           onChange={(e) => updateOpening(i, 'rank', e.target.value)}
-                          className="w-16 border border-slate-200 rounded px-2 py-1 text-sm"
+                          disabled={isPaused}
+                          className={`w-16 border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.rank === '1' ? 'bg-yellow-50 text-yellow-600' : 'bg-slate-100 text-slate-500'}`}>
@@ -2747,7 +3047,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.unit} 
                           onChange={(e) => updateWinning(i, 'unit', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="font-bold text-slate-900 text-sm">{row.unit}</span>
@@ -2758,7 +3059,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.amount} 
                           onChange={(e) => updateWinning(i, 'amount', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="font-mono text-sm text-green-600 font-bold">{row.amount}</span>
@@ -2769,7 +3071,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.date} 
                           onChange={(e) => updateWinning(i, 'date', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="text-sm text-slate-600">{row.date}</span>
@@ -2780,7 +3083,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.url} 
                           onChange={(e) => updateWinning(i, 'url', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-xs text-primary"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-xs text-primary ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <a href="#" className="text-primary hover:underline text-xs flex items-center gap-1">
@@ -2821,14 +3125,16 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                           <input 
                             value={row.name} 
                             onChange={(e) => updateContract(i, 'name', e.target.value)}
+                            disabled={isPaused}
                             placeholder="合同名称"
-                            className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-bold"
+                            className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-bold ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                           />
                           <input 
                             value={row.id} 
                             onChange={(e) => updateContract(i, 'id', e.target.value)}
+                            disabled={isPaused}
                             placeholder="合同编号"
-                            className="w-full border border-slate-200 rounded px-2 py-1 text-[10px]"
+                            className={`w-full border border-slate-200 rounded px-2 py-1 text-[10px] ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                           />
                         </div>
                       ) : (
@@ -2843,7 +3149,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.date} 
                           onChange={(e) => updateContract(i, 'date', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="text-sm text-slate-600">{row.date}</span>
@@ -2854,7 +3161,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.amount} 
                           onChange={(e) => updateContract(i, 'amount', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="font-mono text-sm text-slate-900 font-bold">{row.amount}</span>
@@ -2865,7 +3173,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.owner} 
                           onChange={(e) => updateContract(i, 'owner', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="text-sm text-slate-600">{row.owner}</span>
@@ -2876,7 +3185,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <select 
                           value={row.status} 
                           onChange={(e) => updateContract(i, 'status', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-xs"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-xs ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         >
                           <option>履行中</option>
                           <option>已完成</option>
@@ -2919,7 +3229,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.id} 
                           onChange={(e) => updateArchive(i, 'id', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="font-mono text-sm text-slate-900 font-bold">{row.id}</span>
@@ -2930,7 +3241,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.date} 
                           onChange={(e) => updateArchive(i, 'date', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="text-sm text-slate-600">{row.date}</span>
@@ -2941,7 +3253,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.loc} 
                           onChange={(e) => updateArchive(i, 'loc', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="text-sm text-slate-600">{row.loc}</span>
@@ -2952,7 +3265,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
                         <input 
                           value={row.person} 
                           onChange={(e) => updateArchive(i, 'person', e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="text-sm text-slate-600">{row.person}</span>
@@ -2969,8 +3283,8 @@ const ArchivingPhase = ({ onNavigate }: { onNavigate: () => void }) => {
   );
 };
 
-const AnnotationView = ({ onBack }: { onBack: () => void }) => (
-  <div className="h-[calc(100vh-200px)] flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+const AnnotationView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => (
+  <div className={`h-[calc(100vh-200px)] flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm ${isPaused ? 'opacity-75' : ''}`}>
     <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
       <div className="flex items-center gap-4">
         <button onClick={onBack} className="size-8 flex items-center justify-center hover:bg-slate-200 rounded-full transition-colors text-slate-600">
@@ -2982,10 +3296,31 @@ const AnnotationView = ({ onBack }: { onBack: () => void }) => (
         </h3>
       </div>
       <div className="flex items-center gap-2">
-        <button className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2">
+        {isPaused && (
+          <span className="px-3 py-1 bg-red-50 text-red-600 text-[10px] font-bold rounded-full flex items-center gap-1 mr-2">
+            <Ban size={12} /> 此项目已暂停
+          </span>
+        )}
+        <button 
+          onClick={() => {
+            if (isPaused) {
+              alert('此项目已暂停');
+              return;
+            }
+          }}
+          className={`px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
           <Download size={14} /> 导出批注
         </button>
-        <button className="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20">
+        <button 
+          onClick={() => {
+            if (isPaused) {
+              alert('此项目已暂停');
+              return;
+            }
+          }}
+          className={`px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
           <Share2 size={14} /> 协作分享
         </button>
       </div>
@@ -3083,7 +3418,15 @@ const AnnotationView = ({ onBack }: { onBack: () => void }) => (
               <div className={`absolute -left-px top-4 w-1 h-8 rounded-r-full ${note.type === 'technical' ? 'bg-blue-500' : 'bg-orange-500'}`}></div>
             </div>
           ))}
-          <button className="w-full py-3 border-2 border-dashed border-slate-100 rounded-xl text-slate-400 text-[10px] font-black hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2">
+          <button 
+            onClick={() => {
+              if (isPaused) {
+                alert('此项目已暂停');
+                return;
+              }
+            }}
+            className={`w-full py-3 border-2 border-dashed border-slate-100 rounded-xl text-slate-400 text-[10px] font-black hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
             <Plus size={14} /> 添加新批注
           </button>
         </div>
@@ -3092,8 +3435,8 @@ const AnnotationView = ({ onBack }: { onBack: () => void }) => (
   </div>
 );
 
-const KeyInfoView = ({ onBack }: { onBack: () => void }) => (
-  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+const KeyInfoView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => (
+  <div className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm ${isPaused ? 'opacity-75' : ''}`}>
     <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
       <div className="flex items-center gap-4">
         <button onClick={onBack} className="size-10 flex items-center justify-center hover:bg-slate-200 rounded-full transition-colors text-slate-600">
@@ -3101,6 +3444,11 @@ const KeyInfoView = ({ onBack }: { onBack: () => void }) => (
         </button>
         <h3 className="text-xl font-bold text-slate-900">关键信息提取</h3>
       </div>
+      {isPaused && (
+        <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full flex items-center gap-1">
+          <Ban size={14} /> 此项目已暂停
+        </span>
+      )}
     </div>
     <div className="p-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -3149,8 +3497,8 @@ const KeyInfoView = ({ onBack }: { onBack: () => void }) => (
   </div>
 );
 
-const QualificationView = ({ onBack }: { onBack: () => void }) => (
-  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+const QualificationView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => (
+  <div className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm ${isPaused ? 'opacity-75' : ''}`}>
     <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
       <div className="flex items-center gap-4">
         <button onClick={onBack} className="size-10 flex items-center justify-center hover:bg-slate-200 rounded-full transition-colors text-slate-600">
@@ -3158,6 +3506,11 @@ const QualificationView = ({ onBack }: { onBack: () => void }) => (
         </button>
         <h3 className="text-xl font-bold text-slate-900">资格审查详情</h3>
       </div>
+      {isPaused && (
+        <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full flex items-center gap-1">
+          <Ban size={14} /> 此项目已暂停
+        </span>
+      )}
     </div>
     <div className="p-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -3203,7 +3556,15 @@ const QualificationView = ({ onBack }: { onBack: () => void }) => (
               <p className="text-xs text-slate-400 leading-relaxed">
                 目前尚缺“安全生产许可证”的匹配依据，请尽快从企业资料库中同步或手动上传。
               </p>
-              <button className="w-full py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-100 transition-all">
+              <button 
+                onClick={() => {
+                  if (isPaused) {
+                    alert('此项目已暂停');
+                    return;
+                  }
+                }}
+                className={`w-full py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-100 transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
                 同步资料库
               </button>
             </div>
@@ -3214,8 +3575,8 @@ const QualificationView = ({ onBack }: { onBack: () => void }) => (
   </div>
 );
 
-const RiskView = ({ onBack }: { onBack: () => void }) => (
-  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+const RiskView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => (
+  <div className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm ${isPaused ? 'opacity-75' : ''}`}>
     <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
       <div className="flex items-center gap-4">
         <button onClick={onBack} className="size-10 flex items-center justify-center hover:bg-slate-200 rounded-full transition-colors text-slate-600">
@@ -3223,6 +3584,11 @@ const RiskView = ({ onBack }: { onBack: () => void }) => (
         </button>
         <h3 className="text-xl font-bold text-slate-900">风险预警报告</h3>
       </div>
+      {isPaused && (
+        <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full flex items-center gap-1">
+          <Ban size={14} /> 此项目已暂停
+        </span>
+      )}
     </div>
     <div className="p-8">
       <div className="space-y-8">
@@ -3242,7 +3608,15 @@ const RiskView = ({ onBack }: { onBack: () => void }) => (
                   <span className={`text-xs font-black uppercase tracking-widest ${risk.color}`}>风险等级：{risk.level}</span>
                 </div>
               </div>
-              <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
+              <button 
+                onClick={() => {
+                  if (isPaused) {
+                    alert('此项目已暂停');
+                    return;
+                  }
+                }}
+                className={`px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
                 生成答疑函
               </button>
             </div>

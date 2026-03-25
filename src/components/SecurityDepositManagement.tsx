@@ -30,9 +30,10 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface SecurityDepositManagementProps {
   currentEnterprise?: { id: string; name: string };
+  projects?: any[];
 }
 
-const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ currentEnterprise }) => {
+const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ currentEnterprise, projects = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [selectedDeposit, setSelectedDeposit] = useState<any>(null);
@@ -43,6 +44,7 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
     {
       id: 'DEP-2024-001',
       projectName: '2024年智慧交通管理平台建设项目',
+      projectCode: 'ZB-2024-001',
       amount: '¥ 200,000.00',
       type: '现金转账',
       bank: '中国工商银行北京分行',
@@ -56,6 +58,7 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
     {
       id: 'DEP-2024-002',
       projectName: '政务云扩容采购项目',
+      projectCode: 'ZB-2024-005',
       amount: '¥ 150,000.00',
       type: '银行保函',
       bank: '招商银行上海支行',
@@ -69,6 +72,7 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
     {
       id: 'DEP-2024-003',
       projectName: 'XX市智慧医疗信息系统',
+      projectCode: 'ZB-2024-008',
       amount: '',
       type: '',
       bank: '',
@@ -94,6 +98,13 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
   });
 
   const handleOpenModal = (deposit?: any) => {
+    // Check if the project is paused
+    const project = projects.find(p => p.code === deposit?.projectCode || p.name === deposit?.projectName);
+    if (project?.status === '放弃投标') {
+      alert('项目已放弃投标，无法操作');
+      return;
+    }
+
     if (deposit) {
       setSelectedDeposit(deposit);
       setFormData({
@@ -223,70 +234,82 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {deposits.map((deposit) => (
-              <tr key={deposit.id} className="hover:bg-slate-50/50 transition-colors group">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-xs font-bold text-primary">{deposit.id}</p>
-                    {deposit.hasDepositInfo && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-50 text-green-600">
-                        {deposit.status}
-                      </span>
-                    )}
-                  </div>
-                  <p className="font-bold text-slate-900 group-hover:text-primary transition-colors max-w-xs truncate">{deposit.projectName}</p>
-                </td>
-                <td className="px-6 py-4">
-                  {deposit.hasDepositInfo ? (
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-slate-700">{deposit.amount}</p>
-                      <p className="text-xs text-slate-400">{deposit.type}</p>
-                    </div>
-                  ) : '--'}
-                </td>
-                <td className="px-6 py-4">
-                  {deposit.hasDepositInfo ? (
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Building2 size={14} className="text-slate-400" />
-                        {deposit.bank}
-                      </div>
-                      <p className="text-xs text-slate-400">{deposit.date}</p>
-                    </div>
-                  ) : '--'}
-                </td>
-                <td className="px-6 py-4">
-                  {deposit.hasDepositInfo ? (
-                    <div className="flex flex-col gap-1.5">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${
-                        deposit.refundStatus === '已退还' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'
-                      }`}>
-                        {deposit.refundStatus === '已退还' ? <CheckCircle2 size={10} /> : <Clock size={10} />}
-                        {deposit.refundStatus}
-                      </span>
-                      {deposit.refundStatus === '已退还' && deposit.refundDate && (
-                        <p className="text-[10px] text-slate-400">退还: {deposit.refundDate}</p>
+            {deposits.map((deposit) => {
+              const project = projects.find(p => p.code === deposit.projectCode || p.name === deposit.projectName);
+              const isPaused = project?.status === '放弃投标';
+
+              return (
+                <tr key={deposit.id} className={`hover:bg-slate-50/50 transition-colors group ${isPaused ? 'opacity-60' : ''}`}>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-xs font-bold text-primary">{deposit.id}</p>
+                      {deposit.hasDepositInfo && (
+                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-50 text-green-600`}>
+                          {deposit.status}
+                        </span>
+                      )}
+                      {isPaused && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500">
+                          已暂停
+                        </span>
                       )}
                     </div>
-                  ) : '--'}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button 
-                      onClick={() => handleOpenModal(deposit)}
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                        deposit.hasDepositInfo 
-                          ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
-                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      {deposit.hasDepositInfo ? <Edit3 size={14} /> : <Plus size={14} />}
-                      {deposit.hasDepositInfo ? '修改记录' : '新增记录'}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                    <p className="font-bold text-slate-900 group-hover:text-primary transition-colors max-w-xs truncate">{deposit.projectName}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    {deposit.hasDepositInfo ? (
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold text-slate-700">{deposit.amount}</p>
+                        <p className="text-xs text-slate-400">{deposit.type}</p>
+                      </div>
+                    ) : '--'}
+                  </td>
+                  <td className="px-6 py-4">
+                    {deposit.hasDepositInfo ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                          <Building2 size={14} className="text-slate-400" />
+                          {deposit.bank}
+                        </div>
+                        <p className="text-xs text-slate-400">{deposit.date}</p>
+                      </div>
+                    ) : '--'}
+                  </td>
+                  <td className="px-6 py-4">
+                    {deposit.hasDepositInfo ? (
+                      <div className="flex flex-col gap-1.5">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${
+                          deposit.refundStatus === '已退还' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'
+                        }`}>
+                          {deposit.refundStatus === '已退还' ? <CheckCircle2 size={10} /> : <Clock size={10} />}
+                          {deposit.refundStatus}
+                        </span>
+                        {deposit.refundStatus === '已退还' && deposit.refundDate && (
+                          <p className="text-[10px] text-slate-400">退还: {deposit.refundDate}</p>
+                        )}
+                      </div>
+                    ) : '--'}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => handleOpenModal(deposit)}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                          isPaused 
+                            ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                            : deposit.hasDepositInfo 
+                              ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
+                              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        {deposit.hasDepositInfo ? <Edit3 size={14} /> : <Plus size={14} />}
+                        {deposit.hasDepositInfo ? '修改记录' : '新增记录'}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

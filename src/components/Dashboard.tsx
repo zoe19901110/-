@@ -29,7 +29,8 @@ import {
   Calculator,
   List,
   BrainCircuit,
-  ChevronDown
+  ChevronDown,
+  Ban
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -37,9 +38,10 @@ interface DashboardProps {
   setActiveTab: (tab: string) => void;
   onEnterWorkbench: (stage: string) => void;
   currentEnterprise: { id: string; name: string };
+  projects: any[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, currentEnterprise }) => {
+const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, currentEnterprise, projects }) => {
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAnalyzed, setIsAnalyzed] = useState(false);
@@ -60,92 +62,17 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
     otherRemarks: ''
   });
 
-  const generateMockProjects = (enterpriseName: string) => {
-    return [
-      {
-        id: '1',
-        name: `${enterpriseName}基础设施二期项目`,
-        status: '准备阶段',
-        statusColor: 'bg-blue-50 text-primary',
-        deadline: '2023-12-20 18:00',
-        countdown: '08天 04:12:05',
-        icon: Briefcase,
-        iconBg: 'bg-blue-50 text-primary'
-      },
-      {
-        id: '2',
-        name: `${enterpriseName}政务云扩容采购项目`,
-        status: '检查阶段',
-        statusColor: 'bg-green-100 text-green-700',
-        deadline: '2023-12-01 09:30',
-        countdown: '09天 08:45:12',
-        icon: Cloud,
-        iconBg: 'bg-green-50 text-green-600'
-      },
-      {
-        id: '3',
-        name: `${enterpriseName}智慧医疗平台升级工程`,
-        status: '准备阶段',
-        statusColor: 'bg-blue-50 text-primary',
-        deadline: '2023-12-25 14:00',
-        countdown: '13天 00:15:30',
-        icon: MonitorCheck,
-        iconBg: 'bg-indigo-50 text-indigo-600'
-      },
-      {
-        id: '4',
-        name: `${enterpriseName}电子政务外网二期`,
-        status: '检查阶段',
-        statusColor: 'bg-green-100 text-green-700',
-        deadline: '2023-12-28 10:00',
-        countdown: '15天 20:10:45',
-        icon: Network,
-        iconBg: 'bg-blue-50 text-blue-600'
-      },
-      {
-        id: '5',
-        name: `${enterpriseName}智慧水务管理系统`,
-        status: '准备阶段',
-        statusColor: 'bg-blue-50 text-primary',
-        deadline: '2024-01-05 09:00',
-        countdown: '23天 19:05:12',
-        icon: Database,
-        iconBg: 'bg-emerald-50 text-emerald-600'
-      },
-      {
-        id: '6',
-        name: `${enterpriseName}智慧校园二期建设工程`,
-        status: '检查阶段',
-        statusColor: 'bg-green-100 text-green-700',
-        deadline: '2024-01-10 14:30',
-        countdown: '28天 00:45:12',
-        icon: BookOpen,
-        iconBg: 'bg-blue-50 text-blue-500'
-      },
-      {
-        id: '7',
-        name: `${enterpriseName}智慧城管系统升级`,
-        status: '准备阶段',
-        statusColor: 'bg-blue-50 text-primary',
-        deadline: '2024-01-15 10:00',
-        countdown: '33天 20:15:30',
-        icon: PlayCircle,
-        iconBg: 'bg-purple-50 text-purple-600'
-      },
-      {
-        id: '8',
-        name: `${enterpriseName}公共安全视频监控系统`,
-        status: '检查阶段',
-        statusColor: 'bg-green-100 text-green-700',
-        deadline: '2024-01-20 09:30',
-        countdown: '38天 19:45:12',
-        icon: ShieldCheck,
-        iconBg: 'bg-red-50 text-red-600'
-      }
-    ];
-  };
-
-  const projects = generateMockProjects(currentEnterprise.name);
+  const displayProjects = projects.map(p => ({
+    id: p.id,
+    name: p.name,
+    status: p.status === '放弃投标' ? '已暂停' : (p.status === '已完成' ? '已开标' : '投标中'),
+    statusColor: p.status === '放弃投标' ? 'bg-red-50 text-red-600' : (p.status === '已完成' ? 'bg-green-100 text-green-700' : 'bg-blue-50 text-primary'),
+    deadline: p.bidOpeningTime,
+    countdown: p.countdown || '08天 04:12:05', // 确保显示详细倒计时
+    icon: p.status === '放弃投标' ? Ban : (p.status === '已完成' ? CheckCircle2 : Briefcase),
+    iconBg: p.status === '放弃投标' ? 'bg-red-50 text-red-600' : (p.status === '已完成' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-primary'),
+    isPaused: p.status === '放弃投标'
+  }));
 
   const handleFileUpload = () => {
     setIsAnalyzing(true);
@@ -264,12 +191,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
         ))}
       </section>
 
-      <div className="grid grid-cols-12 gap-8">
+      <div className="grid grid-cols-12 gap-8 items-start">
         {/* Left Column */}
-        <div className="col-span-8 space-y-8">
+        <div className="col-span-8 space-y-8 h-full">
           {/* Projects List */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden h-full flex flex-col">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <Briefcase className="text-primary" size={20} />
                 <h3 className="text-lg font-bold">投标项目登记列表</h3>
@@ -281,15 +208,41 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
                 查看全部
               </button>
             </div>
-            <div className="divide-y divide-slate-100">
-              {projects.map((project) => (
-                <div key={project.id} className="p-6 hover:bg-slate-50 transition-colors flex items-center justify-between group cursor-pointer">
+            <div className="divide-y divide-slate-100 flex-1">
+              {displayProjects.map((project) => (
+                <div 
+                  key={project.id} 
+                  onClick={() => {
+                    if (project.isPaused) {
+                      alert('此项目已暂停');
+                    } else {
+                      onEnterWorkbench('preparation');
+                    }
+                  }}
+                  className={`p-6 hover:bg-slate-50 transition-colors flex items-center justify-between group cursor-pointer ${project.isPaused ? 'opacity-75' : ''}`}
+                >
                   <div className="flex items-start gap-4">
                     <div className={`size-12 rounded-xl ${project.iconBg} flex items-center justify-center shrink-0`}>
                       <project.icon size={24} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 group-hover:text-primary transition-colors">{project.name}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-slate-900 group-hover:text-primary transition-colors">{project.name}</h4>
+                        {project.status && (
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                            project.status === '进行中' ? 'bg-blue-50 text-blue-600' : 
+                            project.status === '已完成' ? 'bg-green-50 text-green-600' : 
+                            project.status === '放弃投标' ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-600'
+                          }`}>
+                            {project.status === '进行中' ? '投标中' : project.status === '已完成' ? '已开标' : project.status}
+                          </span>
+                        )}
+                        {project.isPaused && !project.status && (
+                          <span className="px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-bold rounded uppercase tracking-wider">
+                            已暂停
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-3 mt-2">
                         <span className="text-slate-400 text-xs flex items-center gap-1">
                           <Clock size={14} />
@@ -298,21 +251,28 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-8">
+                  <div className="flex items-center gap-8 self-center">
                     <div className="text-right">
                       <p className="text-xs text-slate-400 mb-1">开标倒计时</p>
-                      <p className={`text-lg font-bold tabular-nums ${['1', '2', '3'].includes(project.id) ? 'text-red-500' : 'text-slate-700'}`}>{project.countdown}</p>
+                      <p className={`text-lg font-bold tabular-nums ${['1', '2', '3'].includes(project.id) ? 'text-red-500' : 'text-slate-700'}`}>{project.countdown || '08天 04:12:05'}</p>
                     </div>
                     <button 
-                      onClick={() => onEnterWorkbench(project.status, {
-                        projectName: project.name,
-                        projectNumber: `PROJ-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`,
-                        tenderer: 'XX市城市建设投资集团有限公司',
-                        tenderAgent: 'XX国际招标有限公司',
-                        openingTime: project.deadline,
-                        depositDeadline: '2024-05-19 17:00'
-                      })}
-                      className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (project.isPaused) {
+                          alert('此项目已暂停');
+                          return;
+                        }
+                        onEnterWorkbench(project.status, {
+                          projectName: project.name,
+                          projectNumber: `PROJ-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`,
+                          tenderer: 'XX市城市建设投资集团有限公司',
+                          tenderAgent: 'XX国际招标有限公司',
+                          openingTime: project.deadline,
+                          depositDeadline: '2024-05-19 17:00'
+                        });
+                      }}
+                      className={`bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 ${project.isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       进入工作台
                     </button>

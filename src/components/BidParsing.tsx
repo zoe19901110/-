@@ -3,11 +3,15 @@ import BidParsingList from './BidParsingList';
 import BidParsingDetail from './BidParsingDetail';
 
 interface BidParsingProps {
-  onEnterWorkbench: (project: any) => void;
+  onEnterWorkbench?: (project: any) => void;
   currentEnterprise?: { id: string; name: string };
+  isPaused?: boolean;
+  onBack?: () => void;
+  autoImported?: boolean;
+  uploadedFiles?: Record<string, boolean>;
 }
 
-const BidParsing: React.FC<BidParsingProps> = ({ onEnterWorkbench, currentEnterprise }) => {
+const BidParsing: React.FC<BidParsingProps> = ({ onEnterWorkbench, currentEnterprise, isPaused = false, onBack }) => {
   const defaultProject = {
     id: '1',
     name: `2024年智慧交通管理平台建设项目`,
@@ -28,24 +32,41 @@ const BidParsing: React.FC<BidParsingProps> = ({ onEnterWorkbench, currentEnterp
   };
 
   const handleBackToList = () => {
-    setView('list');
-    setSelectedProject(null);
+    if (onBack) {
+      onBack();
+    } else {
+      setView('list');
+      setSelectedProject(null);
+    }
   };
 
   const handleViewReport = () => {
     if (selectedProject) {
-      onEnterWorkbench(selectedProject);
+      if (onEnterWorkbench) {
+        onEnterWorkbench(selectedProject);
+      } else if (onBack) {
+        onBack();
+      }
     }
   };
 
   return (
     <div className="w-full h-full">
-      <BidParsingDetail 
-        project={selectedProject} 
-        onBack={handleBackToList}
-        onViewReport={handleViewReport}
-        currentEnterprise={currentEnterprise}
-      />
+      {view === 'list' ? (
+        <BidParsingList 
+          onEnterDetail={handleEnterDetail} 
+          currentEnterprise={currentEnterprise}
+          isPaused={isPaused}
+        />
+      ) : (
+        <BidParsingDetail 
+          project={selectedProject} 
+          onBack={handleBackToList}
+          onViewReport={handleViewReport}
+          currentEnterprise={currentEnterprise}
+          isPaused={isPaused}
+        />
+      )}
     </div>
   );
 };

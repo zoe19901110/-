@@ -29,9 +29,10 @@ interface Project {
 interface BidParsingListProps {
   onEnterDetail: (project: Project) => void;
   currentEnterprise?: { id: string; name: string };
+  isPaused?: boolean;
 }
 
-const BidParsingList: React.FC<BidParsingListProps> = ({ onEnterDetail, currentEnterprise }) => {
+const BidParsingList: React.FC<BidParsingListProps> = ({ onEnterDetail, currentEnterprise, isPaused = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   
   const [projects, setProjects] = useState<Project[]>([
@@ -67,6 +68,10 @@ const BidParsingList: React.FC<BidParsingListProps> = ({ onEnterDetail, currentE
   ]);
 
   const handleDelete = (id: string) => {
+    if (isPaused) {
+      alert('此项目已暂停');
+      return;
+    }
     if (window.confirm('确定要删除该项目吗？')) {
       setProjects(projects.filter(p => p.id !== id));
     }
@@ -76,10 +81,18 @@ const BidParsingList: React.FC<BidParsingListProps> = ({ onEnterDetail, currentE
     <motion.div 
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="space-y-6"
+      className={`space-y-6 ${isPaused ? 'opacity-75 grayscale-[0.2]' : ''}`}
     >
       <div className="flex items-center">
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95">
+        <button 
+          onClick={() => {
+            if (isPaused) {
+              alert('此项目已暂停');
+              return;
+            }
+          }}
+          className={`flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
           <Plus size={20} />
           新增解析项目
         </button>
@@ -206,18 +219,32 @@ const BidParsingList: React.FC<BidParsingListProps> = ({ onEnterDetail, currentE
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
                     <button 
-                      onClick={() => onEnterDetail(project)}
-                      className="px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg transition-all text-xs font-bold flex items-center gap-1"
+                      onClick={() => {
+                        if (isPaused) {
+                          alert('此项目已暂停');
+                          return;
+                        }
+                        onEnterDetail(project);
+                      }}
+                      className={`px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg transition-all text-xs font-bold flex items-center gap-1 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <ExternalLink size={14} />
                       开始解析
                     </button>
-                    <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                    <button 
+                      onClick={() => {
+                        if (isPaused) {
+                          alert('此项目已暂停');
+                          return;
+                        }
+                      }}
+                      className={`p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
                       <Edit size={16} />
                     </button>
                     <button 
                       onClick={() => handleDelete(project.id)}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      className={`p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <Trash2 size={16} />
                     </button>

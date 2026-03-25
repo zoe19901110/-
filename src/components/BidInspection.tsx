@@ -29,20 +29,26 @@ import { motion, AnimatePresence } from 'motion/react';
 interface BidInspectionProps {
   currentEnterprise?: { id: string; name: string };
   uploadedFiles: Record<string, boolean>;
+  projects?: any[];
 }
 
-const BidInspection: React.FC<BidInspectionProps> = ({ currentEnterprise, uploadedFiles }) => {
+const BidInspection: React.FC<BidInspectionProps> = ({ currentEnterprise, uploadedFiles, projects = [] }) => {
   const [view, setView] = useState<'list' | 'detail'>('list');
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
   const handleProjectClick = (project: any) => {
+    const globalProject = projects.find(p => p.name === project.name);
+    if (globalProject?.status === '放弃投标') {
+      alert('此项目已暂停');
+      return;
+    }
     setSelectedProject(project);
     setView('detail');
   };
 
   if (view === 'detail') {
-    return <BidInspectionDetail onBack={() => setView('list')} project={selectedProject} uploadedFiles={uploadedFiles} />;
+    return <BidInspectionDetail onBack={() => setView('list')} project={selectedProject} uploadedFiles={uploadedFiles} projects={projects} />;
   }
 
   return (
@@ -117,53 +123,65 @@ const BidInspection: React.FC<BidInspectionProps> = ({ currentEnterprise, upload
               { name: `${currentEnterprise?.name || '某'}枢纽配套设施建设项目`, status: '未开始', time: '2天前', deadline: '03/28 09:00', deadlineLabel: '投标截止', checkStatus: [0, 0, 0] },
               { name: `${currentEnterprise?.name || '某'}机场三期扩建工程`, status: '已完成', time: '5天前', deadline: '03/14 10:00', deadlineLabel: '开标时间', checkStatus: [1, 1, 1] },
               { name: `${currentEnterprise?.name || '某'}智慧城市基础设施项目`, status: '已开标', time: '2026/3/3', checkStatus: [1, 1, 1] },
-            ].map((project, i) => (
-              <div 
-                key={i} 
-                onClick={() => handleProjectClick(project)}
-                className="px-6 py-5 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer group"
-              >
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-slate-900 group-hover:text-primary transition-colors truncate">{project.name}</h4>
-                  <div className="flex items-center gap-4 mt-1.5">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      project.status === '进行中' ? 'bg-blue-50 text-blue-500' :
-                      project.status === '检查中' ? 'bg-orange-50 text-orange-500' :
-                      project.status === '已完成' ? 'bg-green-50 text-green-500' :
-                      project.status === '已开标' ? 'bg-purple-50 text-purple-500' :
-                      'bg-slate-100 text-slate-400'
-                    }`}>{project.status}</span>
-                    <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                      <Clock size={12} /> 更新于 {project.time}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-12">
-                  {project.deadline && (
-                    <div className="text-right">
-                      <p className="text-[10px] text-slate-400 mb-0.5">
-                        {project.deadlineLabel} {project.countdown && <span className="bg-red-50 text-red-500 px-1 rounded ml-1">{project.countdown}</span>}
-                      </p>
-                      <p className={`text-sm font-bold ${project.countdown ? 'text-red-500' : 'text-slate-700'}`}>{project.deadline}</p>
+            ].map((project, i) => {
+              const globalProject = projects.find(p => p.name === project.name);
+              const isPaused = globalProject?.status === '放弃投标';
+
+              return (
+                <div 
+                  key={i} 
+                  onClick={() => handleProjectClick(project)}
+                  className={`px-6 py-5 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer group ${isPaused ? 'opacity-60' : ''}`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-slate-900 group-hover:text-primary transition-colors truncate">{project.name}</h4>
+                      {isPaused && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500">
+                          已暂停
+                        </span>
+                      )}
                     </div>
-                  )}
-                  <div className="flex items-center gap-3">
-                    {['资信', '技术', '经济'].map((tag, idx) => {
-                      const s = project.checkStatus[idx];
-                      return (
-                        <div key={tag} className="flex flex-col items-center gap-1">
-                          <span className="text-[10px] text-slate-400">{tag}</span>
-                          {s === 1 ? <CheckCircle2 size={16} className="text-green-500" /> :
-                           s === 3 ? <AlertTriangle size={16} className="text-orange-500" /> :
-                           <div className="size-4 rounded-full border border-slate-200" />}
-                        </div>
-                      );
-                    })}
+                    <div className="flex items-center gap-4 mt-1.5">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        project.status === '进行中' ? 'bg-blue-50 text-blue-500' :
+                        project.status === '检查中' ? 'bg-orange-50 text-orange-500' :
+                        project.status === '已完成' ? 'bg-green-50 text-green-500' :
+                        project.status === '已开标' ? 'bg-purple-50 text-purple-500' :
+                        'bg-slate-100 text-slate-400'
+                      }`}>{project.status}</span>
+                      <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                        <Clock size={12} /> 更新于 {project.time}
+                      </span>
+                    </div>
                   </div>
-                  <ChevronRight size={20} className="text-slate-300 group-hover:text-primary transition-colors" />
+                  <div className="flex items-center gap-12">
+                    {project.deadline && (
+                      <div className="text-right">
+                        <p className="text-[10px] text-slate-400 mb-0.5">
+                          {project.deadlineLabel} {project.countdown && <span className="bg-red-50 text-red-500 px-1 rounded ml-1">{project.countdown}</span>}
+                        </p>
+                        <p className={`text-sm font-bold ${project.countdown ? 'text-red-500' : 'text-slate-700'}`}>{project.deadline}</p>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                      {['资信', '技术', '经济'].map((tag, idx) => {
+                        const s = project.checkStatus[idx];
+                        return (
+                          <div key={tag} className="flex flex-col items-center gap-1">
+                            <span className="text-[10px] text-slate-400">{tag}</span>
+                            {s === 1 ? <CheckCircle2 size={16} className="text-green-500" /> :
+                             s === 3 ? <AlertTriangle size={16} className="text-orange-500" /> :
+                             <div className="size-4 rounded-full border border-slate-200" />}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <ChevronRight size={20} className="text-slate-300 group-hover:text-primary transition-colors" />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -289,12 +307,12 @@ const BidInspection: React.FC<BidInspectionProps> = ({ currentEnterprise, upload
                         </div>
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-500 ml-1 uppercase">上传招标文件</label>
+                        <label className="text-xs font-bold text-slate-500 ml-1 uppercase">解析招标文件</label>
                         <div className="border-2 border-dashed border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center gap-4 bg-slate-50/50 hover:bg-primary/5 hover:border-primary/30 transition-all cursor-pointer group">
                           <div className="size-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
                             <UploadCloud size={32} />
                           </div>
-                          <p className="text-sm text-slate-600 font-bold">点击或拖拽招标文件至此处上传</p>
+                          <p className="text-sm text-slate-600 font-bold">点击或拖拽招标文件至此处解析</p>
                           <p className="text-[11px] text-slate-400">支持 PDF、Word、ZF、CF 格式，AI将自动识别关键信息并填充表单</p>
                         </div>
                       </div>
@@ -329,16 +347,24 @@ interface BidInspectionDetailProps {
   onBack: () => void;
   project: any;
   uploadedFiles: Record<string, boolean>;
+  projects?: any[];
 }
 
-const BidInspectionDetail: React.FC<BidInspectionDetailProps> = ({ onBack, project, uploadedFiles }) => {
+const BidInspectionDetail: React.FC<BidInspectionDetailProps> = ({ onBack, project, uploadedFiles, projects = [] }) => {
   const [showClarificationModal, setShowClarificationModal] = useState(false);
   const [useClarification, setUseClarification] = useState(false);
   const [checkingVersion, setCheckingVersion] = useState<any>(null);
 
+  const globalProject = projects.find(p => p.name === project?.name);
+  const isPaused = globalProject?.status === '放弃投标';
+
   const hasClarification = Object.keys(uploadedFiles).some(key => key.startsWith('clar-doc-') && uploadedFiles[key]);
 
   const handleStartCheck = (version: any) => {
+    if (isPaused) {
+      alert('此项目已暂停');
+      return;
+    }
     if (hasClarification && !useClarification) {
       setCheckingVersion(version);
       setShowClarificationModal(true);
@@ -520,11 +546,21 @@ const BidInspectionDetail: React.FC<BidInspectionDetailProps> = ({ onBack, proje
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => handleStartCheck(v)}
-                  className="px-4 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded hover:bg-slate-50"
+                  className={`px-4 py-1.5 border text-xs font-bold rounded transition-all ${
+                    isPaused 
+                      ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
                 >
                   开始检查
                 </button>
-                <button className="p-1 text-slate-400 hover:text-red-600 transition-colors" title="删除"><Trash2 size={18} /></button>
+                <button 
+                  onClick={() => isPaused ? alert('此项目已暂停') : null}
+                  className={`p-1 transition-colors ${isPaused ? 'text-slate-300 cursor-not-allowed' : 'text-slate-400 hover:text-red-600'}`} 
+                  title="删除"
+                >
+                  <Trash2 size={18} />
+                </button>
                 <ChevronRight className="text-slate-300" size={18} />
               </div>
             </div>

@@ -22,9 +22,10 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface OtherProjectMaterialsProps {
   currentEnterprise?: { id: string; name: string };
+  projects?: any[];
 }
 
-const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEnterprise }) => {
+const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEnterprise, projects: allProjects = [] }) => {
   const [view, setView] = useState<'projects' | 'detail'>('projects');
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,6 +36,16 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
   const [uploadRemarks, setUploadRemarks] = useState('');
 
   const [projects, setProjects] = useState<any[]>([]);
+
+  const isPaused = allProjects.find(p => p.code === selectedProject?.code || p.name === selectedProject?.name)?.status === '放弃投标';
+
+  const handleOpenAddModal = () => {
+    if (isPaused) {
+      alert('此项目已暂停');
+      return;
+    }
+    setShowAddModal(true);
+  };
 
   React.useEffect(() => {
     setProjects([
@@ -166,78 +177,132 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {projects.filter(p => p.name.includes(searchTerm) || p.code.includes(searchTerm)).map((project) => (
-              <tr key={project.id} className="hover:bg-slate-50/50 transition-colors group">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="size-8 bg-blue-50 text-primary rounded-lg flex items-center justify-center shrink-0">
-                      <Briefcase size={16} />
+            {projects.filter(p => p.name.includes(searchTerm) || p.code.includes(searchTerm)).map((project) => {
+              const globalProject = allProjects.find(p => p.code === project.code || p.name === project.name);
+              const isProjectPaused = globalProject?.status === '放弃投标';
+
+              return (
+                <tr key={project.id} className={`hover:bg-slate-50/50 transition-colors group ${isProjectPaused ? 'opacity-60' : ''}`}>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 bg-blue-50 text-primary rounded-lg flex items-center justify-center shrink-0">
+                        <Briefcase size={16} />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{project.name}</p>
+                        {isProjectPaused && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 w-fit">
+                            已暂停
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{project.name}</p>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-500">{project.code}</td>
-                <td className="px-6 py-4 text-sm text-slate-600">{project.tenderer}</td>
-                <td className="px-6 py-4 text-center">
-                  <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">
-                    {project.materialCount}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-500">{project.lastUpdate}</td>
-                <td className="px-6 py-4 text-right">
-                  <button 
-                    onClick={() => handleEnterDetail(project)}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                      project.hasMaterials 
-                        ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
-                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {project.hasMaterials ? <Edit3 size={14} /> : <Plus size={14} />}
-                    {project.hasMaterials ? '修改记录' : '新增记录'}
-                  </button>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500">{project.code}</td>
+                  <td className="px-6 py-4 text-sm text-slate-600">{project.tenderer}</td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">
+                      {project.materialCount}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500">{project.lastUpdate}</td>
+                  <td className="px-6 py-4 text-right">
+                    <button 
+                      onClick={() => handleEnterDetail(project)}
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                        isProjectPaused
+                          ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                          : project.hasMaterials 
+                            ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
+                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {project.hasMaterials ? <Edit3 size={14} /> : <Plus size={14} />}
+                      {project.hasMaterials ? '修改记录' : '新增记录'}
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
     </div>
   );
 
+  const [activeCategory, setActiveCategory] = useState<string>('全部文档');
+  const [categories, setCategories] = useState<{name: string, sub: string[]}[]>([
+    { name: '技术材料', sub: [] },
+    { name: '商务材料', sub: [] }
+  ]);
+
+  const addCategory = (name: string) => {
+    setCategories([...categories, { name, sub: [] }]);
+  };
+
+  const addSubCategory = (catIndex: number, name: string) => {
+    const newCategories = [...categories];
+    newCategories[catIndex].sub.push(name);
+    setCategories(newCategories);
+  };
+
   const renderDetailView = () => (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+    <div className="flex gap-6 h-[calc(100vh-120px)]">
+      {/* Left Tree Structure */}
+      <div className="w-64 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 overflow-y-auto">
+        <div className="flex items-center justify-between mb-4 px-2">
+          <h3 className="font-bold text-slate-900">项目目录</h3>
+          <button onClick={() => addCategory('新分类')} className="text-primary hover:text-primary/80"><Plus size={16}/></button>
+        </div>
+        <div className="space-y-1">
+          <div 
+            className={`px-3 py-2 rounded-lg font-bold text-sm cursor-pointer ${activeCategory === '全部文档' ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'}`}
+            onClick={() => setActiveCategory('全部文档')}
+          >
+            全部文档
+          </div>
+          {categories.map((cat, catIdx) => (
+            <div key={catIdx} className="space-y-1">
+              <div className="flex items-center justify-between px-3 py-2 text-slate-600 hover:text-primary cursor-pointer text-sm">
+                {cat.name}
+                <button onClick={() => addSubCategory(catIdx, '新子分类')} className="text-slate-400 hover:text-primary"><Plus size={14}/></button>
+              </div>
+              {cat.sub.map((sub, subIdx) => (
+                <div key={subIdx} className="pl-8 py-1 text-slate-500 hover:text-primary cursor-pointer text-xs">
+                  {sub}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right Content */}
+      <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+          <h3 className="font-bold text-slate-900 flex items-center gap-2">
+            <FolderOpen className="text-primary" size={20} />
+            {activeCategory}
+          </h3>
+          <button 
+            onClick={handleOpenAddModal}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+              isPaused 
+                ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                : 'bg-primary text-white hover:bg-primary/90 shadow-primary/10'
+            }`}
+          >
+            <Plus size={14} />
+            上传材料
+          </button>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-bold text-slate-900">已上传材料</h3>
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all shadow-sm shadow-primary/10"
-              >
-                <Plus size={14} />
-                上传材料
-              </button>
-              <div className="flex items-center gap-2 border-l border-slate-100 pl-4">
-                <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
-                  <Search size={18} />
-                </button>
-                <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
-                  <Filter size={18} />
-                </button>
-              </div>
-            </div>
-          </div>
-
-        <div className="overflow-x-auto">
+        <div className="overflow-y-auto flex-1">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-100">
                 <th className="px-6 py-4">文件名</th>
+                {activeCategory === '全部文档' && <th className="px-6 py-4">所属目录</th>}
                 <th className="px-6 py-4">类型</th>
                 <th className="px-6 py-4">大小</th>
                 <th className="px-6 py-4">上传人</th>
@@ -256,6 +321,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                       <span className="text-sm font-bold text-slate-900 truncate max-w-xs" title={item.fileName}>{item.fileName}</span>
                     </div>
                   </td>
+                  {activeCategory === '全部文档' && <td className="px-6 py-4 text-xs text-slate-500">{item.type}</td>}
                   <td className="px-6 py-4">
                     <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider">
                       {item.type}
@@ -291,8 +357,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
         </div>
       </div>
     </div>
-  </div>
-);
+  );
 
   return (
     <motion.div 

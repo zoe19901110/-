@@ -19,18 +19,26 @@ import {
   X,
   Loader2,
   Edit,
-  Trash2,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  Ban,
+  RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface TenderProjectRegistrationProps {
   onEnterWorkbench?: (stage: string, data?: any) => void;
   currentEnterprise?: { id: string; name: string };
+  projects: any[];
+  setProjects: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
-const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ onEnterWorkbench, currentEnterprise }) => {
+const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ 
+  onEnterWorkbench, 
+  currentEnterprise,
+  projects,
+  setProjects
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -111,184 +119,6 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
   const [statusFilter, setStatusFilter] = useState('全部');
   const [dateFilter, setDateFilter] = useState('');
 
-  const [projects, setProjects] = useState([
-    {
-      id: '1',
-      name: `2024年智慧交通管理平台建设项目`,
-      code: 'ZB-2024-001',
-      tenderer: 'XX市交通运输局',
-      agent: 'XX招标代理有限公司',
-      tendererContact: '张工 010-88888888',
-      agentContact: '李经理 010-66666666',
-      bidOpeningTime: '2026-03-28 10:00',
-      status: '进行中',
-      deposit: '¥50,000',
-      depositDeadline: '2026-03-25 17:00',
-      openingLocation: 'XX市公共资源交易中心 301 会议室',
-      collectionTime: '2024-04-15',
-      requirements: '关键招标要求、资质要求等...',
-      otherRemarks: ''
-    },
-    {
-      id: '2',
-      name: `政务云扩容采购项目`,
-      code: 'ZB-2024-005',
-      tenderer: 'XX市大数据局',
-      agent: 'YY咨询管理公司',
-      tendererContact: '王工 010-77777777',
-      agentContact: '赵经理 010-55555555',
-      bidOpeningTime: '2026-02-28 14:30',
-      status: '已完成',
-      deposit: '¥30,000',
-      depositDeadline: '2026-02-25 17:00',
-      openingLocation: 'XX省政务中心 2楼',
-      collectionTime: '2024-05-10',
-      requirements: '政务云相关资质要求...',
-      otherRemarks: ''
-    },
-    {
-      id: '3',
-      name: `城市绿化带自动灌溉系统`,
-      code: 'ZB-2024-008',
-      tenderer: 'XX市园林局',
-      agent: 'ZZ工程咨询公司',
-      tendererContact: '刘工 010-99999999',
-      agentContact: '孙经理 010-44444444',
-      bidOpeningTime: '2026-03-24 09:00',
-      status: '进行中',
-      deposit: '¥20,000',
-      depositDeadline: '2026-03-20 17:00',
-      openingLocation: 'XX市园林局 5楼会议室',
-      collectionTime: '2024-06-01',
-      requirements: '自动化灌溉系统技术指标...',
-      otherRemarks: ''
-    },
-    {
-      id: '4',
-      name: `XX区智慧教育云平台二期`,
-      code: 'ZB-2024-012',
-      tenderer: 'XX区教育局',
-      agent: 'AA招标代理公司',
-      tendererContact: '陈工 010-11111111',
-      agentContact: '周经理 010-22222222',
-      bidOpeningTime: '2026-04-10 15:00',
-      status: '进行中',
-      deposit: '¥80,000',
-      depositDeadline: '2026-04-05 17:00',
-      openingLocation: 'XX区教育局 1楼大厅',
-      collectionTime: '2024-07-01',
-      requirements: '教育云平台二期扩容需求...',
-      otherRemarks: ''
-    },
-    {
-      id: '5',
-      name: `社区养老服务中心智能化改造`,
-      code: 'ZB-2024-015',
-      tenderer: 'XX市民政局',
-      agent: 'BB项目管理公司',
-      tendererContact: '黄工 010-33333333',
-      agentContact: '吴经理 010-44444444',
-      bidOpeningTime: '2026-03-30 10:30',
-      status: '进行中',
-      deposit: '¥15,000',
-      depositDeadline: '2026-03-26 17:00',
-      openingLocation: 'XX市民政局 3楼',
-      collectionTime: '2024-08-15',
-      requirements: '适老化智能设备安装调试...',
-      otherRemarks: ''
-    }
-  ]);
-
-  React.useEffect(() => {
-    setProjects([
-      {
-        id: '1',
-        name: `2024年智慧交通管理平台建设项目`,
-        code: 'ZB-2024-001',
-        tenderer: 'XX市交通运输局',
-        tendererContact: '张工 010-88888888',
-        agent: 'XX招标代理有限公司',
-        agentContact: '李经理 010-66666666',
-        bidOpeningTime: '2024-05-20 10:00',
-        status: '进行中',
-        deposit: '¥50,000',
-        depositDeadline: '2024-05-15 17:00',
-        openingLocation: 'XX市公共资源交易中心 301 会议室',
-        collectionTime: '2024-04-15',
-        requirements: '关键招标要求、资质要求等...',
-        otherRemarks: ''
-      },
-      {
-        id: '2',
-        name: `政务云扩容采购项目`,
-        code: 'ZB-2024-005',
-        tenderer: 'XX市大数据局',
-        tendererContact: '王工 010-77777777',
-        agent: 'YY咨询管理公司',
-        agentContact: '赵经理 010-55555555',
-        bidOpeningTime: '2024-06-15 14:30',
-        status: '已完成',
-        deposit: '¥30,000',
-        depositDeadline: '2024-06-10 17:00',
-        openingLocation: 'XX省政务中心 2楼',
-        collectionTime: '2024-05-10',
-        requirements: '政务云相关资质要求...',
-        otherRemarks: ''
-      },
-      {
-        id: '3',
-        name: `城市绿化带自动灌溉系统`,
-        code: 'ZB-2024-008',
-        tenderer: 'XX市园林局',
-        tendererContact: '刘工 010-99999999',
-        agent: 'ZZ工程咨询公司',
-        agentContact: '孙经理 010-44444444',
-        bidOpeningTime: '2024-07-10 09:00',
-        status: '进行中',
-        deposit: '¥20,000',
-        depositDeadline: '2024-07-05 17:00',
-        openingLocation: 'XX市园林局 5楼会议室',
-        collectionTime: '2024-06-01',
-        requirements: '自动化灌溉系统技术指标...',
-        otherRemarks: ''
-      },
-      {
-        id: '4',
-        name: `XX区智慧教育云平台二期`,
-        code: 'ZB-2024-012',
-        tenderer: 'XX区教育局',
-        tendererContact: '陈工 010-11111111',
-        agent: 'AA招标代理公司',
-        agentContact: '周经理 010-22222222',
-        bidOpeningTime: '2024-08-05 15:00',
-        status: '进行中',
-        deposit: '¥80,000',
-        depositDeadline: '2024-08-01 17:00',
-        openingLocation: 'XX区教育局 1楼大厅',
-        collectionTime: '2024-07-01',
-        requirements: '教育云平台二期扩容需求...',
-        otherRemarks: ''
-      },
-      {
-        id: '5',
-        name: `社区养老服务中心智能化改造`,
-        code: 'ZB-2024-015',
-        tenderer: 'XX市民政局',
-        tendererContact: '黄工 010-33333333',
-        agent: 'BB项目管理公司',
-        agentContact: '吴经理 010-44444444',
-        bidOpeningTime: '2024-09-25 10:30',
-        status: '进行中',
-        deposit: '¥15,000',
-        depositDeadline: '2024-09-20 17:00',
-        openingLocation: 'XX市民政局 3楼',
-        collectionTime: '2024-08-15',
-        requirements: '适老化智能设备安装调试...',
-        otherRemarks: ''
-      }
-    ]);
-  }, [currentEnterprise]);
-
   const handleEditProject = (project: any) => {
     setIsEditing(true);
     setEditingId(project.id);
@@ -311,8 +141,16 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
     setShowAddModal(true);
   };
 
-  const handleDeleteProject = (id: string) => {
-    setProjects(projects.filter(p => p.id !== id));
+  const handleGiveUpProject = (id: string) => {
+    if (window.confirm('确定要放弃该项目的投标吗？')) {
+      setProjects(projects.map(p => p.id === id ? { ...p, status: '放弃投标' } : p));
+    }
+  };
+
+  const handleRestartProject = (id: string) => {
+    if (window.confirm('确定要重启该项目的投标吗？')) {
+      setProjects(projects.map(p => p.id === id ? { ...p, status: '进行中' } : p));
+    }
   };
 
   const handleSaveProject = () => {
@@ -481,65 +319,81 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({ o
                   <span className="text-sm text-slate-600">{project.bidOpeningTime}</span>
                 </td>
                 <td className="px-6 py-4">
-                  {project.status === '进行中' || project.status === '放弃投标' ? (
-                    <select
-                      value={project.status}
-                      onChange={(e) => {
-                        const newStatus = e.target.value;
-                        setProjects(projects.map(p => p.id === project.id ? { ...p, status: newStatus } : p));
-                      }}
-                      className={`text-xs font-bold px-2 py-1 rounded-full border-none outline-none cursor-pointer transition-colors ${
-                        project.status === '进行中' 
-                          ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' 
-                          : 'bg-red-50 text-red-600 hover:bg-red-100'
-                      }`}
-                    >
-                      <option value="进行中">投标中</option>
-                      <option value="放弃投标">放弃投标</option>
-                    </select>
-                  ) : (
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
-                      project.status === '已完成' 
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
+                    project.status === '进行中' 
+                      ? 'bg-blue-50 text-blue-600' 
+                      : project.status === '已完成' 
                         ? 'bg-emerald-50 text-emerald-600' 
-                        : 'bg-slate-50 text-slate-600'
-                    }`}>
-                      {project.status === '已完成' ? '已开标' : project.status}
-                    </span>
-                  )}
+                        : project.status === '放弃投标'
+                          ? 'bg-red-50 text-red-600'
+                          : 'bg-slate-50 text-slate-600'
+                  }`}>
+                    {project.status === '进行中' ? '投标中' : (project.status === '已完成' ? '已开标' : project.status)}
+                  </span>
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <button 
-                      onClick={() => onEnterWorkbench?.('preparation', { 
-                        ...project,
-                        projectName: project.name, 
-                        projectNumber: project.code,
-                        isTenderUploaded: true 
-                      })}
-                      className="px-3 py-1.5 text-primary hover:bg-primary/5 rounded-lg transition-all flex items-center gap-1.5 group/btn"
-                      title="进入工作台"
+                      onClick={() => {
+                        if (project.status === '放弃投标') {
+                          alert('此项目已暂停');
+                          return;
+                        }
+                        onEnterWorkbench?.('preparation', { 
+                          ...project,
+                          projectName: project.name, 
+                          projectNumber: project.code,
+                          isTenderUploaded: true 
+                        });
+                      }}
+                      className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 group/btn ${
+                        project.status === '放弃投标' 
+                          ? 'text-slate-300 cursor-not-allowed' 
+                          : 'text-primary hover:bg-primary/5'
+                      }`}
+                      title={project.status === '放弃投标' ? '此项目已暂停' : '进入工作台'}
                     >
-                      <ExternalLink size={14} className="group-hover/btn:scale-110 transition-transform" />
+                      <ExternalLink size={14} className={project.status === '放弃投标' ? '' : 'group-hover/btn:scale-110 transition-transform'} />
                       <span className="text-xs font-bold">进入工作台</span>
                     </button>
                     
                     <div className="w-px h-4 bg-slate-200 mx-1" />
                     
                     <button 
-                      onClick={() => handleEditProject(project)}
-                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                      title="修改"
+                      onClick={() => {
+                        if (project.status === '放弃投标') {
+                          alert('此项目已暂停');
+                          return;
+                        }
+                        handleEditProject(project);
+                      }}
+                      className={`p-1.5 rounded-lg transition-all ${
+                        project.status === '放弃投标'
+                          ? 'text-slate-300 cursor-not-allowed'
+                          : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
+                      }`}
+                      title={project.status === '放弃投标' ? '此项目已暂停' : '修改'}
                     >
                       <Edit size={14} />
                     </button>
 
-                    <button 
-                      onClick={() => handleDeleteProject(project.id)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                      title="删除"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {project.status === '放弃投标' ? (
+                      <button 
+                        onClick={() => handleRestartProject(project.id)}
+                        className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                        title="重启投标"
+                      >
+                        <RefreshCw size={14} />
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => handleGiveUpProject(project.id)}
+                        className="p-1.5 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
+                        title="放弃投标"
+                      >
+                        <Ban size={14} />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
