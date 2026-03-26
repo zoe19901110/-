@@ -31,11 +31,19 @@ export default function App() {
   });
 
   const [enterprises, setEnterprises] = useState([
-    { id: '1', name: '杭州某某科技有限公司' },
-    { id: '2', name: '上海分公司' },
-    { id: '3', name: '北京研发中心' },
+    { id: '1', name: '中建八局第三建设有限公司', status: '已加入' },
+    { id: '2', name: '中铁建工集团有限公司', status: '已加入' },
+    { id: '3', name: '中国建筑第一局(集团)有限公司', status: '审核中' },
   ]);
   const [currentEnterprise, setCurrentEnterprise] = useState(enterprises[0]);
+
+  const handleLogin = (enterpriseId: string) => {
+    const selected = enterprises.find(e => e.id === enterpriseId);
+    if (selected) {
+      setCurrentEnterprise(selected);
+    }
+    setIsLoggedIn(true);
+  };
 
   React.useEffect(() => {
     setProjects([
@@ -149,7 +157,7 @@ export default function App() {
   };
 
   if (!isLoggedIn) {
-    return <Login onLogin={() => setIsLoggedIn(true)} />;
+    return <Login onLogin={handleLogin} />;
   }
 
   return (

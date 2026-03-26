@@ -17,7 +17,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 
 interface LoginProps {
-  onLogin: () => void;
+  onLogin: (enterpriseId: string) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
@@ -381,7 +381,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
                 <div className="space-y-4">
                   <button 
-                    onClick={onLogin}
+                    onClick={() => selectedEnterprise && onLogin(selectedEnterprise)}
                     disabled={!selectedEnterprise}
                     className="w-full py-5 bg-primary text-white rounded-[20px] font-bold text-xl shadow-xl shadow-primary/20 hover:shadow-2xl hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
