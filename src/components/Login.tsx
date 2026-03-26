@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { 
+  AlertCircle,
   BrainCircuit, 
   ShieldCheck, 
   LayoutDashboard, 
@@ -28,6 +29,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [agreed, setAgreed] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [error, setError] = useState('');
+  const [simulatedCode, setSimulatedCode] = useState<string | null>(null);
+
   const enterprises = [
     { id: '1', name: '中建八局第三建设有限公司', status: '已加入' },
     { id: '2', name: '中铁建工集团有限公司', status: '已加入' },
@@ -38,8 +46,34 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     e.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleInitialLogin = () => {
+    if (!agreed) {
+      setError('请先阅读并同意服务条款和隐私政策');
+      return;
+    }
+
+    if (loginType === 'account') {
+      // Test credentials: 13800138000 / 888888
+      if (username === '13800138000' && password === '888888') {
+        setError('');
+        setView('select-enterprise');
+      } else {
+        setError('手机号或密码错误');
+      }
+    } else {
+      // Phone login: any 11-digit number + simulated code 123456
+      if (phone.length === 11 && code === '123456') {
+        setError('');
+        setView('select-enterprise');
+      } else {
+        setError('请输入正确的手机号和验证码(123456)');
+      }
+    }
+  };
+
   const startCountdown = () => {
     setCountdown(60);
+    setSimulatedCode('123456');
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -96,15 +130,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
 
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-12">
-              <div className="bg-white p-2 rounded-xl">
-                <LayoutDashboard className="text-primary" size={32} />
-              </div>
-              <div className="text-white">
-                <div className="text-2xl font-black tracking-tighter">标桥 <span className="font-normal opacity-80 text-xl">企业空间</span></div>
-              </div>
-            </div>
-
             <h1 className="text-5xl font-extrabold text-white mb-16 tracking-tight">
               投标协同管理平台
             </h1>
@@ -142,45 +167,64 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 exit={{ opacity: 0, x: -20 }}
                 className="w-full max-w-[440px]"
               >
-                <h2 className="text-5xl font-extrabold text-slate-900 mb-14 tracking-tight">
+                <h2 className="text-4xl font-extrabold text-slate-900 mb-14 tracking-tight">
                   欢迎登录
                 </h2>
 
                 {/* Tabs */}
-                <div className="flex border-b border-slate-100 mb-12">
+                <div className="flex border-b border-slate-100 mb-10">
                   <button 
                     onClick={() => setLoginType('account')}
-                    className={`pb-5 px-8 text-xl font-bold transition-all relative ${
+                    className={`pb-4 px-4 text-lg font-bold transition-all relative ${
                       loginType === 'account' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     账号登录
                     {loginType === 'account' && (
-                      <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1.5 bg-primary rounded-t-full" />
+                      <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
                     )}
                   </button>
                   <button 
                     onClick={() => setLoginType('phone')}
-                    className={`pb-5 px-8 text-xl font-bold transition-all relative ${
+                    className={`pb-4 px-4 text-lg font-bold transition-all relative ${
                       loginType === 'phone' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     手机号登录
                     {loginType === 'phone' && (
-                      <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1.5 bg-primary rounded-t-full" />
+                      <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
                     )}
                   </button>
                 </div>
 
+                {/* Error Message */}
+                <AnimatePresence>
+                  {error && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                      animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+                      exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="bg-red-50 border border-red-100 rounded-lg p-3 flex items-center gap-3 text-red-500">
+                        <AlertCircle size={20} />
+                        <span className="text-sm font-medium">{error}</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {/* Form */}
-                <div className="space-y-10">
+                <div className="space-y-8">
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-slate-400">
                       {loginType === 'account' ? <User size={28} /> : <Smartphone size={28} />}
                     </div>
                     <input 
                       type="text" 
-                      placeholder={loginType === 'account' ? "请输入手机号码" : "请输入手机号"}
+                      value={loginType === 'account' ? username : phone}
+                      onChange={(e) => loginType === 'account' ? setUsername(e.target.value) : setPhone(e.target.value)}
+                      placeholder="请输入手机号"
                       className="w-full pl-16 pr-6 py-6 bg-slate-50 border border-slate-200 rounded-[24px] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-xl font-medium"
                     />
                   </div>
@@ -192,26 +236,43 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     {loginType === 'account' ? (
                       <input 
                         type="password" 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         placeholder="请输入登录密码"
                         className="w-full pl-16 pr-6 py-6 bg-slate-50 border border-slate-200 rounded-[24px] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-xl font-medium"
                       />
                     ) : (
-                      <div className="flex gap-4">
-                        <input 
-                          type="text" 
-                          placeholder="请输入验证码"
-                          className="flex-1 pl-16 pr-6 py-6 bg-slate-50 border border-slate-200 rounded-[24px] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-xl font-medium"
-                        />
-                        <button 
-                          onClick={startCountdown}
-                          disabled={countdown > 0}
-                          className="px-8 bg-slate-50 border border-slate-200 rounded-[24px] text-lg font-bold text-primary hover:bg-slate-100 disabled:text-slate-400 transition-all min-w-[140px]"
-                        >
-                          {countdown > 0 ? `${countdown}s` : '获取验证码'}
-                        </button>
+                      <div className="flex flex-col gap-4">
+                        <div className="flex gap-4">
+                          <input 
+                            type="text" 
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
+                            placeholder="请输入验证码"
+                            className="flex-1 pl-16 pr-6 py-6 bg-slate-50 border border-slate-200 rounded-[24px] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-xl font-medium"
+                          />
+                          <button 
+                            onClick={startCountdown}
+                            disabled={countdown > 0}
+                            className="px-8 bg-slate-50 border border-slate-200 rounded-[24px] text-lg font-bold text-primary hover:bg-slate-100 disabled:text-slate-400 transition-all min-w-[140px]"
+                          >
+                            {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                          </button>
+                        </div>
+                        {simulatedCode && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-primary text-sm font-bold px-2"
+                          >
+                            [模拟短信] 您的验证码是：{simulatedCode}
+                          </motion.div>
+                        )}
                       </div>
                     )}
                   </div>
+
+                  {/* Error Message removed from here */}
 
                   <div className="flex items-center justify-between px-2">
                     <label className="flex items-center gap-4 cursor-pointer group">
@@ -234,10 +295,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   </div>
 
                   <button 
-                    onClick={() => setView('select-enterprise')}
-                    className="w-full py-6 bg-primary text-white rounded-[24px] font-bold text-2xl shadow-xl shadow-primary/20 hover:shadow-2xl hover:bg-primary/90 active:scale-[0.98] transition-all mt-8"
+                    onClick={handleInitialLogin}
+                    className="w-full py-5 bg-primary text-white rounded-[12px] font-bold text-xl shadow-xl shadow-primary/20 hover:shadow-2xl hover:bg-primary/90 active:scale-[0.98] transition-all mt-6"
                   >
-                    登录
+                    登录 / 注册
                   </button>
                 </div>
               </motion.div>
