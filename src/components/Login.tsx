@@ -25,17 +25,30 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [view, setView] = useState<'login' | 'forgot' | 'select-enterprise'>('login');
   const [loginType, setLoginType] = useState<'account' | 'phone'>('account');
   const [selectedEnterprise, setSelectedEnterprise] = useState<string | null>(null);
+  const [rememberDefault, setRememberDefault] = useState(false);
+  const [showOnlyDefault, setShowOnlyDefault] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberPassword, setRememberPassword] = useState(false);
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [showError, setShowError] = useState(false);
   const [simulatedCode, setSimulatedCode] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const savedUsername = localStorage.getItem('saved_username');
+    const savedPassword = localStorage.getItem('saved_password');
+    if (savedUsername && savedPassword) {
+      setUsername(savedUsername);
+      setPassword(savedPassword);
+      setRememberPassword(true);
+    }
+  }, []);
 
   const enterprises = [
     { id: 'personal', name: '陈经理', status: '13800138000', isPersonal: true },
@@ -55,15 +68,27 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   const handleInitialLogin = () => {
-    if (!agreed) {
-      triggerError('请先阅读并同意服务条款和隐私政策');
-      return;
-    }
-
     if (loginType === 'account') {
       // Test credentials: 13800138000 / 888888
       if (username === '13800138000' && password === '888888') {
         setError('');
+        
+        if (rememberPassword) {
+          localStorage.setItem('saved_username', username);
+          localStorage.setItem('saved_password', password);
+        } else {
+          localStorage.removeItem('saved_username');
+          localStorage.removeItem('saved_password');
+        }
+
+        const defaultId = localStorage.getItem('default_login_id');
+        if (defaultId) {
+          setSelectedEnterprise(defaultId);
+          setRememberDefault(true);
+          setShowOnlyDefault(true);
+        } else {
+          setShowOnlyDefault(false);
+        }
         setView('select-enterprise');
       } else {
         triggerError('手机号或密码错误');
@@ -72,10 +97,29 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       // Phone login: any 11-digit number + simulated code 123456
       if (phone.length === 11 && code === '123456') {
         setError('');
+        const defaultId = localStorage.getItem('default_login_id');
+        if (defaultId) {
+          setSelectedEnterprise(defaultId);
+          setRememberDefault(true);
+          setShowOnlyDefault(true);
+        } else {
+          setShowOnlyDefault(false);
+        }
         setView('select-enterprise');
       } else {
         triggerError('请输入正确的手机号和验证码(123456)');
       }
+    }
+  };
+
+  const handleFinalLogin = () => {
+    if (selectedEnterprise) {
+      if (rememberDefault) {
+        localStorage.setItem('default_login_id', selectedEnterprise);
+      } else {
+        localStorage.removeItem('default_login_id');
+      }
+      onLogin(selectedEnterprise);
     }
   };
 
@@ -283,23 +327,31 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   {/* Error Message removed from here */}
 
                   <div className="flex items-center justify-between px-2">
-                    <label className="flex items-center gap-4 cursor-pointer group">
-                      <input 
-                        type="checkbox" 
-                        checked={agreed}
-                        onChange={(e) => setAgreed(e.target.checked)}
-                        className="size-6 rounded-md border-slate-300 text-primary focus:ring-primary"
-                      />
-                      <span className="text-base text-slate-500 group-hover:text-slate-700 transition-colors">
-                        登录视为您已阅读并同意 <span className="text-primary hover:underline">服务条款</span> 和 <span className="text-primary hover:underline">隐私政策</span>
-                      </span>
-                    </label>
+                    <div className="flex items-center gap-6">
+                      {loginType === 'account' && (
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                          <input 
+                            type="checkbox" 
+                            checked={rememberPassword}
+                            onChange={(e) => setRememberPassword(e.target.checked)}
+                            className="size-5 rounded border-slate-300 text-primary focus:ring-primary"
+                          />
+                          <span className="text-sm text-slate-500 group-hover:text-slate-700 transition-colors">
+                            记住密码
+                          </span>
+                        </label>
+                      )}
+                    </div>
                     <button 
                       onClick={() => setView('forgot')}
-                      className="text-base text-primary font-bold hover:underline"
+                      className="text-sm text-primary font-bold hover:underline"
                     >
                       忘记密码?
                     </button>
+                  </div>
+
+                  <div className="px-2 text-xs text-slate-400">
+                    登录视为您已阅读并同意 <span className="text-primary hover:underline cursor-pointer">服务条款</span> 和 <span className="text-primary hover:underline cursor-pointer">隐私政策</span>
                   </div>
 
                   <button 
@@ -404,61 +456,121 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
                     选择进入账号
                   </h2>
-                  <p className="text-slate-500 text-lg">请选择您要登录的...</p>
+                  <p className="text-slate-500 text-lg">
+                    {showOnlyDefault ? '系统将进入您的常用账号' : '请选择您要登录的...'}
+                  </p>
                 </div>
 
-                <div className="relative mb-8">
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400">
-                    <Search size={20} />
+                {!showOnlyDefault && (
+                  <div className="relative mb-8">
+                    <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400">
+                      <Search size={20} />
+                    </div>
+                    <input 
+                      type="text" 
+                      placeholder="搜索企业名称..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-[16px] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-lg"
+                    />
                   </div>
-                  <input 
-                    type="text" 
-                    placeholder="搜索企业名称..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-[16px] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-lg"
-                  />
-                </div>
+                )}
 
                 <div className="space-y-4 mb-10 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar">
-                  {filteredEnterprises.map((enterprise) => (
-                    <button
-                      key={enterprise.id}
-                      onClick={() => setSelectedEnterprise(enterprise.id)}
-                      className={`w-full flex items-center gap-4 p-5 rounded-[20px] border-2 transition-all text-left group ${
-                        selectedEnterprise === enterprise.id 
-                          ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10' 
-                          : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className={`p-3 rounded-xl transition-colors ${
-                        selectedEnterprise === enterprise.id ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'
-                      }`}>
-                        {enterprise.id === 'personal' ? <User size={24} /> : <Building2 size={24} />}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-bold text-slate-900 text-lg">{enterprise.name}</h4>
-                          {enterprise.id === 'personal' && (
-                            <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full">个人账号</span>
-                          )}
+                  {showOnlyDefault ? (
+                    // Only show the default enterprise
+                    enterprises.filter(e => e.id === selectedEnterprise).map((enterprise) => (
+                      <div
+                        key={enterprise.id}
+                        className="w-full flex items-center gap-4 p-5 rounded-[20px] border-2 border-primary bg-primary/5 shadow-lg shadow-primary/10 text-left"
+                      >
+                        <div className="p-3 rounded-xl bg-primary text-white">
+                          {enterprise.id === 'personal' ? <User size={24} /> : <Building2 size={24} />}
                         </div>
-                        <span className={`text-sm font-medium ${
-                          enterprise.id === 'personal' ? 'text-orange-500' : 
-                          enterprise.status === '已加入' ? 'text-emerald-500' : 'text-orange-500'
-                        }`}>
-                          {enterprise.status}
-                        </span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-bold text-slate-900 text-lg">{enterprise.name}</h4>
+                            {enterprise.id === 'personal' && (
+                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full">个人账号</span>
+                            )}
+                          </div>
+                          <span className={`text-sm font-medium ${
+                            enterprise.id === 'personal' ? 'text-orange-500' : 
+                            enterprise.status === '已加入' ? 'text-emerald-500' : 'text-orange-500'
+                          }`}>
+                            {enterprise.status}
+                          </span>
+                        </div>
                       </div>
-                    </button>
-                  ))}
+                    ))
+                  ) : (
+                    // Show full list
+                    filteredEnterprises.map((enterprise) => (
+                      <button
+                        key={enterprise.id}
+                        onClick={() => {
+                          setSelectedEnterprise(enterprise.id);
+                        }}
+                        className={`w-full flex items-center gap-4 p-5 rounded-[20px] border-2 transition-all text-left group ${
+                          selectedEnterprise === enterprise.id 
+                            ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10' 
+                            : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className={`p-3 rounded-xl transition-colors ${
+                          selectedEnterprise === enterprise.id ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'
+                        }`}>
+                          {enterprise.id === 'personal' ? <User size={24} /> : <Building2 size={24} />}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-bold text-slate-900 text-lg">{enterprise.name}</h4>
+                            {enterprise.id === 'personal' && (
+                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full">个人账号</span>
+                            )}
+                          </div>
+                          <span className={`text-sm font-medium ${
+                            enterprise.id === 'personal' ? 'text-orange-500' : 
+                            enterprise.status === '已加入' ? 'text-emerald-500' : 'text-orange-500'
+                          }`}>
+                            {enterprise.status}
+                          </span>
+                        </div>
+                      </button>
+                    ))
+                  )}
                 </div>
 
                 <div className="space-y-4">
+                  <div className="flex items-center justify-between px-2 mb-2">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        checked={rememberDefault}
+                        onChange={(e) => setRememberDefault(e.target.checked)}
+                        className="size-5 rounded border-slate-300 text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm text-slate-500 group-hover:text-slate-700 transition-colors">
+                        下次默认登录此账号
+                      </span>
+                    </label>
+
+                    {showOnlyDefault && (
+                      <button 
+                        onClick={() => {
+                          setShowOnlyDefault(false);
+                        }}
+                        className="text-sm text-primary font-bold hover:underline"
+                      >
+                        切换账号
+                      </button>
+                    )}
+                  </div>
+
                   <button 
-                    onClick={() => selectedEnterprise && onLogin(selectedEnterprise)}
+                    onClick={handleFinalLogin}
                     disabled={!selectedEnterprise}
-                    className="w-full py-5 bg-primary text-white rounded-[20px] font-bold text-xl shadow-xl shadow-primary/20 hover:shadow-2xl hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full py-5 bg-primary text-white rounded-[20px] font-bold text-xl shadow-xl shadow-primary/20 hover:shadow-2xl hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 relative overflow-hidden"
                   >
                     确认进入
                     <motion.span
