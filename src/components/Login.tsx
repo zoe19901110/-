@@ -38,6 +38,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [simulatedCode, setSimulatedCode] = useState<string | null>(null);
 
   const enterprises = [
+    { id: 'personal', name: '陈经理', status: '13800138000', isPersonal: true },
     { id: '1', name: '中建八局第三建设有限公司', status: '已加入' },
     { id: '2', name: '中铁建工集团有限公司', status: '已加入' },
     { id: '3', name: '中国建筑第一局(集团)有限公司', status: '审核中' },
@@ -433,11 +434,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       <div className={`p-3 rounded-xl transition-colors ${
                         selectedEnterprise === enterprise.id ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'
                       }`}>
-                        <Building2 size={24} />
+                        {enterprise.id === 'personal' ? <User size={24} /> : <Building2 size={24} />}
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-bold text-slate-900 text-lg mb-1">{enterprise.name}</h4>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-bold text-slate-900 text-lg">{enterprise.name}</h4>
+                          {enterprise.id === 'personal' && (
+                            <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full">个人账号</span>
+                          )}
+                        </div>
                         <span className={`text-sm font-medium ${
+                          enterprise.id === 'personal' ? 'text-orange-500' : 
                           enterprise.status === '已加入' ? 'text-emerald-500' : 'text-orange-500'
                         }`}>
                           {enterprise.status}

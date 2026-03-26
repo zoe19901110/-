@@ -31,16 +31,19 @@ export default function App() {
   });
 
   const [enterprises, setEnterprises] = useState([
+    { id: 'personal', name: '陈经理', status: '13800138000' },
     { id: '1', name: '中建八局第三建设有限公司', status: '已加入' },
     { id: '2', name: '中铁建工集团有限公司', status: '已加入' },
     { id: '3', name: '中国建筑第一局(集团)有限公司', status: '审核中' },
   ]);
-  const [currentEnterprise, setCurrentEnterprise] = useState(enterprises[0]);
+  const [currentEnterprise, setCurrentEnterprise] = useState(enterprises[1]);
 
   const handleLogin = (enterpriseId: string) => {
     const selected = enterprises.find(e => e.id === enterpriseId);
     if (selected) {
       setCurrentEnterprise(selected);
+    } else if (enterpriseId === 'personal') {
+      setCurrentEnterprise(enterprises[0]);
     }
     setIsLoggedIn(true);
   };

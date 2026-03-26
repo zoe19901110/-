@@ -37,16 +37,22 @@ interface SubItem {
   children?: { id: string; label: string }[];
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, currentEnterprise }) => {
   const [isBusinessOpen, setIsBusinessOpen] = useState(true);
   const [expandedSubItems, setExpandedSubItems] = useState<string[]>([]);
+
+  const isPersonal = currentEnterprise.id === 'personal';
 
   const navItems = [
     { id: 'dashboard', label: '首页', icon: LayoutDashboard },
     { id: 'business-dashboard', label: '业务仪表盘', icon: BarChart3 },
-    { id: 'org', label: '组织架构', icon: Network },
-    { id: 'enterprise', label: '企业资料', icon: Building2 },
-    { id: 'knowledge-base', label: '企业知识库', icon: Database },
+    ...(!isPersonal ? [
+      { id: 'org', label: '组织架构', icon: Network },
+      { id: 'enterprise', label: '企业资料', icon: Building2 },
+      { id: 'knowledge-base', label: '企业知识库', icon: Database },
+    ] : [
+      { id: 'knowledge-base', label: '个人知识库', icon: Database },
+    ]),
   ];
 
   const businessItems: SubItem[] = [

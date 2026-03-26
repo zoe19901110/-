@@ -38,7 +38,11 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnter
       <div className="flex items-center gap-6">
         <div className="relative">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-slate-900">
-            <Building2 size={16} className="text-primary" />
+            {currentEnterprise.id === 'personal' ? (
+              <User size={16} className="text-primary" />
+            ) : (
+              <Building2 size={16} className="text-primary" />
+            )}
             {currentEnterprise.name}
           </div>
         </div>
@@ -105,7 +109,10 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnter
                       onClick={() => setShowEntSelect(!showEntSelect)}
                       className="flex items-center justify-between w-full px-3 py-2 text-sm rounded-md bg-primary/10 text-primary font-bold"
                     >
-                      <span className="text-left">{currentEnterprise.name}</span>
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        {currentEnterprise.id === 'personal' ? <User size={14} /> : <Building2 size={14} />}
+                        <span className="truncate">{currentEnterprise.name}</span>
+                      </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <div className="w-2 h-2 rounded-full bg-primary" />
                         <ChevronDown size={14} className={`transition-transform ${showEntSelect ? 'rotate-180' : ''}`} />
@@ -121,9 +128,10 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnter
                               setCurrentEnterprise(ent);
                               setShowEntSelect(false);
                             }}
-                            className="block w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                            className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
                           >
-                            {ent.name}
+                            {ent.id === 'personal' ? <User size={14} className="text-slate-400" /> : <Building2 size={14} className="text-slate-400" />}
+                            <span className="truncate">{ent.name}</span>
                           </button>
                         ))}
                         {enterprises.length <= 1 && (
