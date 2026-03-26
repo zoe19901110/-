@@ -10,6 +10,8 @@ import {
   User,
   Lock,
   ArrowLeft,
+  Search,
+  Building2,
   ShieldCheck as ShieldIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -19,10 +21,22 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [view, setView] = useState<'login' | 'forgot'>('login');
+  const [view, setView] = useState<'login' | 'forgot' | 'select-enterprise'>('login');
   const [loginType, setLoginType] = useState<'account' | 'phone'>('account');
+  const [selectedEnterprise, setSelectedEnterprise] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [countdown, setCountdown] = useState(0);
+
+  const enterprises = [
+    { id: '1', name: '中建八局第三建设有限公司', status: '已加入' },
+    { id: '2', name: '中铁建工集团有限公司', status: '已加入' },
+    { id: '3', name: '中国建筑第一局(集团)有限公司', status: '审核中' },
+  ];
+
+  const filteredEnterprises = enterprises.filter(e => 
+    e.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const startCountdown = () => {
     setCountdown(60);
@@ -65,7 +79,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     },
     {
       icon: <Database className="text-white/80" size={24} />,
-      title: "企业知识库",
+      title: "我的素材",
       desc: "沉淀投标核心素材，实现知识资产复用"
     }
   ];
@@ -82,8 +96,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
 
           <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-12">
+              <div className="bg-white p-2 rounded-xl">
+                <LayoutDashboard className="text-primary" size={32} />
+              </div>
+              <div className="text-white">
+                <div className="text-2xl font-black tracking-tighter">标桥 <span className="font-normal opacity-80 text-xl">企业空间</span></div>
+              </div>
+            </div>
+
             <h1 className="text-5xl font-extrabold text-white mb-16 tracking-tight">
-              投标协同管理系统
+              投标协同管理平台
             </h1>
 
             <div className="space-y-12">
@@ -164,13 +187,30 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-slate-400">
-                      <Lock size={28} />
+                      {loginType === 'account' ? <Lock size={28} /> : <ShieldIcon size={28} />}
                     </div>
-                    <input 
-                      type="password" 
-                      placeholder="请输入登录密码"
-                      className="w-full pl-16 pr-6 py-6 bg-slate-50 border border-slate-200 rounded-[24px] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-xl font-medium"
-                    />
+                    {loginType === 'account' ? (
+                      <input 
+                        type="password" 
+                        placeholder="请输入登录密码"
+                        className="w-full pl-16 pr-6 py-6 bg-slate-50 border border-slate-200 rounded-[24px] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-xl font-medium"
+                      />
+                    ) : (
+                      <div className="flex gap-4">
+                        <input 
+                          type="text" 
+                          placeholder="请输入验证码"
+                          className="flex-1 pl-16 pr-6 py-6 bg-slate-50 border border-slate-200 rounded-[24px] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-xl font-medium"
+                        />
+                        <button 
+                          onClick={startCountdown}
+                          disabled={countdown > 0}
+                          className="px-8 bg-slate-50 border border-slate-200 rounded-[24px] text-lg font-bold text-primary hover:bg-slate-100 disabled:text-slate-400 transition-all min-w-[140px]"
+                        >
+                          {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between px-2">
@@ -194,14 +234,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   </div>
 
                   <button 
-                    onClick={onLogin}
+                    onClick={() => setView('select-enterprise')}
                     className="w-full py-6 bg-primary text-white rounded-[24px] font-bold text-2xl shadow-xl shadow-primary/20 hover:shadow-2xl hover:bg-primary/90 active:scale-[0.98] transition-all mt-8"
                   >
                     登录
                   </button>
                 </div>
               </motion.div>
-            ) : (
+            ) : view === 'forgot' ? (
               <motion.div 
                 key="forgot"
                 initial={{ opacity: 0, x: 20 }}
@@ -280,6 +320,84 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     className="w-full py-6 bg-primary text-white rounded-[24px] font-bold text-2xl shadow-xl shadow-primary/20 hover:shadow-2xl hover:bg-primary/90 active:scale-[0.98] transition-all mt-8"
                   >
                     确认重置
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="select-enterprise"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="w-full max-w-[480px]"
+              >
+                <div className="text-center mb-10">
+                  <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
+                    选择进入账号
+                  </h2>
+                  <p className="text-slate-500 text-lg">请选择您要登录的...</p>
+                </div>
+
+                <div className="relative mb-8">
+                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400">
+                    <Search size={20} />
+                  </div>
+                  <input 
+                    type="text" 
+                    placeholder="搜索企业名称..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-[16px] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-lg"
+                  />
+                </div>
+
+                <div className="space-y-4 mb-10 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar">
+                  {filteredEnterprises.map((enterprise) => (
+                    <button
+                      key={enterprise.id}
+                      onClick={() => setSelectedEnterprise(enterprise.id)}
+                      className={`w-full flex items-center gap-4 p-5 rounded-[20px] border-2 transition-all text-left group ${
+                        selectedEnterprise === enterprise.id 
+                          ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10' 
+                          : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className={`p-3 rounded-xl transition-colors ${
+                        selectedEnterprise === enterprise.id ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'
+                      }`}>
+                        <Building2 size={24} />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-slate-900 text-lg mb-1">{enterprise.name}</h4>
+                        <span className={`text-sm font-medium ${
+                          enterprise.status === '已加入' ? 'text-emerald-500' : 'text-orange-500'
+                        }`}>
+                          {enterprise.status}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-4">
+                  <button 
+                    onClick={onLogin}
+                    disabled={!selectedEnterprise}
+                    className="w-full py-5 bg-primary text-white rounded-[20px] font-bold text-xl shadow-xl shadow-primary/20 hover:shadow-2xl hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    确认进入
+                    <motion.span
+                      animate={{ x: [0, 4, 0] }}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
+                    >
+                      →
+                    </motion.span>
+                  </button>
+                  <button 
+                    onClick={() => setView('login')}
+                    className="w-full py-5 bg-white border-2 border-slate-100 text-slate-500 rounded-[20px] font-bold text-xl hover:bg-slate-50 hover:border-slate-200 transition-all"
+                  >
+                    返回登录
                   </button>
                 </div>
               </motion.div>

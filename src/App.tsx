@@ -20,7 +20,7 @@ import Login from './components/Login';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [workbenchStage, setWorkbenchStage] = useState<string | undefined>(undefined);
   const [projectData, setProjectData] = useState<any>(null);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import BidParsing from './BidParsing';
+import MarginReceiptUpload from './MarginReceiptUpload';
 import { 
   Fingerprint, 
   ClipboardList, 
@@ -69,12 +70,16 @@ import {
   Wallet,
   Medal,
   Archive,
-  Globe
+  Globe,
+  Paperclip,
+  Upload,
+  FileText as FileTextIcon,
+  Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 type Phase = 'preparation' | 'production' | 'inspection' | 'archiving';
-type SubView = 'main' | 'annotation-view' | 'key-info-view' | 'qualification-view' | 'risk-view' | 'file-production' | 'inspection-detail' | 'archive-register' | 'resource-center' | 'parsing-report';
+type SubView = 'main' | 'annotation-view' | 'key-info-view' | 'qualification-view' | 'risk-view' | 'file-production' | 'inspection-detail' | 'archive-register' | 'resource-center' | 'parsing-report' | 'margin-receipt';
 
 interface WorkbenchProps {
   onExit: () => void;
@@ -84,6 +89,14 @@ interface WorkbenchProps {
   uploadedFiles: Record<string, boolean>;
   setUploadedFiles: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   onUpdateProject?: (updatedProject: any) => void;
+}
+
+interface Attachment {
+  id: string;
+  name: string;
+  size: string;
+  type: 'pdf' | 'image';
+  date: string;
 }
 
 const ParsingReportView = ({ onBack, projectData, isPaused }: { onBack: () => void, projectData: any, isPaused: boolean }) => (
@@ -231,7 +244,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
   const notifications = [
     { id: 1, type: 'warning', text: '保证金缴纳截止时间提醒：2023-11-25 17:00', time: '2小时前', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50' },
     { id: 2, type: 'info', text: '开标时间提醒：2023-12-20 09:30', time: '5小时前', icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-50' },
-    { id: 3, type: 'alert', text: '答疑澄清提醒：收到1条新的澄清公告', time: '1天前', icon: Info, color: 'text-purple-500', bg: 'bg-purple-50' },
+    { id: 3, type: 'alert', text: '文件领取截止时间提醒：2024-04-15', time: '1天前', icon: Info, color: 'text-purple-500', bg: 'bg-purple-50' },
   ];
 
   useEffect(() => {
@@ -583,7 +596,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
                 />
               )}
               {currentPhase === 'production' && <ProductionPhase onNavigate={handleStartProduction} onSelect={setSelectedCard} isPaused={isPaused} />}
-              {currentPhase === 'inspection' && <InspectionPhase onNavigate={() => setSubView('inspection-detail')} onSelect={setSelectedCard} isPaused={isPaused} />}
+              {currentPhase === 'inspection' && <InspectionPhase onNavigate={(view) => setSubView(view)} onSelect={setSelectedCard} isPaused={isPaused} />}
               {currentPhase === 'archiving' && <ArchivingPhase onNavigate={() => setSubView('archive-register')} isPaused={isPaused} />}
             </div>
           ) : (
@@ -596,6 +609,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
               {subView === 'inspection-detail' && <InspectionDetailView onBack={() => setSubView('main')} uploadedFiles={uploadedFiles} isPaused={isPaused} />}
               {subView === 'archive-register' && <ArchiveRegisterView onBack={() => setSubView('main')} isPaused={isPaused} />}
               {subView === 'parsing-report' && <ParsingReportView onBack={() => setSubView('main')} projectData={projectData} isPaused={isPaused} />}
+              {subView === 'margin-receipt' && <MarginReceiptUpload onBack={() => setSubView('main')} isPaused={isPaused} />}
               {subView === 'bid-parsing' && (
                 <BidParsing 
                   onBack={() => setSubView('main')} 
@@ -966,12 +980,14 @@ const Workbench: React.FC<WorkbenchProps> = ({
 
               </div>
 
-              <div className="p-6 border-t border-slate-100 bg-slate-50/50">
-                <button className="w-full py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2">
-                  <Download size={18} />
-                  导出分析报告
-                </button>
-              </div>
+              {activeRightTab !== 'resource-center' && (
+                <div className="p-6 border-t border-slate-100 bg-slate-50/50">
+                  <button className="w-full py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2">
+                    <Download size={18} />
+                    导出分析报告
+                  </button>
+                </div>
+              )}
             </motion.div>
           </>
         )}
@@ -1569,7 +1585,7 @@ const InspectionDetailView = ({ onBack, uploadedFiles, isPaused }: { onBack: () 
 };
 
 const ResourceCenterView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => {
-  const [activeTab, setActiveTab] = useState<'receipts' | 'personnel' | 'performance' | 'finance' | 'rewards' | 'honors' | 'materials' | 'disclosure' | 'credit' | 'qualifications'>('receipts');
+  const [activeTab, setActiveTab] = useState<'basic_info' | 'personnel' | 'performance' | 'finance' | 'rewards' | 'honors' | 'materials' | 'disclosure' | 'credit' | 'qualifications'>('basic_info');
 
   return (
     <div className={`flex flex-col h-full ${isPaused ? 'opacity-75' : ''}`}>
@@ -1577,7 +1593,7 @@ const ResourceCenterView = ({ onBack, isPaused }: { onBack: () => void, isPaused
         <div className="flex items-center justify-between mb-6">
           <div className="flex flex-wrap bg-slate-100 p-1 rounded-xl gap-1">
             {[
-              { id: 'receipts', label: '项目回执', icon: Receipt },
+              { id: 'basic_info', label: '企业基本信息', icon: Building2 },
               { id: 'personnel', label: '人员库', icon: Users },
               { id: 'performance', label: '业绩库', icon: Trophy },
               { id: 'qualifications', label: '企业资质', icon: Building2 },
@@ -1612,69 +1628,19 @@ const ResourceCenterView = ({ onBack, isPaused }: { onBack: () => void, isPaused
 
       <div className="flex-1 overflow-y-auto p-8">
         <AnimatePresence mode="wait">
-        {activeTab === 'receipts' && (
+        {activeTab === 'basic_info' && (
           <motion.div
-            key="receipts"
+            key="basic_info"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="space-y-8"
+            className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-xl"
           >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { label: '待处理回执', count: '1', color: 'orange', icon: AlertTriangle },
-                { label: '已确认回执', count: '2', color: 'green', icon: CheckCircle2 },
-                { label: '累计缴纳金额', count: '¥250,500.00', color: 'primary', icon: Receipt },
-              ].map((stat, i) => (
-                <div key={i} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
-                  <div className="flex items-center gap-4">
-                    <div className={`size-12 rounded-xl flex items-center justify-center bg-${stat.color}-50 text-${stat.color === 'primary' ? 'primary' : stat.color + '-500'}`}>
-                      <stat.icon size={24} />
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">{stat.label}</p>
-                      <p className="text-xl font-black text-slate-900">{stat.count}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="size-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 mb-4">
+              <Building2 size={32} />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              { title: '投标保证金缴纳回执', status: '已上传', date: '2026-03-12', amount: '¥250,000.00', file: 'receipt_security_deposit.pdf' },
-            ].map((item, i) => (
-              <div key={i} className="bg-white border border-slate-200 rounded-xl p-6 hover:shadow-md transition-all">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${item.status === '已上传' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-400'}`}>
-                      <Receipt size={24} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900">{item.title}</h4>
-                      <p className="text-xs text-slate-500 mt-1">更新时间: {item.date}</p>
-                    </div>
-                  </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                    item.status === '已上传' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'
-                  }`}>
-                    {item.status}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                  <span className="text-sm font-bold text-slate-700">{item.amount}</span>
-                  <div className="flex gap-2">
-                    {item.file ? (
-                      <>
-                        <button className="p-2 text-slate-400 hover:text-primary transition-colors" title="查看"><Eye size={18} /></button>
-                        <button className="p-2 text-slate-400 hover:text-primary transition-colors" title="下载"><Download size={18} /></button>
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            ))}
-            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">暂无数据</h3>
+            <p className="text-sm text-slate-500">该模块内容正在建设中</p>
           </motion.div>
         )}
 
@@ -2765,7 +2731,7 @@ const ProductionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () =>
   );
 };
 
-const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () => void, onSelect: (id: string | null) => void, isPaused: boolean }) => (
+const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: (view: SubView) => void, onSelect: (id: string | null) => void, isPaused: boolean }) => (
   <div className="space-y-8">
     <div className="flex items-center justify-between mb-4">
       <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
@@ -2786,6 +2752,7 @@ const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () =>
               alert('此项目已暂停');
               return;
             }
+            onNavigate('margin-receipt');
           }}
           className={`mt-auto w-full py-3.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-primary hover:text-primary transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
@@ -2796,7 +2763,11 @@ const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () =>
       <div 
         onMouseEnter={() => onSelect('bid-inspection')}
         onMouseLeave={() => onSelect(null)}
-        onClick={onNavigate}
+        onClick={() => {
+          if (!isPaused) {
+            onNavigate('inspection-detail');
+          }
+        }}
         className="bg-primary rounded-xl p-8 text-white shadow-xl shadow-primary/20 group hover:-translate-y-1 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col"
       >
         <div className="flex justify-between items-start mb-6">
@@ -2807,12 +2778,13 @@ const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () =>
         <h4 className="text-xl font-bold mb-3">标书检查</h4>
         <p className="text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem]">系统将自动扫描标书完整性、雷同性及格式规范，确保投标文件的有效性，降低废标风险。</p>
           <button 
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               if (isPaused) {
                 alert('此项目已暂停');
                 return;
               }
-              onNavigate();
+              onNavigate('inspection-detail');
             }}
             className={`mt-auto w-full py-3.5 bg-white text-primary font-bold rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
@@ -2864,17 +2836,19 @@ const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () =>
 const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPaused: boolean }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [openingRecords, setOpeningRecords] = useState([
-    { name: '城市基础设施二期项目', time: '2023-12-20', loc: '市公共资源交易中心', units: '5家', price: '¥1,210.5万', rank: '1' },
-    { name: '智慧交通一期工程', time: '2022-05-12', loc: '省招标中心', units: '8家', price: '¥850.0万', rank: '2' },
+    { units: '某某建设集团有限公司', price: 12105000, rank: '1', isWinner: true, isSelf: false },
+    { units: '中建某局有限公司', price: 12500000, rank: '2', isWinner: false, isSelf: false },
+    { units: '省建工集团', price: 12800000, rank: '3', isWinner: false, isSelf: false },
   ]);
   const [winningRecords, setWinningRecords] = useState([
-    { unit: '某某建设集团有限公司', amount: '¥1,210.5万', date: '2023-12-25', url: 'http://ggzy.example.com/...' },
+    { unit: '某某建设集团有限公司', amount: 12105000, date: '2024-03-25', url: 'http://ggzy.example.com/...' },
   ]);
   const [contractRecords, setContractRecords] = useState([
-    { id: 'HT-2024-001', name: '城市基础设施施工合同', date: '2024-01-05', amount: '¥1,180.0万', owner: '陈经理', status: '履行中' },
+    { id: 'HT-2024-001', name: '城市基础设施施工合同', date: '2024-04-05', amount: 11800000, owner: '陈经理', status: '履行中', fulfillmentDate: '2024-04-10' },
   ]);
-  const [archiveRecords, setArchiveRecords] = useState([
-    { id: 'GD-2024-008', date: '2024-02-15', loc: '档案室-A区-03柜', person: '张美玲' },
+  const [contractAttachments, setContractAttachments] = useState<Attachment[]>([
+    { id: '1', name: '中标通知书.pdf', size: '1.2MB', type: 'pdf', date: '2024-03-25' },
+    { id: '2', name: '施工合同扫描件.jpg', size: '2.4MB', type: 'image', date: '2024-04-05' },
   ]);
 
   const handleSave = () => {
@@ -2882,28 +2856,72 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
     // In a real app, you'd send data to a server here
   };
 
-  const updateOpening = (index: number, field: string, value: string) => {
+  const formatCurrency = (value: number | string) => {
+    if (typeof value === 'string') return value;
+    return new Intl.NumberFormat('zh-CN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
+  };
+
+  const updateOpening = (index: number, field: string, value: any) => {
     const newRecords = [...openingRecords];
     (newRecords[index] as any)[field] = value;
+    
+    // If marking as winner, unmark others (assuming single winner)
+    if (field === 'isWinner' && value === true) {
+      newRecords.forEach((r, i) => {
+        if (i !== index) r.isWinner = false;
+      });
+      // Sync to winning records
+      setWinningRecords([{
+        unit: newRecords[index].units,
+        amount: newRecords[index].price,
+        date: winningRecords[0]?.date || '',
+        url: winningRecords[0]?.url || ''
+      }]);
+    } else if (field === 'isWinner' && value === false) {
+      // If unmarking the winner, clear winning records
+      setWinningRecords([]);
+    } else if (field === 'isSelf' && value === true) {
+      // If marking as self, unmark others
+      newRecords.forEach((r, i) => {
+        if (i !== index) r.isSelf = false;
+      });
+    } else if (newRecords[index].isWinner && (field === 'units' || field === 'price')) {
+      // If updating the name or price of the current winner, sync to winning records
+      setWinningRecords([{
+        unit: newRecords[index].units,
+        amount: newRecords[index].price,
+        date: winningRecords[0]?.date || '',
+        url: winningRecords[0]?.url || ''
+      }]);
+    }
+    
     setOpeningRecords(newRecords);
   };
 
-  const updateWinning = (index: number, field: string, value: string) => {
+  const updateWinning = (index: number, field: string, value: any) => {
     const newRecords = [...winningRecords];
     (newRecords[index] as any)[field] = value;
     setWinningRecords(newRecords);
   };
 
-  const updateContract = (index: number, field: string, value: string) => {
+  const updateContract = (index: number, field: string, value: any) => {
     const newRecords = [...contractRecords];
     (newRecords[index] as any)[field] = value;
     setContractRecords(newRecords);
   };
 
-  const updateArchive = (index: number, field: string, value: string) => {
-    const newRecords = [...archiveRecords];
-    (newRecords[index] as any)[field] = value;
-    setArchiveRecords(newRecords);
+  const handleExport = () => {
+    const data = {
+      opening: openingRecords,
+      winning: winningRecords,
+      contract: contractRecords,
+      attachments: contractAttachments
+    };
+    console.log('Exporting data:', data);
+    alert('详情数据已准备好导出（包含附件列表，模拟导出成功）');
   };
 
   return (
@@ -2920,12 +2938,12 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                 alert('此项目已暂停');
                 return;
               }
-              // Export logic
+              handleExport();
             }}
             className={`px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Download size={16} />
-            导出记录
+            导出详情
           </button>
           {!isEditing ? (
             <button 
@@ -2964,15 +2982,17 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
         <section className="space-y-4">
           <div className="flex items-center gap-2 text-slate-900 font-bold">
             <ClipboardList size={20} className="text-primary" />
-            <h4>开标记录</h4>
+            <h4>开标详情</h4>
           </div>
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
-                  <th className="px-6 py-4">参标单位</th>
-                  <th className="px-6 py-4">投标报价</th>
-                  <th className="px-6 py-4">排名</th>
+                  <th className="px-6 py-4">参标单位 <span className="text-red-500">*</span></th>
+                  <th className="px-6 py-4">投标报价（元） <span className="text-red-500">*</span></th>
+                  <th className="px-6 py-4">排名 <span className="text-red-500">*</span></th>
+                  <th className="px-6 py-4 text-center">是否中标 <span className="text-red-500">*</span></th>
+                  <th className="px-6 py-4 text-center">是否本单位 <span className="text-red-500">*</span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -2987,19 +3007,23 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                           className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
-                        <span className="text-sm text-slate-600">{row.units}</span>
+                        <span className={`text-sm font-bold ${row.isWinner ? 'text-emerald-700' : 'text-slate-600'}`}>
+                          {row.units || '--'}
+                          {row.isSelf && <span className="ml-2 px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded text-[10px]">本单位</span>}
+                        </span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {isEditing ? (
                         <input 
+                          type="number"
                           value={row.price} 
-                          onChange={(e) => updateOpening(i, 'price', e.target.value)}
+                          onChange={(e) => updateOpening(i, 'price', parseFloat(e.target.value) || 0)}
                           disabled={isPaused}
                           className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
-                        <span className="font-mono text-sm text-primary font-bold">{row.price}</span>
+                        <span className="font-mono text-sm text-primary font-bold">{formatCurrency(row.price)}</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -3012,8 +3036,36 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                         />
                       ) : (
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.rank === '1' ? 'bg-yellow-50 text-yellow-600' : 'bg-slate-100 text-slate-500'}`}>
-                          第{row.rank}名
+                          {row.rank ? `第${row.rank}名` : '--'}
                         </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {isEditing ? (
+                        <input 
+                          type="radio"
+                          name="isWinner"
+                          checked={row.isWinner}
+                          onChange={() => updateOpening(i, 'isWinner', true)}
+                          disabled={isPaused}
+                          className={`size-4 cursor-pointer ${isPaused ? 'cursor-not-allowed' : ''}`}
+                        />
+                      ) : (
+                        row.isWinner && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-bold">中标单位</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {isEditing ? (
+                        <input 
+                          type="radio"
+                          name="isSelf"
+                          checked={row.isSelf}
+                          onChange={() => updateOpening(i, 'isSelf', true)}
+                          disabled={isPaused}
+                          className={`size-4 cursor-pointer ${isPaused ? 'cursor-not-allowed' : ''}`}
+                        />
+                      ) : (
+                        row.isSelf && <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-[10px] font-bold">是</span>
                       )}
                     </td>
                   </tr>
@@ -3021,20 +3073,31 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
               </tbody>
             </table>
           </div>
+          {isEditing && (
+            <div className="flex justify-end mt-2">
+              <button 
+                onClick={() => setOpeningRecords([...openingRecords, { units: '', price: 0, rank: '', isWinner: false, isSelf: false }])}
+                disabled={isPaused}
+                className={`text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Plus size={16} /> 添加参标单位
+              </button>
+            </div>
+          )}
         </section>
 
         {/* Winning Records Section */}
         <section className="space-y-4">
           <div className="flex items-center gap-2 text-slate-900 font-bold">
             <Trophy size={20} className="text-primary" />
-            <h4>中标记录</h4>
+            <h4>中标详情</h4>
           </div>
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
                   <th className="px-6 py-4">中标单位</th>
-                  <th className="px-6 py-4">中标金额</th>
+                  <th className="px-6 py-4">中标金额（元）</th>
                   <th className="px-6 py-4">通知书日期</th>
                   <th className="px-6 py-4">公示链接</th>
                 </tr>
@@ -3046,36 +3109,38 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                       {isEditing ? (
                         <input 
                           value={row.unit} 
-                          onChange={(e) => updateWinning(i, 'unit', e.target.value)}
-                          disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          readOnly
+                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"
+                          placeholder="自动获取中标单位"
                         />
                       ) : (
-                        <span className="font-bold text-slate-900 text-sm">{row.unit}</span>
+                        <span className="font-bold text-slate-900 text-sm">{row.unit || '--'}</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {isEditing ? (
                         <input 
+                          type="number"
                           value={row.amount} 
-                          onChange={(e) => updateWinning(i, 'amount', e.target.value)}
-                          disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          readOnly
+                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm bg-slate-50 text-slate-500 font-mono cursor-not-allowed"
+                          placeholder="0.00"
                         />
                       ) : (
-                        <span className="font-mono text-sm text-green-600 font-bold">{row.amount}</span>
+                        <span className="font-mono text-sm text-green-600 font-bold">{formatCurrency(row.amount)}</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {isEditing ? (
                         <input 
+                          type="date"
                           value={row.date} 
                           onChange={(e) => updateWinning(i, 'date', e.target.value)}
                           disabled={isPaused}
                           className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
-                        <span className="text-sm text-slate-600">{row.date}</span>
+                        <span className="text-sm text-slate-600">{row.date || '--'}</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -3085,9 +3150,10 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                           onChange={(e) => updateWinning(i, 'url', e.target.value)}
                           disabled={isPaused}
                           className={`w-full border border-slate-200 rounded px-2 py-1 text-xs text-primary ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          placeholder="http://..."
                         />
                       ) : (
-                        <a href="#" className="text-primary hover:underline text-xs flex items-center gap-1">
+                        <a href={row.url} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1">
                           查看公示 <ArrowRight size={12} />
                         </a>
                       )}
@@ -3102,8 +3168,8 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
         {/* Contract Management Section */}
         <section className="space-y-4">
           <div className="flex items-center gap-2 text-slate-900 font-bold">
-            <Receipt size={20} className="text-primary" />
-            <h4>合同管理</h4>
+            <Receipt size={20} className="text-[#0052d9]" />
+            <h4>合同归档</h4>
           </div>
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <table className="w-full text-left border-collapse">
@@ -3111,8 +3177,9 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                 <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
                   <th className="px-6 py-4">合同编号/名称</th>
                   <th className="px-6 py-4">签署日期</th>
-                  <th className="px-6 py-4">合同金额</th>
+                  <th className="px-6 py-4">合同金额（元）</th>
                   <th className="px-6 py-4">负责人</th>
+                  <th className="px-6 py-4">履行时间</th>
                   <th className="px-6 py-4">履行状态</th>
                 </tr>
               </thead>
@@ -3139,33 +3206,35 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                         </div>
                       ) : (
                         <>
-                          <p className="text-sm font-bold text-slate-900">{row.name}</p>
-                          <p className="text-[10px] text-slate-400">{row.id}</p>
+                          <p className="text-sm font-bold text-slate-900">{row.name || '--'}</p>
+                          <p className="text-[10px] text-slate-400">{row.id || '--'}</p>
                         </>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {isEditing ? (
                         <input 
+                          type="date"
                           value={row.date} 
                           onChange={(e) => updateContract(i, 'date', e.target.value)}
                           disabled={isPaused}
                           className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
-                        <span className="text-sm text-slate-600">{row.date}</span>
+                        <span className="text-sm text-slate-600">{row.date || '--'}</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {isEditing ? (
                         <input 
+                          type="number"
                           value={row.amount} 
-                          onChange={(e) => updateContract(i, 'amount', e.target.value)}
+                          onChange={(e) => updateContract(i, 'amount', parseFloat(e.target.value) || 0)}
                           disabled={isPaused}
                           className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
-                        <span className="font-mono text-sm text-slate-900 font-bold">{row.amount}</span>
+                        <span className="font-mono text-sm text-slate-900 font-bold">{formatCurrency(row.amount)}</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -3177,7 +3246,20 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                           className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
-                        <span className="text-sm text-slate-600">{row.owner}</span>
+                        <span className="text-sm text-slate-600">{row.owner || '--'}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {isEditing ? (
+                        <input 
+                          type="date"
+                          value={row.fulfillmentDate} 
+                          onChange={(e) => updateContract(i, 'fulfillmentDate', e.target.value)}
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                        />
+                      ) : (
+                        <span className="text-sm text-slate-600">{row.fulfillmentDate || '--'}</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -3193,7 +3275,11 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                           <option>已终止</option>
                         </select>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          row.status === '已完成' ? 'bg-green-50 text-green-600' : 
+                          row.status === '已终止' ? 'bg-red-50 text-red-600' : 
+                          'bg-blue-50 text-blue-600'
+                        }`}>
                           {row.status}
                         </span>
                       )}
@@ -3203,79 +3289,95 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
               </tbody>
             </table>
           </div>
+          {isEditing && (
+            <div className="flex justify-end">
+              <button 
+                onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: 0, owner: '', status: '履行中', fulfillmentDate: '' }])}
+                disabled={isPaused}
+                className={`text-xs font-bold text-primary hover:underline flex items-center gap-1 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Plus size={14} /> 添加合同
+              </button>
+            </div>
+          )}
         </section>
 
-        {/* Project Archiving Section */}
+        {/* Contract Attachments Section */}
         <section className="space-y-4">
-          <div className="flex items-center gap-2 text-slate-900 font-bold">
-            <FolderOpen size={20} className="text-primary" />
-            <h4>项目归档</h4>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-2 text-slate-900 font-bold">
+              <Paperclip size={20} className="text-primary" />
+              <h4 className="text-lg">合同附件</h4>
+            </div>
+            {isEditing && (
+              <div className="relative">
+                <input 
+                  type="file" 
+                  multiple 
+                  accept=".pdf,image/*"
+                  disabled={isPaused}
+                  className={`absolute inset-0 opacity-0 cursor-pointer ${isPaused ? 'cursor-not-allowed' : ''}`}
+                  onChange={(e) => {
+                    const files = e.target.files;
+                    if (files) {
+                      const newAttachments: Attachment[] = Array.from(files).map((file, idx) => {
+                        const f = file as File;
+                        return {
+                          id: Date.now() + idx + '',
+                          name: f.name,
+                          size: (f.size / 1024 / 1024).toFixed(1) + 'MB',
+                          type: f.type.includes('pdf') ? 'pdf' : 'image',
+                          date: new Date().toISOString().split('T')[0]
+                        };
+                      });
+                      setContractAttachments([...contractAttachments, ...newAttachments]);
+                    }
+                  }}
+                />
+                <button className={`px-4 py-2 bg-primary/10 text-primary rounded-lg text-xs font-bold hover:bg-primary/20 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  <Upload size={14} /> 上传附件
+                </button>
+              </div>
+            )}
           </div>
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
-                  <th className="px-6 py-4">归档编号</th>
-                  <th className="px-6 py-4">归档日期</th>
-                  <th className="px-6 py-4">存放位置</th>
-                  <th className="px-6 py-4">移交人</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {archiveRecords.map((row, i) => (
-                  <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4">
-                      {isEditing ? (
-                        <input 
-                          value={row.id} 
-                          onChange={(e) => updateArchive(i, 'id', e.target.value)}
-                          disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
-                        />
-                      ) : (
-                        <span className="font-mono text-sm text-slate-900 font-bold">{row.id}</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {isEditing ? (
-                        <input 
-                          value={row.date} 
-                          onChange={(e) => updateArchive(i, 'date', e.target.value)}
-                          disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
-                        />
-                      ) : (
-                        <span className="text-sm text-slate-600">{row.date}</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {isEditing ? (
-                        <input 
-                          value={row.loc} 
-                          onChange={(e) => updateArchive(i, 'loc', e.target.value)}
-                          disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
-                        />
-                      ) : (
-                        <span className="text-sm text-slate-600">{row.loc}</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {isEditing ? (
-                        <input 
-                          value={row.person} 
-                          onChange={(e) => updateArchive(i, 'person', e.target.value)}
-                          disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
-                        />
-                      ) : (
-                        <span className="text-sm text-slate-600">{row.person}</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {contractAttachments.map((file) => (
+              <div key={file.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 group hover:border-primary/30 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className={`size-10 rounded-lg flex items-center justify-center ${file.type === 'pdf' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
+                    {file.type === 'pdf' ? <FileTextIcon size={20} /> : <ImageIcon size={20} />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-700 truncate max-w-[200px]">{file.name}</p>
+                    <p className="text-[10px] text-slate-400">{file.size} • {file.date}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button className="p-2 text-slate-400 hover:text-primary transition-colors">
+                    <Eye size={16} />
+                  </button>
+                  <button className="p-2 text-slate-400 hover:text-emerald-500 transition-colors">
+                    <Download size={16} />
+                  </button>
+                  {isEditing && (
+                    <button 
+                      onClick={() => setContractAttachments(contractAttachments.filter(a => a.id !== file.id))}
+                      disabled={isPaused}
+                      className={`p-2 text-slate-400 hover:text-red-500 transition-colors ${isPaused ? 'cursor-not-allowed' : ''}`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {contractAttachments.length === 0 && (
+              <div className="col-span-2 py-10 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                <Paperclip size={32} className="mb-2 opacity-20" />
+                <p className="text-sm">暂无附件</p>
+              </div>
+            )}
           </div>
         </section>
       </div>

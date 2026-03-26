@@ -24,8 +24,8 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
   
   // Initialize files based on project
   const [files, setFiles] = useState([
-    { name: project.latestFile || `2023年${enterpriseName}智慧校园建设项目招标文件.pdf`, time: project.updateTime || '2023-11-20 14:30', type: 'pdf', status: '待上传' },
-    { name: `${enterpriseName}配套网络设备采购需求清单.docx`, time: '2023-11-19 10:15', type: 'doc', status: '上传成功' }
+    { name: project.latestFile || `2023年${enterpriseName}智慧校园建设项目招标文件.pdf`, time: project.updateTime || '2023-11-20 14:30', type: 'pdf', status: '进行中' },
+    { name: `${enterpriseName}配套网络设备采购需求清单.docx`, time: '2023-11-19 10:15', type: 'doc', status: '已完成' }
   ]);
 
   const [isImported, setIsImported] = useState(!!project.latestFile);
@@ -71,23 +71,30 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
             </h3>
           </div>
         </div>
-        <button 
-          onClick={() => {
-            if (isPaused) {
-              alert('此项目已暂停');
-              return;
-            }
-          }}
-          className={`flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium transition-all ${isPaused ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:bg-slate-50'}`}
-        >
-          <Download size={16} /> 导出报告
-        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-12 space-y-8">
           <div className={`bg-white rounded-xl p-8 border border-slate-100 shadow-sm ${isPaused ? 'opacity-75 grayscale-[0.5]' : ''}`}>
             <h3 className="text-lg font-bold mb-6">招标文件解析</h3>
+            <input 
+              type="file" 
+              id="file-upload" 
+              className="hidden" 
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  setIsImported(true);
+                  setFiles(prev => {
+                    const newFiles = [...prev];
+                    if (newFiles.length > 0) {
+                      newFiles[0].name = e.target.files![0].name;
+                      newFiles[0].status = '进行中';
+                    }
+                    return newFiles;
+                  });
+                }
+              }} 
+            />
             {isImported ? (
               isParsed ? (
                 <div className="border-2 border-green-100 bg-green-50/30 rounded-xl p-12 flex flex-col items-center justify-center">
@@ -117,10 +124,13 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
                         }
                         setIsImported(false); 
                         setIsParsed(false); 
+                        setTimeout(() => {
+                          document.getElementById('file-upload')?.click();
+                        }, 0);
                       }}
                       className={`bg-white border border-slate-200 text-slate-600 font-bold py-2.5 px-8 rounded-lg transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`}
                     >
-                      重新解析
+                      重新上传
                     </button>
                   </div>
                 </div>
@@ -145,7 +155,7 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
                           setFiles(prev => {
                             const newFiles = [...prev];
                             if (newFiles.length > 0) {
-                              newFiles[0].status = '解析成功';
+                              newFiles[0].status = '已完成';
                             }
                             return newFiles;
                           });
@@ -163,10 +173,14 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
                           return;
                         }
                         setIsImported(false);
+                        setIsParsed(false);
+                        setTimeout(() => {
+                          document.getElementById('file-upload')?.click();
+                        }, 0);
                       }}
                       className={`bg-white border border-slate-200 text-slate-600 font-bold py-2.5 px-8 rounded-lg transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`}
                     >
-                      重新解析
+                      重新上传
                     </button>
                   </div>
                 </div>
@@ -179,7 +193,7 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
                     alert('此项目已暂停');
                     return;
                   }
-                  setIsImported(true);
+                  document.getElementById('file-upload')?.click();
                 }}
               >
                 <div className="size-14 bg-blue-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
@@ -204,7 +218,7 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
                 <tr className="text-slate-400 text-xs font-medium bg-slate-50/30">
                   <th className="px-6 py-4">文件名</th>
                   <th className="px-6 py-4">上传时间</th>
-                  <th className="px-6 py-4">状态</th>
+                  <th className="px-6 py-4">分析状态</th>
                   <th className="px-6 py-4 text-right">操作</th>
                 </tr>
               </thead>
@@ -219,8 +233,8 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
                     </td>
                     <td className="px-6 py-5 text-sm text-slate-400">{file.time}</td>
                     <td className="px-6 py-5">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-600">
-                        <span className="size-1.5 rounded-full bg-green-500"></span>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${file.status === '已完成' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
+                        <span className={`size-1.5 rounded-full ${file.status === '已完成' ? 'bg-green-500' : 'bg-blue-500'}`}></span>
                         {file.status}
                       </span>
                     </td>

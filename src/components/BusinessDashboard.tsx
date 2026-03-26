@@ -13,7 +13,7 @@ const statsData = [
 
 const statusDistribution = [
   { name: '未中标', value: 3, percentage: '21%', color: '#3b82f6' },
-  { name: '准备中', value: 6, percentage: '43%', color: '#10b981' },
+  { name: '放弃投标', value: 6, percentage: '43%', color: '#10b981' },
   { name: '投标中', value: 4, percentage: '29%', color: '#f59e0b' },
   { name: '已中标', value: 1, percentage: '7%', color: '#ef4444' },
 ];
@@ -31,14 +31,12 @@ interface BusinessDashboardProps {
 
 const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise }) => {
   const generateStatsData = (enterpriseName: string) => {
-    // Generate some deterministic but dynamic-looking data based on the enterprise name length
     const seed = enterpriseName.length;
     return [
-      { label: '项目数', value: (seed * 3).toString(), unit: '个' },
-      { label: '投标数', value: (seed * 5).toString(), unit: '个' },
-      { label: '投标保证金/元', value: (seed * 150000).toFixed(2), unit: '元' },
-      { label: '待退还投标保证金/元', value: (seed * 50000).toFixed(2), unit: '元' },
-      { label: '已退还投标保证金/元', value: (seed * 100000).toFixed(2), unit: '元' },
+      { label: '本年累计中标金额', value: (seed * 1200000).toFixed(2), unit: '元' },
+      { label: '中标率', value: '42.8', unit: '%' },
+      { label: '在途保证金', value: (seed * 50000).toFixed(2), unit: '元' },
+      { label: '待开标重点项目数', value: (seed % 5 + 2).toString(), unit: '个' },
     ];
   };
 
@@ -46,7 +44,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
     const seed = enterpriseName.length;
     return [
       { name: '未中标', value: seed, percentage: '20%', color: '#3b82f6' },
-      { name: '准备中', value: seed * 2, percentage: '40%', color: '#10b981' },
+      { name: '放弃投标', value: seed * 2, percentage: '40%', color: '#10b981' },
       { name: '投标中', value: seed, percentage: '20%', color: '#f59e0b' },
       { name: '已中标', value: seed, percentage: '20%', color: '#ef4444' },
     ];
@@ -88,7 +86,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
         progress: 100
       },
       {
-        status: '准备中',
+        status: '放弃投标',
         projectNo: 'XM-0002',
         projectName: `${enterpriseName}城建投资有限公司项目`,
         customerName: '辛辛',
@@ -114,22 +112,16 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
 
   const statsData = generateStatsData(currentEnterprise.name);
   const statusDistribution = generateStatusDistribution(currentEnterprise.name);
-  const bidDetails = generateBidDetails(currentEnterprise.name);
+  const bidDetails = generateBidDetails(currentEnterprise.name).filter(bid => bid.status === '投标中');
   return (
     <motion.div 
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       className="space-y-6"
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">业务仪表盘 ({currentEnterprise.name})</h2>
-          <p className="text-slate-500 text-sm mt-1">投标业务数据概览与分析</p>
-        </div>
-      </div>
 
       {/* Top Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsData.map((stat, i) => (
           <div key={i} className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm text-center">
             <p className="text-slate-500 text-xs mb-2">{stat.label}</p>
@@ -267,7 +259,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
       {/* Bottom Table */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-          <h4 className="text-sm font-bold text-slate-700">投标明细</h4>
+          <h4 className="text-sm font-bold text-slate-700">投标明细（重点项目）</h4>
           <button className="flex items-center gap-2 text-primary text-sm font-bold hover:opacity-80">
             <Download size={16} />
             导出
@@ -277,33 +269,20 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50">
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">投标状态</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">项目编号</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">项目名称</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">客户名称</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">投标负责人</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">项目进度</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">招标文件</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">开标时间</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">招标形式</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {bidDetails.map((bid, i) => (
                 <tr key={i} className="hover:bg-slate-50/30 transition-colors">
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      bid.status === '投标中' ? 'bg-orange-50 text-orange-600' :
-                      bid.status === '已中标' ? 'bg-emerald-50 text-emerald-600' :
-                      bid.status === '准备中' ? 'bg-blue-50 text-blue-600' :
-                      'bg-red-50 text-red-600'
-                    }`}>
-                      {bid.status}
-                    </span>
-                  </td>
                   <td className="px-6 py-4 text-xs text-slate-500">{bid.projectNo}</td>
                   <td className="px-6 py-4 text-xs font-bold text-slate-700">{bid.projectName}</td>
                   <td className="px-6 py-4 text-xs text-slate-700">{bid.customerName}</td>
-                  <td className="px-6 py-4 text-xs text-primary font-medium">{bid.manager}</td>
                   <td className="px-6 py-4">
                     <div className="w-24">
                       <div className="flex items-center justify-between mb-1">
@@ -321,8 +300,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    {bid.hasFile && <FileText size={14} className="text-primary mx-auto cursor-pointer" />}
+                  <td className="px-6 py-4 text-xs text-slate-500">
+                    {bid.deadline}
                   </td>
                   <td className="px-6 py-4">
                     <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] font-bold">
