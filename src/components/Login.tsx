@@ -34,6 +34,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
+  const [showError, setShowError] = useState(false);
   const [simulatedCode, setSimulatedCode] = useState<string | null>(null);
 
   const enterprises = [
@@ -46,9 +47,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     e.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const triggerError = (msg: string) => {
+    setError(msg);
+    setShowError(true);
+    setTimeout(() => setShowError(false), 3000);
+  };
+
   const handleInitialLogin = () => {
     if (!agreed) {
-      setError('请先阅读并同意服务条款和隐私政策');
+      triggerError('请先阅读并同意服务条款和隐私政策');
       return;
     }
 
@@ -58,7 +65,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         setError('');
         setView('select-enterprise');
       } else {
-        setError('手机号或密码错误');
+        triggerError('手机号或密码错误');
       }
     } else {
       // Phone login: any 11-digit number + simulated code 123456
@@ -66,7 +73,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         setError('');
         setView('select-enterprise');
       } else {
-        setError('请输入正确的手机号和验证码(123456)');
+        triggerError('请输入正确的手机号和验证码(123456)');
       }
     }
   };
@@ -157,7 +164,24 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         </div>
 
         {/* Right Content */}
-        <div className="flex-1 flex flex-col items-center justify-center p-16 bg-white">
+        <div className="flex-1 flex flex-col items-center justify-center p-16 bg-white relative">
+          {/* Floating Error Toast */}
+          <AnimatePresence>
+            {showError && (
+              <motion.div 
+                initial={{ opacity: 0, y: -20, x: '-50%' }}
+                animate={{ opacity: 1, y: 0, x: '-50%' }}
+                exit={{ opacity: 0, y: -20, x: '-50%' }}
+                className="absolute top-10 left-1/2 z-50 w-full max-w-[400px]"
+              >
+                <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center gap-3 text-red-500 shadow-xl shadow-red-500/10">
+                  <AlertCircle size={24} />
+                  <span className="text-base font-bold">{error}</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <AnimatePresence mode="wait">
             {view === 'login' ? (
               <motion.div 
@@ -196,23 +220,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     )}
                   </button>
                 </div>
-
-                {/* Error Message */}
-                <AnimatePresence>
-                  {error && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                      animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
-                      exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="bg-red-50 border border-red-100 rounded-lg p-3 flex items-center gap-3 text-red-500">
-                        <AlertCircle size={20} />
-                        <span className="text-sm font-medium">{error}</span>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
 
                 {/* Form */}
                 <div className="space-y-8">
