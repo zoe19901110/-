@@ -27,6 +27,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [selectedEnterprise, setSelectedEnterprise] = useState<string | null>(null);
   const [rememberDefault, setRememberDefault] = useState(false);
   const [showOnlyDefault, setShowOnlyDefault] = useState(false);
+  const [selectionTab, setSelectionTab] = useState<'personal' | 'enterprise'>('enterprise');
   const [searchQuery, setSearchQuery] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -58,7 +59,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   ];
 
   const filteredEnterprises = enterprises.filter(e => 
-    e.name.toLowerCase().includes(searchQuery.toLowerCase())
+    !e.isPersonal && e.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const triggerError = (msg: string) => {
@@ -81,6 +82,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           localStorage.removeItem('saved_password');
         }
 
+        if (selectionTab === 'personal') {
+          onLogin('personal');
+          return;
+        }
+
         const defaultId = localStorage.getItem('default_login_id');
         if (defaultId) {
           setSelectedEnterprise(defaultId);
@@ -97,6 +103,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       // Phone login: any 11-digit number + simulated code 123456
       if (phone.length === 11 && code === '123456') {
         setError('');
+        if (selectionTab === 'personal') {
+          onLogin('personal');
+          return;
+        }
+
         const defaultId = localStorage.getItem('default_login_id');
         if (defaultId) {
           setSelectedEnterprise(defaultId);
@@ -171,10 +182,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 sm:p-6">
-      <div className="bg-white rounded-[40px] shadow-2xl flex overflow-hidden max-w-[1150px] w-full min-h-[720px]">
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 sm:p-6 overflow-auto">
+      <div className="bg-white rounded-[40px] shadow-2xl flex overflow-hidden w-[1020px] h-[720px] shrink-0">
         {/* Left Sidebar */}
-        <div className="w-[460px] bg-primary p-14 flex flex-col relative overflow-hidden shrink-0 hidden md:flex">
+        <div className="w-[480px] bg-primary p-14 flex flex-col relative overflow-hidden shrink-0 hidden md:flex">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10 pointer-events-none">
             <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-white blur-3xl" />
@@ -182,7 +193,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
 
           <div className="relative z-10">
-            <h1 className="text-5xl font-extrabold text-white mb-16 tracking-tight">
+            <h1 className="text-5xl font-extrabold text-white mb-16 tracking-tight whitespace-nowrap">
               投标协同管理平台
             </h1>
 
@@ -199,8 +210,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     {React.cloneElement(feature.icon as React.ReactElement, { size: 32 })}
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
-                    <p className="text-base text-white/60 leading-relaxed">{feature.desc}</p>
+                    <h3 className="text-xl font-bold text-white mb-2 whitespace-nowrap">{feature.title}</h3>
+                    <p className="text-base text-white/60 leading-relaxed whitespace-nowrap overflow-hidden text-ellipsis">{feature.desc}</p>
                   </div>
                 </motion.div>
               ))}
@@ -209,7 +220,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         </div>
 
         {/* Right Content */}
-        <div className="flex-1 flex flex-col items-center justify-center p-16 bg-white relative">
+        <div className="w-[540px] flex flex-col items-center justify-center p-16 bg-white relative shrink-0">
           {/* Floating Error Toast */}
           <AnimatePresence>
             {showError && (
@@ -236,32 +247,76 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 exit={{ opacity: 0, x: -20 }}
                 className="w-full max-w-[440px]"
               >
-                <h2 className="text-4xl font-extrabold text-slate-900 mb-14 tracking-tight">
+                <h2 className="text-4xl font-extrabold text-slate-900 mb-8 tracking-tight text-center whitespace-nowrap">
                   欢迎登录
                 </h2>
 
+                <div className="flex justify-center mb-10">
+                  <div className="inline-flex p-1.5 bg-slate-100/40 rounded-2xl relative w-full border border-slate-200/30 backdrop-blur-md shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+                    <motion.div
+                      className="absolute inset-y-1.5 bg-white rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] border border-slate-200/60"
+                      initial={false}
+                      animate={{
+                        left: selectionTab === 'personal' ? '6px' : '50%',
+                        right: selectionTab === 'personal' ? '50%' : '6px'
+                      }}
+                      transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    />
+                    <button 
+                      onClick={() => setSelectionTab('personal')}
+                      className={`relative z-10 flex-1 py-3.5 text-sm font-bold transition-all duration-500 whitespace-nowrap flex items-center justify-center gap-2.5 ${
+                        selectionTab === 'personal' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      <div className={`p-1.5 rounded-lg transition-colors duration-500 ${selectionTab === 'personal' ? 'bg-primary/10' : 'bg-transparent'}`}>
+                        <User size={18} className={selectionTab === 'personal' ? 'text-primary' : 'text-slate-400'} />
+                      </div>
+                      个人账户登录
+                    </button>
+                    <button 
+                      onClick={() => setSelectionTab('enterprise')}
+                      className={`relative z-10 flex-1 py-3.5 text-sm font-bold transition-all duration-500 whitespace-nowrap flex items-center justify-center gap-2.5 ${
+                        selectionTab === 'enterprise' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      <div className={`p-1.5 rounded-lg transition-colors duration-500 ${selectionTab === 'enterprise' ? 'bg-primary/10' : 'bg-transparent'}`}>
+                        <Building2 size={18} className={selectionTab === 'enterprise' ? 'text-primary' : 'text-slate-400'} />
+                      </div>
+                      企业账户登录
+                    </button>
+                  </div>
+                </div>
+
                 {/* Tabs */}
-                <div className="flex border-b border-slate-100 mb-10">
+                <div className="flex border-b border-slate-100 mb-10 justify-center gap-8">
                   <button 
                     onClick={() => setLoginType('account')}
-                    className={`pb-4 px-4 text-lg font-bold transition-all relative ${
+                    className={`pb-4 px-2 text-lg font-bold transition-all relative whitespace-nowrap ${
                       loginType === 'account' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     账号登录
                     {loginType === 'account' && (
-                      <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+                      <motion.div 
+                        layoutId="activeTab" 
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full"
+                        transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                      />
                     )}
                   </button>
                   <button 
                     onClick={() => setLoginType('phone')}
-                    className={`pb-4 px-4 text-lg font-bold transition-all relative ${
+                    className={`pb-4 px-2 text-lg font-bold transition-all relative whitespace-nowrap ${
                       loginType === 'phone' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     手机号登录
                     {loginType === 'phone' && (
-                      <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+                      <motion.div 
+                        layoutId="activeTab" 
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full"
+                        transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                      />
                     )}
                   </button>
                 </div>
@@ -326,31 +381,33 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
                   {/* Error Message removed from here */}
 
-                  <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center gap-6">
-                      {loginType === 'account' && (
-                        <label className="flex items-center gap-2 cursor-pointer group">
-                          <input 
-                            type="checkbox" 
-                            checked={rememberPassword}
-                            onChange={(e) => setRememberPassword(e.target.checked)}
-                            className="size-5 rounded border-slate-300 text-primary focus:ring-primary"
-                          />
-                          <span className="text-sm text-slate-500 group-hover:text-slate-700 transition-colors">
-                            记住密码
-                          </span>
-                        </label>
-                      )}
+                  <div className="flex flex-col gap-4 px-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-6">
+                        {loginType === 'account' && (
+                          <label className="flex items-center gap-2 cursor-pointer group">
+                            <input 
+                              type="checkbox" 
+                              checked={rememberPassword}
+                              onChange={(e) => setRememberPassword(e.target.checked)}
+                              className="size-5 rounded border-slate-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-slate-500 group-hover:text-slate-700 transition-colors whitespace-nowrap">
+                              记住密码
+                            </span>
+                          </label>
+                        )}
+                      </div>
+                      <button 
+                        onClick={() => setView('forgot')}
+                        className="text-sm text-primary font-bold hover:underline whitespace-nowrap"
+                      >
+                        忘记密码?
+                      </button>
                     </div>
-                    <button 
-                      onClick={() => setView('forgot')}
-                      className="text-sm text-primary font-bold hover:underline"
-                    >
-                      忘记密码?
-                    </button>
                   </div>
 
-                  <div className="px-2 text-xs text-slate-400">
+                  <div className="px-2 text-xs text-slate-400 whitespace-nowrap">
                     登录视为您已阅读并同意 <span className="text-primary hover:underline cursor-pointer">服务条款</span> 和 <span className="text-primary hover:underline cursor-pointer">隐私政策</span>
                   </div>
 
@@ -358,7 +415,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     onClick={handleInitialLogin}
                     className="w-full py-5 bg-primary text-white rounded-[12px] font-bold text-xl shadow-xl shadow-primary/20 hover:shadow-2xl hover:bg-primary/90 active:scale-[0.98] transition-all mt-6"
                   >
-                    登录 / 注册
+                    登录
                   </button>
                 </div>
               </motion.div>
@@ -378,7 +435,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   <span className="text-xl font-bold">返回登录</span>
                 </button>
 
-                <h2 className="text-5xl font-extrabold text-slate-900 mb-14 tracking-tight">
+                <h2 className="text-5xl font-extrabold text-slate-900 mb-14 tracking-tight whitespace-nowrap">
                   重置密码
                 </h2>
 
@@ -453,15 +510,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 className="w-full max-w-[480px]"
               >
                 <div className="text-center mb-10">
-                  <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
-                    选择进入账号
+                  <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight whitespace-nowrap">
+                    {selectionTab === 'personal' ? '确认登录账号' : '选择进入企业'}
                   </h2>
-                  <p className="text-slate-500 text-lg">
-                    {showOnlyDefault ? '系统将进入您的常用账号' : '请选择您要登录的...'}
+                  <p className="text-slate-500 text-lg whitespace-nowrap">
+                    {selectionTab === 'personal' ? '您正在以个人身份登录' : '请选择您要登录的企业账号'}
                   </p>
                 </div>
 
-                {!showOnlyDefault && (
+                {!showOnlyDefault && selectionTab === 'enterprise' && (
                   <div className="relative mb-8">
                     <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400">
                       <Search size={20} />
@@ -485,17 +542,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         className="w-full flex items-center gap-4 p-5 rounded-[20px] border-2 border-primary bg-primary/5 shadow-lg shadow-primary/10 text-left"
                       >
                         <div className="p-3 rounded-xl bg-primary text-white">
-                          {enterprise.id === 'personal' ? <User size={24} /> : <Building2 size={24} />}
+                          <Building2 size={24} />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-bold text-slate-900 text-lg">{enterprise.name}</h4>
-                            {enterprise.id === 'personal' && (
-                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full">个人账号</span>
-                            )}
+                            <h4 className="font-bold text-slate-900 text-lg whitespace-nowrap">{enterprise.name}</h4>
                           </div>
-                          <span className={`text-sm font-medium ${
-                            enterprise.id === 'personal' ? 'text-orange-500' : 
+                          <span className={`text-sm font-medium whitespace-nowrap ${
                             enterprise.status === '已加入' ? 'text-emerald-500' : 'text-orange-500'
                           }`}>
                             {enterprise.status}
@@ -503,8 +556,29 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         </div>
                       </div>
                     ))
+                  ) : selectionTab === 'personal' ? (
+                    // Show personal account card
+                    enterprises.filter(e => e.id === 'personal').map((enterprise) => (
+                      <div
+                        key={enterprise.id}
+                        className="w-full flex items-center gap-4 p-5 rounded-[20px] border-2 border-primary bg-primary/5 shadow-lg shadow-primary/10 text-left"
+                      >
+                        <div className="p-3 rounded-xl bg-primary text-white">
+                          <User size={24} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-bold text-slate-900 text-lg whitespace-nowrap">{enterprise.name}</h4>
+                            <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full whitespace-nowrap">个人账号</span>
+                          </div>
+                          <span className="text-sm font-medium text-orange-500 whitespace-nowrap">
+                            {enterprise.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))
                   ) : (
-                    // Show full list
+                    // Show full enterprise list (excluding personal)
                     filteredEnterprises.map((enterprise) => (
                       <button
                         key={enterprise.id}
@@ -520,17 +594,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         <div className={`p-3 rounded-xl transition-colors ${
                           selectedEnterprise === enterprise.id ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'
                         }`}>
-                          {enterprise.id === 'personal' ? <User size={24} /> : <Building2 size={24} />}
+                          <Building2 size={24} />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-bold text-slate-900 text-lg">{enterprise.name}</h4>
-                            {enterprise.id === 'personal' && (
-                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full">个人账号</span>
-                            )}
+                            <h4 className="font-bold text-slate-900 text-lg whitespace-nowrap">{enterprise.name}</h4>
                           </div>
-                          <span className={`text-sm font-medium ${
-                            enterprise.id === 'personal' ? 'text-orange-500' : 
+                          <span className={`text-sm font-medium whitespace-nowrap ${
                             enterprise.status === '已加入' ? 'text-emerald-500' : 'text-orange-500'
                           }`}>
                             {enterprise.status}
@@ -543,26 +613,29 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between px-2 mb-2">
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                      <input 
-                        type="checkbox" 
-                        checked={rememberDefault}
-                        onChange={(e) => setRememberDefault(e.target.checked)}
-                        className="size-5 rounded border-slate-300 text-primary focus:ring-primary"
-                      />
-                      <span className="text-sm text-slate-500 group-hover:text-slate-700 transition-colors">
-                        下次默认登录此账号
-                      </span>
-                    </label>
+                    {!showOnlyDefault && selectionTab === 'enterprise' && (
+                      <label className="flex items-center gap-2 cursor-pointer group">
+                        <input 
+                          type="checkbox" 
+                          checked={rememberDefault}
+                          onChange={(e) => setRememberDefault(e.target.checked)}
+                          className="size-5 rounded border-slate-300 text-primary focus:ring-primary"
+                        />
+                        <span className="text-sm text-slate-500 group-hover:text-slate-700 transition-colors whitespace-nowrap">
+                          下次默认登录此企业
+                        </span>
+                      </label>
+                    )}
 
                     {showOnlyDefault && (
                       <button 
                         onClick={() => {
                           setShowOnlyDefault(false);
+                          setSelectedEnterprise(null);
                         }}
-                        className="text-sm text-primary font-bold hover:underline"
+                        className="text-sm text-primary font-bold hover:underline whitespace-nowrap"
                       >
-                        切换账号
+                        切换企业
                       </button>
                     )}
                   </div>
