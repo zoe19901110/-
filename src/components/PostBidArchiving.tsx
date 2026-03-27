@@ -21,6 +21,7 @@ import {
   Check,
   ArrowRight,
   ExternalLink,
+  ChevronDown,
   Paperclip,
   File,
   Image as ImageIcon,
@@ -67,7 +68,7 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
   // Modal State
   const [isEditing, setIsEditing] = useState(true);
   const [openingRecords, setOpeningRecords] = useState([
-    { units: '某某建设集团有限公司', price: 12105000, rank: '1', isWinner: true, isSelf: false },
+    { units: '某某建设集团有限公司', price: 12105000, rank: '1', isWinner: true, isSelf: true },
     { units: '中建某局有限公司', price: 12500000, rank: '2', isWinner: false, isSelf: false },
     { units: '省建工集团', price: 12800000, rank: '3', isWinner: false, isSelf: false },
   ]);
@@ -276,16 +277,29 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-8">
-        <div className="w-56 relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
-          <input 
-            type="text" 
-            placeholder="搜索项目名称..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-56 relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+            <input 
+              type="text" 
+              placeholder="搜索项目名称..."
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="w-40 relative group">
+            <select 
+              className="w-full pl-4 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all appearance-none cursor-pointer text-slate-600 font-medium"
+            >
+              <option value="全部">全部结果</option>
+              <option value="中标">中标</option>
+              <option value="未中标">未中标</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-primary transition-colors" size={16} />
+          </div>
         </div>
         
         <div className="flex gap-2">
@@ -411,7 +425,35 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                       导出详情
                     </button>
                     <button 
-                      onClick={() => setIsEditing(!isEditing)}
+                      onClick={() => {
+                        if (isEditing) {
+                          // Validate opening records
+                          for (let i = 0; i < openingRecords.length; i++) {
+                            const record = openingRecords[i];
+                            if (!record.units) {
+                              alert(`开标记录第 ${i + 1} 行：请填写参标单位`);
+                              return;
+                            }
+                            if (record.price === '' || record.price === null || record.price === undefined) {
+                              alert(`开标记录第 ${i + 1} 行：请填写投标报价`);
+                              return;
+                            }
+                            if (!record.rank) {
+                              alert(`开标记录第 ${i + 1} 行：请填写排名`);
+                              return;
+                            }
+                          }
+                          
+                          if (openingRecords.length > 0 && !openingRecords.some(r => r.isSelf)) {
+                             alert('开标记录：请选择本单位');
+                             return;
+                          }
+
+                          setIsEditing(false);
+                        } else {
+                          setIsEditing(true);
+                        }
+                      }}
                       className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
                         isEditing ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
@@ -454,11 +496,19 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                       </div>
 
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                        <div className="flex items-center justify-between w-full">
+                          <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2 whitespace-nowrap">
                             <ClipboardList size={16} className="text-slate-400" />
                             开标详情
                           </h5>
+                          {isEditing && (
+                            <button 
+                              onClick={() => setOpeningRecords([...openingRecords, { units: '', price: '', rank: '', isWinner: false, isSelf: false }])}
+                              className="px-4 py-2 bg-primary/10 text-primary rounded-lg text-xs font-bold hover:bg-primary/20 transition-all flex items-center gap-2 shrink-0"
+                            >
+                              <Plus size={14} /> 添加参标单位
+                            </button>
+                          )}
                         </div>
                         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
                           <table className="w-full text-left border-collapse">
@@ -544,16 +594,7 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                             </tbody>
                           </table>
                         </div>
-                        {isEditing && (
-                          <div className="flex justify-end mt-2">
-                            <button 
-                              onClick={() => setOpeningRecords([...openingRecords, { units: '', price: '', rank: '', isWinner: false, isSelf: false }])}
-                              className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                            >
-                              <Plus size={16} /> 添加参标单位
-                            </button>
-                          </div>
-                        )}
+                        {/* Removed button from here */}
                       </div>
 
                       <div className="space-y-4">
@@ -635,10 +676,20 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
 
                     {/* Contract Archiving Section */}
                     <section className="space-y-4">
-                      <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                        <Receipt size={16} className="text-[#0052d9]" />
-                        合同归档
-                      </h5>
+                      <div className="flex items-center justify-between">
+                        <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                          <Receipt size={16} className="text-[#0052d9]" />
+                          合同归档
+                        </h5>
+                        {isEditing && (
+                          <button 
+                            onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: '', owner: '', status: '履行中', fulfillmentDate: '' }])}
+                            className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-xs font-bold hover:bg-primary/20 transition-all flex items-center gap-1"
+                          >
+                            <Plus size={14} /> 添加合同
+                          </button>
+                        )}
+                      </div>
                       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
                         <table className="w-full text-left border-collapse">
                           <thead>
@@ -752,16 +803,6 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                           </tbody>
                         </table>
                       </div>
-                      {isEditing && (
-                        <div className="flex justify-end">
-                          <button 
-                            onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: '', owner: '', status: '履行中', fulfillmentDate: '' }])}
-                            className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
-                          >
-                            <Plus size={14} /> 添加合同
-                          </button>
-                        </div>
-                      )}
                     </section>
 
                     {/* Contract Attachments Section */}
@@ -858,7 +899,32 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
 
                   <div className="flex gap-4 pt-8 shrink-0 bg-white">
                     <button 
-                      onClick={() => setShowAddModal(false)} 
+                      onClick={() => {
+                        // Validate opening records
+                        for (let i = 0; i < openingRecords.length; i++) {
+                          const record = openingRecords[i];
+                          if (!record.units) {
+                            alert(`开标记录第 ${i + 1} 行：请填写参标单位`);
+                            return;
+                          }
+                          if (record.price === '' || record.price === null || record.price === undefined) {
+                            alert(`开标记录第 ${i + 1} 行：请填写投标报价`);
+                            return;
+                          }
+                          if (!record.rank) {
+                            alert(`开标记录第 ${i + 1} 行：请填写排名`);
+                            return;
+                          }
+                        }
+
+                        // Validate winning records
+                        if (openingRecords.length > 0 && !openingRecords.some(r => r.isSelf)) {
+                           alert('开标记录：请选择本单位');
+                           return;
+                        }
+
+                        setShowAddModal(false);
+                      }} 
                       className="flex-1 py-2.5 bg-[#0052d9] text-white rounded-lg font-bold hover:bg-[#0052d9]/90 transition-all"
                     >
                       保存

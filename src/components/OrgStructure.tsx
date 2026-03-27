@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, 
   UserPlus, 
@@ -15,9 +15,11 @@ import {
   Phone,
   Edit2,
   Trash2,
-  X
+  X,
+  GripVertical,
+  RefreshCw
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, Reorder } from 'motion/react';
 
 interface Department {
   id: string;
@@ -28,7 +30,7 @@ interface Department {
 interface User {
   id: string;
   name: string;
-  dept: string;
+  depts: string[]; // 支持多个部门
   position: string;
   roleId: string; // Link to Role
   email: string;
@@ -66,12 +68,13 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingDept, setEditingDept] = useState<Department | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [highlightedUserId, setHighlightedUserId] = useState<string | null>(null);
 
   // Form States
   const [deptForm, setDeptForm] = useState({ name: '' });
   const [userForm, setUserForm] = useState({
     name: '',
-    dept: '',
+    depts: [] as string[], // 修改为数组
     position: '',
     roleId: '3', // Default to '普通员工'
     email: '',
@@ -80,30 +83,89 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
     createAccount: false,
     username: '',
     password: '',
-    enterprises: ['杭州某某科技有限公司'] as string[]
+    enterprises: [] as string[]
   });
 
-  const [departments, setDepartments] = useState<Department[]>([
-    { id: '1', name: '总经办', count: 1 },
-    { id: '2', name: '市场部', count: 1 },
-    { id: '3', name: '技术部', count: 1 },
-    { id: '4', name: '财务部', count: 1 },
-    { id: '5', name: '法务部', count: 0 },
-  ]);
+  const [departments, setDepartments] = useState<Department[]>(() => {
+    const saved = localStorage.getItem('departments');
+    const initialDepts = [
+      { id: '1', name: '总经办', count: 0 },
+      { id: '2', name: '市场部', count: 0 },
+      { id: '3', name: '技术部', count: 0 },
+      { id: '4', name: '财务部', count: 0 },
+      { id: '5', name: '法务部', count: 0 },
+    ];
+    if (!saved) return initialDepts;
+    const parsed = JSON.parse(saved);
+    // 确保初始部门都在列表中
+    let mergedDepts = [...parsed];
+    initialDepts.forEach(initialDept => {
+      if (!mergedDepts.find(d => d.name === initialDept.name)) {
+        mergedDepts.push(initialDept);
+      }
+    });
+    return mergedDepts;
+  });
 
-  const [users, setUsers] = useState<User[]>([
-    { id: '1', name: '陈经理', dept: '总经办', position: '项目总监', roleId: '1', email: 'chen@example.com', phone: '13800008888', status: '正常', hasAccount: true, username: '13800008888', enterprises: ['杭州某某科技有限公司', '上海分公司'] },
-    { id: '2', name: '王志强', dept: '市场部', position: '市场经理', roleId: '2', email: 'wang@example.com', phone: '13900007777', status: '正常', hasAccount: true, username: '13900007777', enterprises: ['杭州某某科技有限公司'] },
-    { id: '3', name: '李晓明', dept: '技术部', position: '技术专家', roleId: '3', email: 'li@example.com', phone: '13700006666', status: '正常', hasAccount: false, enterprises: ['杭州某某科技有限公司'] },
-    { id: '4', name: '张美玲', dept: '财务部', position: '财务主管', roleId: '4', email: 'zhang@example.com', phone: '13600005555', status: '正常', hasAccount: false, enterprises: ['杭州某某科技有限公司', '北京研发中心'] },
-  ]);
+  const [users, setUsers] = useState<User[]>(() => {
+    const saved = localStorage.getItem('users');
+    const demoEnterprises = ['中建八局第三建设有限公司', '中铁建工集团有限公司', '陈经理'];
+    const initialUsers = [
+      { id: '1', name: '陈经理', depts: ['总经办'], position: '项目总监', roleId: '1', email: 'chen@example.com', phone: '13800008888', status: '正常', hasAccount: true, username: '13800008888', enterprises: demoEnterprises },
+      { id: '1-2', name: '李助理', depts: ['总经办'], position: '行政助理', roleId: '3', email: 'li_asst@example.com', phone: '13800001111', status: '正常', hasAccount: true, username: '13800001111', enterprises: demoEnterprises },
+      { id: '2', name: '王志强', depts: ['市场部'], position: '市场经理', roleId: '2', email: 'wang@example.com', phone: '13900007777', status: '正常', hasAccount: true, username: '13900007777', enterprises: demoEnterprises },
+      { id: '2-2', name: '赵敏', depts: ['市场部'], position: '商务专员', roleId: '3', email: 'zhao@example.com', phone: '13900002222', status: '正常', hasAccount: true, username: '13900002222', enterprises: demoEnterprises },
+      { id: '3', name: '李晓明', depts: ['技术部'], position: '技术专家', roleId: '3', email: 'li@example.com', phone: '13700006666', status: '正常', hasAccount: true, username: '13700006666', enterprises: demoEnterprises },
+      { id: '3-2', name: '周工', depts: ['技术部'], position: '高级工程师', roleId: '3', email: 'zhou@example.com', phone: '13700003333', status: '正常', hasAccount: true, username: '13700003333', enterprises: demoEnterprises },
+      { id: '3-3', name: '吴工', depts: ['技术部'], position: '研发工程师', roleId: '3', email: 'wu@example.com', phone: '13700004444', status: '正常', hasAccount: true, username: '13700004444', enterprises: demoEnterprises },
+      { id: '4', name: '张美玲', depts: ['财务部'], position: '财务主管', roleId: '4', email: 'zhang@example.com', phone: '13600005555', status: '正常', hasAccount: true, username: '13600005555', enterprises: demoEnterprises },
+      { id: '4-2', name: '孙会计', depts: ['财务部'], position: '出纳', roleId: '3', email: 'sun@example.com', phone: '13600006666', status: '正常', hasAccount: true, username: '13600006666', enterprises: demoEnterprises },
+      { id: '5', name: '郑律师', depts: ['法务部'], position: '法务顾问', roleId: '3', email: 'zheng@example.com', phone: '13500009999', status: '正常', hasAccount: true, username: '13500009999', enterprises: demoEnterprises },
+    ];
+    if (!saved) return initialUsers;
+    const parsed = JSON.parse(saved);
+    
+    // 确保所有初始演示人员都在列表中
+    let mergedUsers = [...parsed];
+    initialUsers.forEach(initialUser => {
+      if (!mergedUsers.find(u => u.id === initialUser.id || u.phone === initialUser.phone)) {
+        mergedUsers.push(initialUser);
+      }
+    });
 
-  const [roles] = useState<Role[]>([
-    { id: '1', name: '超级管理员', desc: '拥有系统所有权限', userCount: 2 },
-    { id: '2', name: '部门经理', desc: '负责部门内部项目审批与管理', userCount: 8 },
-    { id: '3', name: '普通员工', desc: '参与项目执行与标书制作', userCount: 45 },
-    { id: '4', name: '财务审计', desc: '仅拥有财务相关查看与审核权限', userCount: 3 },
-  ]);
+    // 迁移数据：转换部门格式并确保演示企业存在
+    return mergedUsers.map((u: any) => {
+      const depts = u.depts || (u.dept ? [u.dept] : []);
+      const isInitialUser = /^[1-5](-.*)?$/.test(u.id);
+      const enterprises = isInitialUser ? Array.from(new Set([...(u.enterprises || []), ...demoEnterprises])) : (u.enterprises || []);
+      return { ...u, depts, enterprises };
+    });
+  });
+
+  useEffect(() => {
+    localStorage.setItem('departments', JSON.stringify(departments));
+  }, [departments]);
+
+  useEffect(() => {
+    localStorage.setItem('users', JSON.stringify(users));
+  }, [users]);
+
+  const departmentsWithCounts = React.useMemo(() => {
+    return departments.map(dept => {
+      const count = users.filter(u => {
+        const matchesEnterprise = currentEnterprise ? u.enterprises.includes(currentEnterprise.name) : true;
+        return matchesEnterprise && u.depts.includes(dept.name);
+      }).length;
+      return { ...dept, count };
+    });
+  }, [departments, users, currentEnterprise]);
+
+  const roles: Role[] = [
+    { id: '1', name: '超级管理员', desc: '拥有系统所有权限', userCount: users.filter(u => u.roleId === '1').length },
+    { id: '2', name: '部门经理', desc: '负责部门内部项目审批与管理', userCount: users.filter(u => u.roleId === '2').length },
+    { id: '3', name: '普通员工', desc: '参与项目执行与标书制作', userCount: users.filter(u => u.roleId === '3').length },
+    { id: '4', name: '财务审计', desc: '仅拥有财务相关查看与审核权限', userCount: users.filter(u => u.roleId === '4').length },
+  ];
 
   const tabs = [
     { id: 'dept', label: '部门与人员', icon: Users },
@@ -210,9 +272,10 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
 
   const handleAddUser = () => {
     setEditingUser(null);
+    const selectedDeptName = selectedDeptId ? departments.find(d => d.id === selectedDeptId)?.name : null;
     setUserForm({
       name: '',
-      dept: selectedDeptId ? departments.find(d => d.id === selectedDeptId)?.name || '' : '',
+      depts: selectedDeptName ? [selectedDeptName] : [],
       position: '',
       roleId: '3',
       email: '',
@@ -221,7 +284,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
       createAccount: false,
       username: '',
       password: '',
-      enterprises: currentEnterprise ? [currentEnterprise.name] : ['杭州某某科技有限公司']
+      enterprises: currentEnterprise ? [currentEnterprise.name] : []
     });
     setShowUserModal(true);
   };
@@ -229,30 +292,42 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
   const handleEditUser = (user: User) => {
     setEditingUser(user);
     setUserForm({ 
-      ...user, 
+      ...user,
+      depts: user.depts || [],
       createAccount: user.hasAccount,
       username: user.username || '',
       password: '',
-      enterprises: user.enterprises || ['杭州某某科技有限公司']
+      enterprises: user.enterprises || []
     });
     setShowUserModal(true);
   };
 
   const handleSaveUser = () => {
-    if (!userForm.name || !userForm.dept || !userForm.phone) return;
+    // 修复：部门选择框的值为空数组时，不应触发保存
+    if (!userForm.name || !userForm.depts || userForm.depts.length === 0 || !userForm.phone) {
+      alert("请填写完整信息，并至少选择一个部门");
+      return;
+    }
     
     // Check if account exists globally by phone
     const existingUser = users.find(u => u.phone === userForm.phone);
 
     let updatedUsers;
     let isNewAccount = false;
+    let savedUserId = '';
 
     if (existingUser) {
-      // If found existing user, update them (this effectively "selects" and moves them)
+      // 如果账号已存在，合并部门
       isNewAccount = !existingUser.hasAccount;
+      savedUserId = existingUser.id;
+      
+      // 合并部门列表，去重
+      const mergedDepts = Array.from(new Set([...existingUser.depts, ...userForm.depts]));
+      
       updatedUsers = users.map(u => u.id === existingUser.id ? { 
         ...u, 
         ...userForm,
+        depts: mergedDepts, // 使用合并后的部门
         id: existingUser.id, // Ensure we keep the original ID
         hasAccount: true,
         username: userForm.phone
@@ -263,9 +338,14 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
       if (editingUser && editingUser.id !== existingUser.id) {
         updatedUsers = updatedUsers.filter(u => u.id !== editingUser.id);
       }
+      
+      if (!isNewAccount) {
+        alert(`账号 ${userForm.phone} 已存在，已将其关联到选定的部门。`);
+      }
     } else if (editingUser) {
       // Standard edit for non-conflicting phone
       isNewAccount = !editingUser.hasAccount;
+      savedUserId = editingUser.id;
       updatedUsers = users.map(u => u.id === editingUser.id ? { 
         ...u, 
         ...userForm,
@@ -281,17 +361,16 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
         hasAccount: true,
         username: userForm.phone
       };
+      savedUserId = newUser.id;
       updatedUsers = [...users, newUser];
     }
 
     setUsers(updatedUsers);
+    setHighlightedUserId(savedUserId);
+    setTimeout(() => setHighlightedUserId(null), 3000);
 
     // Update dept counts
-    const newDeptCounts = departments.map(dept => ({
-      ...dept,
-      count: updatedUsers.filter(u => u.dept === dept.name).length
-    }));
-    setDepartments(newDeptCounts);
+    setDepartments(updatedUsers.length > 0 ? departments : departments); // Dummy to trigger re-render if needed, but useMemo handles it
     
     if (isNewAccount) {
       alert('账号已创建，初始密码为123456，请及时修改密码。');
@@ -308,22 +387,24 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
     if (window.confirm('确定要将该人员从企业中移除吗？移除后该账号将无法登录且在企业中消失。')) {
       const updatedUsers = users.filter(u => u.id !== id);
       setUsers(updatedUsers);
-      
-      // Update dept counts
-      const newDeptCounts = departments.map(dept => ({
-        ...dept,
-        count: updatedUsers.filter(u => u.dept === dept.name).length
-      }));
-      setDepartments(newDeptCounts);
     }
   };
 
   const filteredUsers = users.filter(user => {
     const matchesEnterprise = currentEnterprise ? user.enterprises.includes(currentEnterprise.name) : true;
-    const matchesDept = selectedDeptId ? user.dept === departments.find(d => d.id === selectedDeptId)?.name : true;
+    const selectedDeptName = departments.find(d => d.id === selectedDeptId)?.name;
+    const matchesDept = selectedDeptName ? user.depts.includes(selectedDeptName) : true;
     const matchesSearch = user.name.includes(searchQuery) || user.email.includes(searchQuery) || user.position.includes(searchQuery);
     return matchesEnterprise && matchesDept && matchesSearch;
   });
+
+  const handleResetData = () => {
+    if (window.confirm('确定要重置所有组织架构数据吗？这将清除您手动添加的数据并恢复初始示例数据。')) {
+      localStorage.removeItem('users');
+      localStorage.removeItem('departments');
+      window.location.reload();
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -333,6 +414,13 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
           组织架构管理
         </h3>
         <div className="flex gap-3">
+          <button 
+            onClick={handleResetData}
+            className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-slate-600 transition-colors"
+            title="重置数据"
+          >
+            <RefreshCw size={16} />
+          </button>
           {activeSubTab === 'dept' && (
             <>
               <button 
@@ -396,28 +484,42 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                     全部
                   </button>
                 </div>
-                <div className="p-2 space-y-1 max-h-[600px] overflow-y-auto">
-                  {departments.map((dept) => (
-                    <div key={dept.id} className="group relative">
-                      <button 
-                        onClick={() => setSelectedDeptId(dept.id)}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all text-left ${
-                          selectedDeptId === dept.id ? 'bg-primary/5 text-primary' : 'hover:bg-slate-50 text-slate-700'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Building size={16} className={selectedDeptId === dept.id ? 'text-primary' : 'text-slate-400'} />
-                          <span className="text-sm font-medium">{dept.name}</span>
+                <Reorder.Group 
+                  axis="y" 
+                  values={departments} 
+                  onReorder={setDepartments}
+                  className="p-2 space-y-1 max-h-[600px] overflow-y-auto"
+                >
+                  {departmentsWithCounts.map((dept) => (
+                    <Reorder.Item 
+                      key={dept.id} 
+                      value={departments.find(d => d.id === dept.id)!}
+                      className="group relative"
+                    >
+                      <div className="flex items-center">
+                        <div className="p-1 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-opacity">
+                          <GripVertical size={14} />
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                            selectedDeptId === dept.id ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'
-                          }`}>
-                            {dept.count}
-                          </span>
-                        </div>
-                      </button>
-                      <div className="absolute right-10 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => setSelectedDeptId(dept.id)}
+                          className={`flex-1 flex items-center justify-between px-3 py-2.5 rounded-lg transition-all text-left ${
+                            selectedDeptId === dept.id ? 'bg-primary/5 text-primary' : 'hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Building size={16} className={selectedDeptId === dept.id ? 'text-primary' : 'text-slate-400'} />
+                            <span className="text-sm font-medium">{dept.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                              selectedDeptId === dept.id ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'
+                            }`}>
+                              {dept.count}
+                            </span>
+                          </div>
+                        </button>
+                      </div>
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleEditDept(dept); }}
                           className="p-1 text-slate-400 hover:text-primary hover:bg-white rounded shadow-sm"
@@ -431,9 +533,9 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                           <Trash2 size={12} />
                         </button>
                       </div>
-                    </div>
+                    </Reorder.Item>
                   ))}
-                </div>
+                </Reorder.Group>
               </div>
               
               <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
@@ -443,7 +545,9 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white/60 rounded-lg p-2">
                     <p className="text-[10px] text-blue-600 mb-0.5">总人数</p>
-                    <p className="text-lg font-bold text-blue-900">{users.length}</p>
+                    <p className="text-lg font-bold text-blue-900">
+                      {users.filter(u => currentEnterprise ? u.enterprises.includes(currentEnterprise.name) : true).length}
+                    </p>
                   </div>
                   <div className="bg-white/60 rounded-lg p-2">
                     <p className="text-[10px] text-blue-600 mb-0.5">部门数</p>
@@ -495,7 +599,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredUsers.length > 0 ? filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
+                      <tr key={user.id} className={`${user.id === highlightedUserId ? 'bg-primary/20' : 'hover:bg-slate-50/50'} transition-colors group`}>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="size-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold text-sm shadow-sm">
@@ -515,7 +619,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                         </td>
                         <td className="px-6 py-4">
                           <div className="space-y-0.5">
-                            <p className="text-xs font-bold text-slate-700">{user.dept}</p>
+                            <p className="text-xs font-bold text-slate-700">{user.depts.join(', ')}</p>
                             <p className="text-[10px] text-slate-400">{user.position}</p>
                           </div>
                         </td>
@@ -769,15 +873,26 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">部门</label>
-                  <select 
-                    value={userForm.dept}
-                    onChange={(e) => setUserForm({ ...userForm, dept: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
-                  >
-                    <option value="">请选择部门</option>
-                    {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-                  </select>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">部门 (可多选)</label>
+                  <div className="max-h-32 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
+                    {departments.map(d => (
+                      <label key={d.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 p-1 rounded">
+                        <input 
+                          type="checkbox"
+                          checked={userForm.depts.includes(d.name)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setUserForm({ ...userForm, depts: [...userForm.depts, d.name] });
+                            } else {
+                              setUserForm({ ...userForm, depts: userForm.depts.filter(name => name !== d.name) });
+                            }
+                          }}
+                          className="rounded border-slate-300 text-primary focus:ring-primary"
+                        />
+                        <span className="text-sm text-slate-700">{d.name}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 <div className="col-span-1">
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">职位</label>
@@ -811,28 +926,6 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                     <option value="正常">正常</option>
                     <option value="禁用">禁用</option>
                   </select>
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">所属企业</label>
-                  <div className="flex flex-wrap gap-2">
-                    {enterprisesList.map(ent => (
-                      <label key={ent.id} className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
-                        <input 
-                          type="checkbox" 
-                          checked={userForm.enterprises.includes(ent.name)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setUserForm({ ...userForm, enterprises: [...userForm.enterprises, ent.name] });
-                            } else {
-                              setUserForm({ ...userForm, enterprises: userForm.enterprises.filter(name => name !== ent.name) });
-                            }
-                          }}
-                          className="rounded text-primary focus:ring-primary/20"
-                        />
-                        <span className="text-sm text-slate-700">{ent.name}</span>
-                      </label>
-                    ))}
-                  </div>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">联系电话 (即系统登录账号)</label>

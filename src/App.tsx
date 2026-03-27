@@ -20,7 +20,7 @@ import Login from './components/Login';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('isLoggedIn') === 'true');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [workbenchStage, setWorkbenchStage] = useState<string | undefined>(undefined);
   const [projectData, setProjectData] = useState<any>(null);
@@ -46,6 +46,7 @@ export default function App() {
       setCurrentEnterprise(enterprises[0]);
     }
     setIsLoggedIn(true);
+    localStorage.setItem('isLoggedIn', 'true');
   };
 
   React.useEffect(() => {
@@ -103,7 +104,7 @@ export default function App() {
           />
         );
       case 'business-dashboard':
-        return <BusinessDashboard currentEnterprise={currentEnterprise} />;
+        return <BusinessDashboard currentEnterprise={currentEnterprise} projects={projects} />;
       case 'workbench':
         return (
           <Workbench 
@@ -181,7 +182,10 @@ export default function App() {
           enterprises={enterprises} 
           currentEnterprise={currentEnterprise}
           setCurrentEnterprise={setCurrentEnterprise}
-          onLogout={() => setIsLoggedIn(false)}
+          onLogout={() => {
+            setIsLoggedIn(false);
+            localStorage.removeItem('isLoggedIn');
+          }}
         />
         <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-[1600px] mx-auto w-full">

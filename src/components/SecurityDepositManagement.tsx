@@ -24,7 +24,8 @@ import {
   Paperclip,
   File,
   Image as ImageIcon,
-  Download
+  Download,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -35,6 +36,8 @@ interface SecurityDepositManagementProps {
 
 const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ currentEnterprise, projects = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [refundStatusFilter, setRefundStatusFilter] = useState('全部');
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [selectedDeposit, setSelectedDeposit] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -199,23 +202,55 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-8">
-        <div className="w-56 relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
-          <input 
-            type="text" 
-            placeholder="搜索项目名称、银行、项目编号..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="w-56 relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+            <input 
+              type="text" 
+              placeholder="搜索项目名称、银行、项目编号..."
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="w-40 relative group">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+            <input 
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all text-slate-600 font-medium"
+            />
+          </div>
+          
+          <div className="w-40 relative group">
+            <select 
+              value={refundStatusFilter}
+              onChange={(e) => setRefundStatusFilter(e.target.value)}
+              className="w-full pl-4 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all appearance-none cursor-pointer text-slate-600 font-medium"
+            >
+              <option value="全部">退还状态</option>
+              <option value="已退还">已退还</option>
+              <option value="待退还">待退还</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-primary transition-colors" size={16} />
+          </div>
         </div>
         
         <div className="flex gap-2">
           <button className="px-8 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 shadow-sm hover:shadow-md transition-all">
             查询
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+          <button 
+            onClick={() => {
+              setSearchTerm('');
+              setDateFilter('');
+              setRefundStatusFilter('全部');
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all"
+          >
             <Filter size={16} /> 重置
           </button>
         </div>
@@ -234,7 +269,12 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {deposits.map((deposit) => {
+            {deposits.filter(d => {
+              const matchesSearch = d.projectName.includes(searchTerm) || d.projectCode.includes(searchTerm) || d.bank.includes(searchTerm);
+              const matchesDate = !dateFilter || d.date.includes(dateFilter);
+              const matchesRefundStatus = refundStatusFilter === '全部' || d.refundStatus === refundStatusFilter;
+              return matchesSearch && matchesDate && matchesRefundStatus;
+            }).map((deposit) => {
               const project = projects.find(p => p.code === deposit.projectCode || p.name === deposit.projectName);
               const isPaused = project?.status === '放弃投标';
 
@@ -323,7 +363,7 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-white rounded-3xl shadow-2xl w-full max-w-[700px] max-h-[90vh] flex flex-col overflow-hidden"
+                className="bg-white rounded-3xl shadow-2xl w-full max-w-[1000px] max-h-[90vh] flex flex-col overflow-hidden"
               >
                 <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
                   <div className="flex items-center gap-3">
@@ -391,52 +431,48 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
                         />
                       </div>
 
-                      {isEditing && (
-                        <>
-                          <div className="col-span-2 space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">退还状态 <span className="text-red-500">*</span></label>
-                            <div className="flex gap-8 px-2 py-2">
-                              {['待退还', '已退还'].map((status) => (
-                                <label key={status} className="flex items-center gap-2 cursor-pointer group">
-                                  <div className="relative flex items-center justify-center">
-                                    <input
-                                      type="radio"
-                                      name="refundStatus"
-                                      checked={formData.refundStatus === status}
-                                      onChange={() => setFormData({...formData, refundStatus: status})}
-                                      className="sr-only"
-                                    />
-                                    <div className={`size-5 rounded-full border-2 transition-all ${
-                                      formData.refundStatus === status 
-                                        ? 'border-primary bg-primary' 
-                                        : 'border-slate-300 bg-white group-hover:border-slate-400'
-                                    }`}>
-                                      {formData.refundStatus === status && (
-                                        <div className="size-2 bg-white rounded-full" />
-                                      )}
-                                    </div>
-                                  </div>
-                                  <span className={`text-sm font-bold transition-colors ${
-                                    formData.refundStatus === status ? 'text-slate-900' : 'text-slate-500'
-                                  }`}>
-                                    {status}
-                                  </span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                          {formData.refundStatus === '已退还' && (
-                            <div className="col-span-2 space-y-1.5">
-                              <label className="text-xs font-bold text-slate-500 ml-1">退还时间 <span className="text-red-500">*</span></label>
-                              <input 
-                                type="date" 
-                                value={formData.refundDate}
-                                onChange={(e) => setFormData({...formData, refundDate: e.target.value})}
-                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" 
-                              />
-                            </div>
-                          )}
-                        </>
+                      <div className="col-span-2 space-y-1.5">
+                        <label className="text-xs font-bold text-slate-500 ml-1">退还状态 <span className="text-red-500">*</span></label>
+                        <div className="flex gap-8 px-2 py-2">
+                          {['待退还', '已退还'].map((status) => (
+                            <label key={status} className="flex items-center gap-2 cursor-pointer group">
+                              <div className="relative flex items-center justify-center">
+                                <input
+                                  type="radio"
+                                  name="refundStatus"
+                                  checked={formData.refundStatus === status}
+                                  onChange={() => setFormData({...formData, refundStatus: status})}
+                                  className="sr-only"
+                                />
+                                <div className={`size-5 rounded-full border-2 transition-all ${
+                                  formData.refundStatus === status 
+                                    ? 'border-primary bg-primary' 
+                                    : 'border-slate-300 bg-white group-hover:border-slate-400'
+                                }`}>
+                                  {formData.refundStatus === status && (
+                                    <div className="size-2 bg-white rounded-full" />
+                                  )}
+                                </div>
+                              </div>
+                              <span className={`text-sm font-bold transition-colors ${
+                                formData.refundStatus === status ? 'text-slate-900' : 'text-slate-500'
+                              }`}>
+                                {status}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      {formData.refundStatus === '已退还' && (
+                        <div className="col-span-2 space-y-1.5">
+                          <label className="text-xs font-bold text-slate-500 ml-1">退还时间 <span className="text-red-500">*</span></label>
+                          <input 
+                            type="date" 
+                            value={formData.refundDate}
+                            onChange={(e) => setFormData({...formData, refundDate: e.target.value})}
+                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" 
+                          />
+                        </div>
                       )}
 
                       <div className="col-span-2 space-y-4">

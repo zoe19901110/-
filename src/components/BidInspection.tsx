@@ -15,6 +15,7 @@ import {
   Trash2,
   MoreHorizontal, 
   ChevronRight,
+  ChevronDown,
   Search,
   Plus,
   BrainCircuit,
@@ -98,13 +99,13 @@ const BidInspection: React.FC<BidInspectionProps> = ({ currentEnterprise, upload
           <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between">
             <h3 className="font-bold text-slate-900">我的项目</h3>
             <div className="flex items-center gap-4">
-              <div className="relative">
+              <div className="relative group">
                 <select className="appearance-none pl-3 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20">
                   <option>进行中</option>
                   <option>已完成</option>
                   <option>全部</option>
                 </select>
-                <Filter size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-primary transition-colors" />
               </div>
               <div className="relative">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
