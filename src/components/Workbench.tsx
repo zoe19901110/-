@@ -146,6 +146,8 @@ const Workbench: React.FC<WorkbenchProps> = ({
   const [showToolModal, setShowToolModal] = useState(false);
   const [isToolInstalled, setIsToolInstalled] = useState(false); // Mock state
   const [activeRightTab, setActiveRightTab] = useState<string | null>(null);
+  const [showOperationLog, setShowOperationLog] = useState(false);
+  const [showCollaborativeSharing, setShowCollaborativeSharing] = useState(false);
   const [showFileViewer, setShowFileViewer] = useState(false);
   const [activeViewerTab, setActiveViewerTab] = useState<'core' | 'risk' | 'custom'>('risk');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -415,8 +417,14 @@ const Workbench: React.FC<WorkbenchProps> = ({
                   alert('此项目已暂停');
                   return;
                 }
+                setActiveRightTab(activeRightTab === 'operation-log' ? null : 'operation-log');
               }}
-              className={`px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`px-6 py-2 border rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
+                isPaused ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed' :
+                activeRightTab === 'operation-log' 
+                  ? 'bg-slate-800 text-white border-slate-800 shadow-lg shadow-slate-800/20' 
+                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
             >
               <History size={16} /> 操作日志
             </button>
@@ -426,6 +434,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
                   alert('此项目已暂停');
                   return;
                 }
+                setShowCollaborativeSharing(true);
               }}
               className={`px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
@@ -609,7 +618,13 @@ const Workbench: React.FC<WorkbenchProps> = ({
               {subView === 'key-info-view' && <KeyInfoView onBack={() => setSubView('main')} isPaused={isPaused} />}
               {subView === 'qualification-view' && <QualificationView onBack={() => setSubView('main')} isPaused={isPaused} />}
               {subView === 'risk-view' && <RiskView onBack={() => setSubView('main')} isPaused={isPaused} />}
-              {subView === 'file-production' && <FileProductionView onBack={() => setSubView('main')} isPaused={isPaused} />}
+              {subView === 'file-production' && (
+                <FileProductionView 
+                  onBack={() => setSubView('main')} 
+                  isPaused={isPaused} 
+                  onShare={() => setShowCollaborativeSharing(true)}
+                />
+              )}
               {subView === 'inspection-detail' && <InspectionDetailView onBack={() => setSubView('main')} uploadedFiles={uploadedFiles} isPaused={isPaused} />}
               {subView === 'archive-register' && <ArchiveRegisterView onBack={() => setSubView('main')} isPaused={isPaused} />}
               {subView === 'parsing-report' && <ParsingReportView onBack={() => setSubView('main')} projectData={projectData} isPaused={isPaused} />}
@@ -644,7 +659,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className={`fixed right-0 top-0 bottom-0 ${activeRightTab === 'annotation' || activeRightTab === 'resource-center' || activeRightTab === 'material-market' ? 'w-[1200px]' : 'w-[450px]'} bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-[80] flex flex-col border-l border-slate-100 transition-all duration-500`}
+              className={`fixed right-0 top-0 bottom-0 ${activeRightTab === 'annotation' || activeRightTab === 'material-market' ? 'w-[1200px]' : activeRightTab === 'resource-center' ? 'w-[600px]' : 'w-[450px]'} bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-[80] flex flex-col border-l border-slate-100 transition-all duration-500`}
             >
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div className="flex items-center gap-3">
@@ -654,7 +669,8 @@ const Workbench: React.FC<WorkbenchProps> = ({
                     activeRightTab === 'qualification' ? 'bg-emerald-500' :
                     activeRightTab === 'disqualification' ? 'bg-rose-500' : 
                     activeRightTab === 'material-market' ? 'bg-amber-500' :
-                    activeRightTab === 'resource-center' ? 'bg-amber-500' : 'bg-purple-500'
+                    activeRightTab === 'resource-center' ? 'bg-amber-500' : 
+                    activeRightTab === 'operation-log' ? 'bg-slate-800' : 'bg-purple-500'
                   }`}>
                     {activeRightTab === 'annotation' && <PenTool size={20} />}
                     {activeRightTab === 'key-info' && <BrainCircuit size={20} />}
@@ -662,6 +678,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
                     {activeRightTab === 'disqualification' && <ShieldAlert size={20} />}
                     {activeRightTab === 'material-market' && <LayoutGrid size={20} />}
                     {activeRightTab === 'resource-center' && <FolderOpen size={20} />}
+                    {activeRightTab === 'operation-log' && <History size={20} />}
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900">
@@ -671,10 +688,12 @@ const Workbench: React.FC<WorkbenchProps> = ({
                       {activeRightTab === 'disqualification' && '风险建议'}
                       {activeRightTab === 'material-market' && '素材市场'}
                       {activeRightTab === 'resource-center' && '资源中心'}
+                      {activeRightTab === 'operation-log' && '操作日志'}
                     </h3>
                     <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
                       {activeRightTab === 'material-market' ? 'Material Market' : 
-                       activeRightTab === 'resource-center' ? 'Resource Management' : 'Tender Document Analysis'}
+                       activeRightTab === 'resource-center' ? 'Resource Management' : 
+                       activeRightTab === 'operation-log' ? 'Operation Log' : 'Tender Document Analysis'}
                     </p>
                   </div>
                 </div>
@@ -846,6 +865,12 @@ const Workbench: React.FC<WorkbenchProps> = ({
                 {activeRightTab === 'resource-center' && (
                   <div className="h-full flex flex-col bg-slate-50">
                     <ResourceCenterView onBack={() => setActiveRightTab(null)} isPaused={isPaused} />
+                  </div>
+                )}
+
+                {activeRightTab === 'operation-log' && (
+                  <div className="h-full flex flex-col bg-white">
+                    <OperationLogPanel onClose={() => setActiveRightTab(null)} />
                   </div>
                 )}
 
@@ -1282,12 +1307,15 @@ const Workbench: React.FC<WorkbenchProps> = ({
             </motion.div>
           </div>
         )}
+        {showCollaborativeSharing && (
+          <CollaborativeSharingModal onClose={() => setShowCollaborativeSharing(false)} />
+        )}
       </AnimatePresence>
     </motion.div>
   );
 };
 
-const FileProductionView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => (
+const FileProductionView = ({ onBack, isPaused, onShare }: { onBack: () => void, isPaused: boolean, onShare: () => void }) => (
   <div className={`space-y-8 ${isPaused ? 'opacity-75' : ''}`}>
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
@@ -1315,6 +1343,7 @@ const FileProductionView = ({ onBack, isPaused }: { onBack: () => void, isPaused
               alert('此项目已暂停');
               return;
             }
+            onShare();
           }}
           className={`px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
@@ -1588,307 +1617,1345 @@ const InspectionDetailView = ({ onBack, uploadedFiles, isPaused }: { onBack: () 
   );
 };
 
-const ResourceCenterView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => {
-  const [activeTab, setActiveTab] = useState<'basic_info' | 'personnel' | 'performance' | 'finance' | 'rewards' | 'honors' | 'materials' | 'disclosure' | 'credit' | 'qualifications'>('basic_info');
+const OperationLogPanel = ({ onClose }: { onClose: () => void }) => {
+  const logs = [
+    { id: 1, user: '张三', action: '修改了项目基本信息', time: '2024-03-20 14:30:22', type: 'update' },
+    { id: 2, user: '李四', action: '上传了投标文件', time: '2024-03-20 11:15:45', type: 'upload' },
+    { id: 3, user: '王五', action: '解析了招标文件', time: '2024-03-19 16:40:10', type: 'process' },
+    { id: 4, user: '张三', action: '创建了项目', time: '2024-03-18 09:00:00', type: 'create' },
+    { id: 5, user: '系统', action: '自动备份完成', time: '2024-03-17 23:59:59', type: 'system' },
+    { id: 6, user: '李四', action: '删除了一个附件', time: '2024-03-17 15:20:33', type: 'delete' },
+  ];
 
   return (
-    <div className={`flex flex-col h-full ${isPaused ? 'opacity-75' : ''}`}>
-      <div className="p-8 border-b border-slate-100 bg-white">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex flex-wrap bg-slate-100 p-1 rounded-xl gap-1">
-            {[
-              { id: 'basic_info', label: '企业基本信息', icon: Building2 },
-              { id: 'personnel', label: '人员库', icon: Users },
-              { id: 'performance', label: '业绩库', icon: Trophy },
-              { id: 'qualifications', label: '企业资质', icon: Building2 },
-              { id: 'finance', label: '企业财务', icon: Wallet },
-              { id: 'rewards', label: '奖惩信息', icon: Medal },
-              { id: 'honors', label: '荣誉奖项', icon: Award },
-              { id: 'materials', label: '投标所需材料', icon: Archive },
-              { id: 'disclosure', label: '信息披露', icon: Globe },
-              { id: 'credit', label: '信用评价', icon: ShieldCheck },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                  activeTab === tab.id 
-                    ? 'bg-white text-primary shadow-sm' 
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                <tab.icon size={18} />
-                {tab.label}
-              </button>
-            ))}
+    <div className="flex flex-col h-full bg-white">
+      <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-xl bg-slate-800 flex items-center justify-center text-white shadow-lg">
+            <History size={20} />
           </div>
-          {isPaused && (
-            <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full flex items-center gap-1">
-              <Ban size={14} /> 此项目已暂停
-            </span>
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">操作日志</h2>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Operation Log</p>
+          </div>
+        </div>
+        <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+          <X size={20} className="text-slate-400" />
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="relative border-l-2 border-slate-100 ml-3 space-y-8 pb-8">
+          {logs.map((log) => (
+            <div key={log.id} className="relative pl-8">
+              <div className={`absolute -left-[9px] top-1 size-4 rounded-full border-2 border-white shadow-sm ${
+                log.type === 'create' ? 'bg-green-500' :
+                log.type === 'update' ? 'bg-blue-500' :
+                log.type === 'delete' ? 'bg-red-500' :
+                log.type === 'upload' ? 'bg-amber-500' :
+                log.type === 'process' ? 'bg-purple-500' : 'bg-slate-400'
+              }`} />
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-sm transition-all">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold text-sm text-slate-900">{log.user}</span>
+                  <span className="text-[10px] text-slate-400 font-mono">{log.time}</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">{log.action}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CollaborativeSharingModal = ({ onClose }: { onClose: () => void }) => {
+  const [modalTab, setModalTab] = useState<'add' | 'manage'>('add');
+  const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+  const [permissions, setPermissions] = useState<Record<number, 'view' | 'edit'>>({});
+  const [existingCollaborators, setExistingCollaborators] = useState([
+    { id: 401, name: '孙七', role: '项目经理', permission: 'edit' },
+    { id: 402, name: '周八', role: '技术顾问', permission: 'view' },
+  ]);
+
+  const orgData = [
+    { id: 1, name: '技术部', children: [
+      { id: 101, name: '张三', role: '高级工程师' },
+      { id: 102, name: '李四', role: '结构设计师' },
+    ]},
+    { id: 2, name: '商务部', children: [
+      { id: 201, name: '王五', role: '商务经理' },
+      { id: 202, name: '赵六', role: '造价师' },
+    ]},
+    { id: 3, name: '管理层', children: [
+      { id: 301, name: '钱七', role: '项目总监' },
+    ]},
+  ];
+
+  const toggleUser = (userId: number) => {
+    if (selectedUsers.includes(userId)) {
+      setSelectedUsers(selectedUsers.filter(id => id !== userId));
+      const newPerms = { ...permissions };
+      delete newPerms[userId];
+      setPermissions(newPerms);
+    } else {
+      setSelectedUsers([...selectedUsers, userId]);
+      setPermissions({ ...permissions, [userId]: 'view' });
+    }
+  };
+
+  const setPermission = (userId: number, perm: 'view' | 'edit') => {
+    setPermissions({ ...permissions, [userId]: perm });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[80vh]"
+      >
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg">
+              <Share2 size={20} />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">协作分享</h2>
+              <div className="flex gap-4 mt-1">
+                <button 
+                  onClick={() => setModalTab('add')}
+                  className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${modalTab === 'add' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  添加成员
+                </button>
+                <button 
+                  onClick={() => setModalTab('manage')}
+                  className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${modalTab === 'manage' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  管理成员 ({existingCollaborators.length})
+                </button>
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+            <X size={20} className="text-slate-400" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-hidden flex">
+          {modalTab === 'add' ? (
+            <>
+              {/* Org structure */}
+              <div className="w-1/2 border-r border-slate-100 overflow-y-auto p-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">组织架构</h3>
+                <div className="space-y-4">
+                  {orgData.map(dept => (
+                    <div key={dept.id} className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                        <Building2 size={16} className="text-slate-400" />
+                        {dept.name}
+                      </div>
+                      <div className="pl-6 space-y-1">
+                        {dept.children.map(user => (
+                          <div 
+                            key={user.id}
+                            onClick={() => toggleUser(user.id)}
+                            className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all ${
+                              selectedUsers.includes(user.id) ? 'bg-blue-50 border-blue-100' : 'hover:bg-slate-50 border-transparent'
+                            } border`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className={`size-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                                selectedUsers.includes(user.id) ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
+                              }`}>
+                                {user.name[0]}
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-slate-900">{user.name}</p>
+                                <p className="text-[10px] text-slate-400">{user.role}</p>
+                              </div>
+                            </div>
+                            {selectedUsers.includes(user.id) && <CheckCircle2 size={16} className="text-blue-600" />}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Selected users & permissions */}
+              <div className="w-1/2 overflow-y-auto p-4 bg-slate-50/50">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">已选人员及权限</h3>
+                {selectedUsers.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-300 py-20">
+                    <Users size={48} className="mb-4 opacity-20" />
+                    <p className="text-sm">请从左侧选择人员</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {selectedUsers.map(userId => {
+                      const user = orgData.flatMap(d => d.children).find(u => u.id === userId);
+                      return (
+                        <div key={userId} className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="size-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">
+                              {user?.name[0]}
+                            </div>
+                            <span className="text-xs font-bold text-slate-900">{user?.name}</span>
+                          </div>
+                          <div className="flex bg-slate-100 p-1 rounded-lg">
+                            <button 
+                              onClick={() => setPermission(userId, 'view')}
+                              className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${
+                                permissions[userId] === 'view' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                              }`}
+                            >
+                              查看
+                            </button>
+                            <button 
+                              onClick={() => setPermission(userId, 'edit')}
+                              className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${
+                                permissions[userId] === 'edit' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                              }`}
+                            >
+                              编辑
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="w-full overflow-y-auto p-6 bg-slate-50/30">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-sm font-bold text-slate-800">当前协作人员</h3>
+                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-full uppercase tracking-wider">
+                  Total: {existingCollaborators.length}
+                </span>
+              </div>
+              
+              {existingCollaborators.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-slate-300">
+                  <Users size={48} className="mb-4 opacity-20" />
+                  <p className="text-sm">暂无协作人员</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  {existingCollaborators.map(user => (
+                    <div key={user.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
+                      <div className="flex items-center gap-3">
+                        <div className="size-10 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center text-sm font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                          {user.name[0]}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">{user.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] text-slate-400">{user.role}</span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                              user.permission === 'edit' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'
+                            }`}>
+                              {user.permission === 'edit' ? '可编辑' : '可查看'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          if (confirm(`确定要取消 ${user.name} 的协作权限吗？`)) {
+                            setExistingCollaborators(existingCollaborators.filter(u => u.id !== user.id));
+                          }
+                        }}
+                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                        title="取消协作"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
+        </div>
+
+        <div className="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
+          <button onClick={onClose} className="px-6 py-2 text-sm font-bold text-slate-500 hover:text-slate-700">取消</button>
+          {modalTab === 'add' && (
+            <button 
+              onClick={() => {
+                const newUsers = selectedUsers.map(id => {
+                  const u = orgData.flatMap(d => d.children).find(user => user.id === id);
+                  return {
+                    id: u!.id,
+                    name: u!.name,
+                    role: u!.role,
+                    permission: permissions[id]
+                  };
+                });
+                setExistingCollaborators([...existingCollaborators, ...newUsers]);
+                setSelectedUsers([]);
+                setPermissions({});
+                setModalTab('manage');
+                alert('分享成功！');
+              }}
+              disabled={selectedUsers.length === 0}
+              className="px-8 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 disabled:shadow-none"
+            >
+              确认分享
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const ResourceCenterView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => {
+  const [activeTab, setActiveTab] = useState('enterprise'); // 'enterprise', 'license', 'material'
+  const [activeFilter, setActiveFilter] = useState('personnel'); // 'personnel', 'performance', 'finance', 'qualification'
+  const [activeLicenseFilter, setActiveLicenseFilter] = useState('business_license'); // 'business_license', 'qualification', 'permit', 'honor'
+  const [activeMaterialFilter, setActiveMaterialFilter] = useState('tech'); // 'tech', 'business'
+  const [expandedCard, setExpandedCard] = useState<string | null>('li');
+  const [innerTab, setInnerTab] = useState('basic'); // 'basic', 'performance', 'qualification'
+  const [materialSearch, setMaterialSearch] = useState('');
+
+  return (
+    <div className={`flex flex-col h-full bg-slate-50 ${isPaused ? 'opacity-75' : ''}`}>
+      {/* Header / Tabs */}
+      <div className="bg-white px-6 pt-6 border-b border-slate-200 shrink-0">
+        <h2 className="text-lg font-bold text-slate-800 mb-4">全局资产库</h2>
+        <div className="flex gap-8 border-b border-slate-200">
+          {[
+            { id: 'enterprise', label: '企业信息' },
+            { id: 'license', label: '证照库' },
+            { id: 'material', label: '素材库' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-3 text-sm font-bold transition-colors relative ${
+                activeTab === tab.id ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
+              )}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-8">
-        <AnimatePresence mode="wait">
-        {activeTab === 'basic_info' && (
-          <motion.div
-            key="basic_info"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-xl"
-          >
-            <div className="size-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 mb-4">
-              <Building2 size={32} />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">暂无数据</h3>
-            <p className="text-sm text-slate-500">该模块内容正在建设中</p>
-          </motion.div>
-        )}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar Filters */}
+        <div className="w-[120px] shrink-0 bg-white border-r border-slate-100 overflow-y-auto py-4">
+          <div className="flex flex-col gap-2 px-2">
+            {activeTab === 'enterprise' && [
+              { id: 'personnel', label: '人员选择' },
+              { id: 'performance', label: '业绩选择' },
+              { id: 'finance', label: '财务报表' },
+              { id: 'qualification', label: '企业资质' }
+            ].map(filter => (
+              <button
+                key={filter.id}
+                onClick={() => setActiveFilter(filter.id)}
+                className={`px-3 py-2 text-sm transition-colors text-center rounded-full ${
+                  activeFilter === filter.id 
+                    ? 'bg-blue-600 text-white font-bold' 
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
 
-        {activeTab === 'personnel' && (
-          <motion.div
-            key="personnel"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="space-y-6"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {[
-                { label: '总人数', count: '42', icon: Users, color: 'blue' },
-                { label: '项目经理', count: '8', icon: User, color: 'indigo' },
-                { label: '技术负责人', count: '12', icon: ShieldCheck, color: 'emerald' },
-                { label: '证书预警', count: '3', icon: AlertTriangle, color: 'orange' },
-              ].map((stat, i) => (
-                <div key={i} className="bg-white border border-slate-100 rounded-xl p-4 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className={`size-10 rounded-lg flex items-center justify-center bg-${stat.color}-50 text-${stat.color}-600`}>
-                      <stat.icon size={20} />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{stat.label}</p>
-                      <p className="text-lg font-black text-slate-900">{stat.count}</p>
-                    </div>
-                  </div>
+            {activeTab === 'license' && [
+              { id: 'business_license', label: '企业营业执照' },
+              { id: 'qualification', label: '资质' },
+              { id: 'permit', label: '许可证' },
+              { id: 'honor', label: '荣誉' },
+              { id: 'basic_info', label: '基本信息' },
+              { id: 'legal_person', label: '法人信息' },
+              { id: 'professionals', label: '职业人员' },
+              { id: 'enterprise_qualification', label: '企业资质' },
+              { id: 'bidding_performance', label: '投标业绩' }
+            ].map(filter => (
+              <button
+                key={filter.id}
+                onClick={() => setActiveLicenseFilter(filter.id)}
+                className={`px-3 py-2 text-sm transition-colors text-center rounded-full ${
+                  activeLicenseFilter === filter.id 
+                    ? 'bg-blue-600 text-white font-bold' 
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+
+            {activeTab === 'material' && [
+              { id: 'tech', label: '技术标素材' },
+              { id: 'business', label: '商务标素材' }
+            ].map(filter => (
+              <button
+                key={filter.id}
+                onClick={() => setActiveMaterialFilter(filter.id)}
+                className={`px-3 py-2 text-sm transition-colors text-center rounded-full ${
+                  activeMaterialFilter === filter.id 
+                    ? 'bg-blue-600 text-white font-bold' 
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {activeTab === 'material' && (
+          <div className="space-y-6">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="搜索素材..."
+                value={materialSearch}
+                onChange={(e) => setMaterialSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              />
+            </div>
+
+            {/* Technical Materials Section */}
+            {activeMaterialFilter === 'tech' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-slate-500 font-bold text-sm mb-4">
+                  技术标素材
                 </div>
-              ))}
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input 
-                  type="text" 
-                  placeholder="搜索姓名、职称、证书..." 
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                />
-              </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                    <th className="px-6 py-4 font-bold">姓名</th>
-                    <th className="px-6 py-4 font-bold">拟派岗位</th>
-                    <th className="px-6 py-4 font-bold">职称/证书</th>
-                    <th className="px-6 py-4 font-bold">证书有效期</th>
-                    <th className="px-6 py-4 font-bold text-right">操作</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
+                
+                <div className="space-y-3">
                   {[
-                    { name: '张建国', role: '项目经理', cert: '一级建造师（市政）', expiry: '2027-05-20', status: '有效' },
-                    { name: '李晓明', role: '技术负责人', cert: '高级工程师', expiry: '2028-11-15', status: '有效' },
-                    { name: '王志强', role: '安全员', cert: '安全生产考核合格证(C证)', expiry: '2026-09-10', status: '有效' },
-                    { name: '赵敏', role: '造价员', cert: '一级造价工程师', expiry: '2026-03-25', status: '即将过期' },
-                  ].map((person, i) => (
-                    <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="size-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 font-bold text-xs">
-                            {person.name.charAt(0)}
-                          </div>
-                          <span className="text-sm font-bold text-slate-900">{person.name}</span>
+                    { title: '施工组织设计标准模板', type: '标准文本段落', icon: 'blue' },
+                    { title: '质量保证措施(通用版)', type: '标准文本段落', icon: 'blue' },
+                    { title: '安全生产应急预案', type: '标准文本段落', icon: 'blue' }
+                  ].map((item, i) => (
+                    <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between hover:border-blue-200 hover:shadow-sm transition-all group">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                          <FileText size={20} />
                         </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{person.role}</td>
-                      <td className="px-6 py-4">
-                        <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">{person.cert}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-sm text-slate-600">{person.expiry}</span>
-                          <span className={`text-[10px] font-bold ${person.status === '有效' ? 'text-green-500' : 'text-orange-500'}`}>
-                            {person.status}
-                          </span>
+                        <div>
+                          <h4 className="font-bold text-slate-900 text-sm">{item.title}</h4>
+                          <p className="text-xs text-slate-500 mt-0.5">{item.type}</p>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button className="p-2 text-slate-400 hover:text-primary transition-colors"><Eye size={18} /></button>
-                        </div>
-                      </td>
-                    </tr>
+                      </div>
+                      <div className="flex items-center gap-2 text-blue-600 text-xs font-bold">
+                        <button className="hover:underline">查看</button>
+                        <span className="text-slate-200 font-normal">|</span>
+                        <button className="hover:underline">插入</button>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </div>
-            </div>
-          </motion.div>
+                </div>
+              </div>
+            )}
+
+            {/* Commercial Materials Section */}
+            {activeMaterialFilter === 'business' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-slate-500 font-bold text-sm mb-4">
+                  商务标素材
+                </div>
+                
+                <div className="space-y-3">
+                  {[
+                    { title: '公司简介(2024最新版)', type: '标准文本段落', icon: 'orange' },
+                    { title: '售后服务承诺书', type: '标准文本段落', icon: 'orange' },
+                    { title: '反商业贿赂承诺书', type: '标准文本段落', icon: 'orange' }
+                  ].map((item, i) => (
+                    <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between hover:border-blue-200 hover:shadow-sm transition-all group">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-orange-50 text-orange-600 rounded-lg">
+                          <FileText size={20} />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-900 text-sm">{item.title}</h4>
+                          <p className="text-xs text-slate-500 mt-0.5">{item.type}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-blue-600 text-xs font-bold">
+                        <button className="hover:underline">查看</button>
+                        <span className="text-slate-200 font-normal">|</span>
+                        <button className="hover:underline">插入</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
-        {activeTab === 'performance' && (
-          <motion.div
-            key="performance"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="space-y-6"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { label: '累计业绩数量', count: '156', icon: Trophy, color: 'amber' },
-                { label: '近一年业绩', count: '24', icon: Calendar, color: 'blue' },
-                { label: '累计中标金额', count: '¥12.8 亿', icon: Receipt, color: 'emerald' },
-              ].map((stat, i) => (
-                <div key={i} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
-                  <div className="flex items-center gap-4">
-                    <div className={`size-12 rounded-xl flex items-center justify-center bg-${stat.color}-50 text-${stat.color}-600`}>
-                      <stat.icon size={24} />
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">{stat.label}</p>
-                      <p className="text-xl font-black text-slate-900">{stat.count}</p>
-                    </div>
+        {activeTab === 'enterprise' && activeFilter === 'personnel' && (
+          <>
+            {/* Card 1 */}
+            <div className={`bg-white rounded-xl border ${expandedCard === 'li' ? 'border-blue-200 shadow-sm' : 'border-slate-200'} overflow-hidden transition-all`}>
+              <div 
+                className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50"
+                onClick={() => setExpandedCard(expandedCard === 'li' ? null : 'li')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="size-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
+                    李
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm">李茂盛</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">高级结构工程师 • 15年经验</p>
                   </div>
                 </div>
-              ))}
+                <ChevronDown className={`text-slate-400 transition-transform ${expandedCard === 'li' ? 'rotate-180' : ''}`} size={20} />
+              </div>
+
+              {expandedCard === 'li' && (
+                <div className="border-t border-slate-100 p-4">
+                  <div className="flex gap-6 border-b border-slate-100 mb-4">
+                    {[
+                      { id: 'basic', label: '基本信息' },
+                      { id: 'performance', label: '人员业绩' },
+                      { id: 'qualification', label: '人员资质' }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setInnerTab(tab.id)}
+                        className={`pb-2 text-xs font-bold transition-colors relative ${
+                          innerTab === tab.id ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        {tab.label}
+                        {innerTab === tab.id && (
+                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mb-6">
+                    {innerTab === 'basic' && (
+                      <div>
+                        <div className="flex items-center gap-2 text-slate-700 font-bold text-sm mb-2">
+                          <User size={16} className="text-blue-600" />
+                          基本信息
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed">
+                          国家一级注册结构师。曾主导大都会歌剧院、市民科技馆等多个地标建筑的结构体系设计，擅长复杂大跨度钢结构及高层剪力墙体系。
+                        </p>
+                      </div>
+                    )}
+                    {innerTab === 'performance' && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-700">大都会歌剧院结构设计</span>
+                          <span className="text-slate-500">2021-2023</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-700">市民科技馆主体结构</span>
+                          <span className="text-slate-500">2019-2021</span>
+                        </div>
+                      </div>
+                    )}
+                    {innerTab === 'qualification' && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-700">一级注册结构工程师</span>
+                          <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded">有效</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-700">高级工程师职称</span>
+                          <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded">有效</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button className="flex-1 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors">
+                      查看
+                    </button>
+                    <button className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                      <Plus size={16} /> 插入
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-            {[
-              { title: '某市中心城区道路改造工程', amount: '¥4,500.00万', date: '2024-12-20', client: '某市住房和城乡建设局', tags: ['市政', '道路', '4000万+'] },
-              { title: '高新区智慧交通系统建设项目', amount: '¥2,800.00万', date: '2025-05-15', client: '高新区管委会', tags: ['智慧交通', '弱电', '2000万+'] },
-              { title: '滨江公园景观提升工程（二期）', amount: '¥1,200.00万', date: '2023-08-10', client: '某区园林绿化局', tags: ['园林', '景观', '1000万+'] },
-            ].map((perf, i) => (
-              <div key={i} className="bg-white border border-slate-200 rounded-xl p-6 hover:border-primary/30 hover:shadow-md transition-all group">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
-                        <Trophy size={20} />
-                      </div>
-                      <h4 className="text-lg font-bold text-slate-900 group-hover:text-primary transition-colors">{perf.title}</h4>
-                    </div>
-                    <div className="flex items-center gap-6 text-sm text-slate-500">
-                      <div className="flex items-center gap-1.5">
-                        <Building2 size={16} />
-                        {perf.client}
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Calendar size={16} />
-                        竣工日期: {perf.date}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {perf.tags.map(tag => (
-                        <span key={tag} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider">{tag}</span>
-                      ))}
-                    </div>
+            {/* Card 2 */}
+            <div className={`bg-white rounded-xl border ${expandedCard === 'wang' ? 'border-blue-200 shadow-sm' : 'border-slate-200'} overflow-hidden transition-all`}>
+              <div 
+                className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50"
+                onClick={() => setExpandedCard(expandedCard === 'wang' ? null : 'wang')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="size-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
+                    王
                   </div>
-                  <div className="text-right space-y-4">
-                    <div className="text-xl font-bold text-primary">{perf.amount}</div>
-                    <button className="px-4 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold hover:bg-primary hover:text-white transition-all flex items-center gap-2 ml-auto">
-                      查看合同及证明材料 <ExternalLink size={14} />
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm">王志远</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">机电专业负责人 • 12年经验</p>
+                  </div>
+                </div>
+                <ChevronDown className={`text-slate-400 transition-transform ${expandedCard === 'wang' ? 'rotate-180' : ''}`} size={20} />
+              </div>
+              
+              {expandedCard === 'wang' && (
+                <div className="border-t border-slate-100 p-4">
+                  <div className="flex gap-6 border-b border-slate-100 mb-4">
+                    {[
+                      { id: 'basic', label: '基本信息' },
+                      { id: 'performance', label: '人员业绩' },
+                      { id: 'qualification', label: '人员资质' }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setInnerTab(tab.id)}
+                        className={`pb-2 text-xs font-bold transition-colors relative ${
+                          innerTab === tab.id ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        {tab.label}
+                        {innerTab === tab.id && (
+                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mb-6">
+                    {innerTab === 'basic' && (
+                      <div>
+                        <div className="flex items-center gap-2 text-slate-700 font-bold text-sm mb-2">
+                          <User size={16} className="text-blue-600" />
+                          基本信息
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed">
+                          注册公用设备工程师（暖通空调）。拥有丰富的超高层及大型商业综合体机电设计经验，熟悉各类节能技术应用。
+                        </p>
+                      </div>
+                    )}
+                    {innerTab === 'performance' && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-700">环球金融中心机电设计</span>
+                          <span className="text-slate-500">2020-2022</span>
+                        </div>
+                      </div>
+                    )}
+                    {innerTab === 'qualification' && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-700">注册公用设备工程师</span>
+                          <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded">有效</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button className="flex-1 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors">
+                      查看
+                    </button>
+                    <button className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                      <Plus size={16} /> 插入
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+        
+        {/* Placeholder for other tabs/filters */}
+        {!(activeTab === 'enterprise' && ['personnel', 'performance', 'finance', 'qualification'].includes(activeFilter)) && activeTab !== 'license' && activeTab !== 'material' && (
+          <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+            <FolderOpen size={48} className="mb-4 opacity-20" />
+            <p className="text-sm font-medium">内容建设中</p>
+          </div>
+        )}
+
+        {activeTab === 'license' && (
+          <div className="grid grid-cols-2 gap-4">
+            {(activeLicenseFilter === 'business_license' ? [
+              { title: '营业执照正本', img: 'https://picsum.photos/seed/license1/400/300?blur=2' },
+              { title: '营业执照副本', img: 'https://picsum.photos/seed/license2/400/300?blur=2' }
+            ] : activeLicenseFilter === 'qualification' ? [
+              { title: '建筑工程施工总承包壹级', img: 'https://picsum.photos/seed/qual1/400/300?blur=2' },
+              { title: '市政公用工程施工总承包贰级', img: 'https://picsum.photos/seed/qual2/400/300?blur=2' }
+            ] : activeLicenseFilter === 'permit' ? [
+              { title: '安全生产许可证', img: 'https://picsum.photos/seed/permit1/400/300?blur=2' },
+              { title: '排污许可证', img: 'https://picsum.photos/seed/permit2/400/300?blur=2' }
+            ] : activeLicenseFilter === 'honor' ? [
+              { title: '鲁班奖证书', img: 'https://picsum.photos/seed/honor1/400/300?blur=2' },
+              { title: '省级优秀企业', img: 'https://picsum.photos/seed/honor2/400/300?blur=2' },
+              { title: '高新技术企业证书', img: 'https://picsum.photos/seed/honor3/400/300?blur=2' }
+            ] : activeLicenseFilter === 'basic_info' ? [
+              { title: '开户许可证', img: 'https://picsum.photos/seed/basic1/400/300?blur=2' },
+              { title: '机构信用代码证', img: 'https://picsum.photos/seed/basic2/400/300?blur=2' }
+            ] : activeLicenseFilter === 'legal_person' ? [
+              { title: '法人身份证（正）', img: 'https://picsum.photos/seed/legal1/400/300?blur=2' },
+              { title: '法人身份证（反）', img: 'https://picsum.photos/seed/legal2/400/300?blur=2' }
+            ] : activeLicenseFilter === 'professionals' ? [
+              { title: '一级建造师注册证', img: 'https://picsum.photos/seed/prof1/400/300?blur=2' },
+              { title: '造价工程师注册证', img: 'https://picsum.photos/seed/prof2/400/300?blur=2' }
+            ] : activeLicenseFilter === 'enterprise_qualification' ? [
+              { title: '工程设计综合甲级', img: 'https://picsum.photos/seed/entqual1/400/300?blur=2' },
+              { title: '工程勘察综合甲级', img: 'https://picsum.photos/seed/entqual2/400/300?blur=2' }
+            ] : [
+              { title: '中标通知书', img: 'https://picsum.photos/seed/bid1/400/300?blur=2' },
+              { title: '施工合同', img: 'https://picsum.photos/seed/bid2/400/300?blur=2' }
+            ]).map((item, i) => (
+              <div key={i} className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col hover:border-blue-300 hover:shadow-md transition-all group">
+                <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
+                  <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+                </div>
+                <div className="p-3 flex flex-col flex-1">
+                  <h4 className="font-bold text-slate-900 text-xs mb-3 line-clamp-2 flex-1" title={item.title}>{item.title}</h4>
+                  <div className="flex gap-2 mt-auto">
+                    <button className="flex-1 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-md text-xs font-bold hover:bg-slate-100 transition-colors">
+                      查看
+                    </button>
+                    <button className="flex-1 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold hover:bg-blue-700 transition-colors">
+                      插入
                     </button>
                   </div>
                 </div>
               </div>
             ))}
-            </div>
-          </motion.div>
+          </div>
         )}
 
-        {['finance', 'rewards', 'honors', 'materials', 'disclosure', 'credit', 'qualifications'].includes(activeTab) && (
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-xl"
-          >
-            <div className="size-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 mb-4">
-              {activeTab === 'qualifications' && <Building2 size={32} />}
-              {activeTab === 'finance' && <Wallet size={32} />}
-              {activeTab === 'rewards' && <Medal size={32} />}
-              {activeTab === 'honors' && <Award size={32} />}
-              {activeTab === 'materials' && <Archive size={32} />}
-              {activeTab === 'disclosure' && <Globe size={32} />}
-              {activeTab === 'credit' && <ShieldCheck size={32} />}
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">暂无数据</h3>
-            <p className="text-sm text-slate-500">该模块内容正在建设中</p>
-          </motion.div>
+        {activeTab === 'enterprise' && activeFilter === 'performance' && (
+          <div className="space-y-4">
+            {[
+              { title: '大都会CBD二期综合体', status: '已竣工', start: '2020年3月', end: '2023年5月', amount: '¥12,500,000' },
+              { title: '滨江市民广场', status: '已竣工', start: '2018年6月', end: '2021年10月', amount: '¥8,200,000' }
+            ].map((item, i) => (
+              <div key={i} className="bg-white rounded-xl border border-slate-200 p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-bold text-slate-900 text-sm">{item.title}</h4>
+                  <span className="px-2 py-1 bg-green-50 text-green-600 rounded text-xs font-bold">{item.status}</span>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <div className="flex text-xs">
+                    <span className="text-slate-500 w-20">开始时间：</span>
+                    <span className="text-slate-700">{item.start}</span>
+                  </div>
+                  <div className="flex text-xs">
+                    <span className="text-slate-500 w-20">竣工时间：</span>
+                    <span className="text-slate-700">{item.end}</span>
+                  </div>
+                  <div className="flex text-xs">
+                    <span className="text-slate-500 w-20">项目金额：</span>
+                    <span className="text-slate-700">{item.amount}</span>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button className="flex-1 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors">
+                    查看
+                  </button>
+                  <button className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                    插入
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
-      </AnimatePresence>
+
+        {activeTab === 'enterprise' && activeFilter === 'finance' && (
+          <div className="space-y-4">
+            {[
+              { title: '2023年度审计报告', subtitle: '经第三方会计师事务所审计', income: '¥45,200万', profit: '¥5,800万' },
+              { title: '2022年度审计报告', subtitle: '经第三方会计师事务所审计', income: '¥41,500万', profit: '¥4,900万' },
+              { title: '2021年度审计报告', subtitle: '经第三方会计师事务所审计', income: '¥38,000万', profit: '¥4,200万' }
+            ].map((item, i) => (
+              <div key={i} className="bg-white rounded-xl border border-slate-200 p-4">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm">{item.title}</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">{item.subtitle}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs text-slate-500 mb-1">营业收入</p>
+                    <p className="text-sm font-bold text-slate-900">{item.income}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs text-slate-500 mb-1">净利润</p>
+                    <p className="text-sm font-bold text-slate-900">{item.profit}</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button className="flex-1 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors">
+                    查看
+                  </button>
+                  <button className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                    插入
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'enterprise' && activeFilter === 'qualification' && (
+          <div className="space-y-4">
+            {[
+              { title: '建筑业企业资质证书', badge: '建筑工程施工总承包壹级', issuer: '住房和城乡建设部', expiry: '2028-12-31', scope: '可承担单项建安合同额不超过企业注册资本金5倍的建筑工程施工。' },
+              { title: '工程设计资质证书', badge: '建筑行业（建筑工程）甲级', issuer: '住房和城乡建设部', expiry: '2027-06-30', scope: '可承担建筑工程专业建设工程项目主体工程及其配套工程的设计业务，其规模不受限制。' },
+              { title: '质量管理体系认证', badge: 'ISO 9001:2015', issuer: '中国质量认证中心', expiry: '2026-10-15', scope: '覆盖工程设计与咨询服务、建筑工程施工总承包。' }
+            ].map((item, i) => (
+              <div key={i} className="bg-white rounded-xl border border-slate-200 p-4">
+                <div className="flex items-start justify-between mb-4 gap-2">
+                  <h4 className="font-bold text-slate-900 text-sm leading-tight">{item.title}</h4>
+                  <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs font-bold whitespace-nowrap shrink-0">{item.badge}</span>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <div className="flex text-xs">
+                    <span className="text-slate-500 w-20 shrink-0">发证机关：</span>
+                    <span className="text-slate-700">{item.issuer}</span>
+                  </div>
+                  <div className="flex text-xs">
+                    <span className="text-slate-500 w-20 shrink-0">有效期至：</span>
+                    <span className="text-slate-700">{item.expiry}</span>
+                  </div>
+                  <div className="flex text-xs">
+                    <span className="text-slate-500 w-20 shrink-0">许可范围：</span>
+                    <span className="text-slate-700 leading-relaxed">{item.scope}</span>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button className="flex-1 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors">
+                    查看
+                  </button>
+                  <button className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                    插入
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
-const ArchiveRegisterView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => (
-  <div className={`space-y-8 ${isPaused ? 'opacity-75' : ''}`}>
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <button 
-          onClick={onBack} 
-          className="size-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:border-primary hover:text-primary transition-all shadow-sm group"
-          title="返回"
-        >
-          <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
-        </button>
-        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-          <span className="w-1.5 h-6 bg-primary rounded-full"></span>
-          项目归档登记
-        </h3>
+const ArchiveRegisterView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => {
+  const [openingDetails, setOpeningDetails] = useState([
+    { id: 1, unit: '中铁一局集团有限公司', price: '12560.88', rank: '1', isWinner: true },
+    { id: 2, unit: '中建三局集团有限公司', price: '12890.50', rank: '2', isWinner: false },
+    { id: 3, unit: '中交第二公路工程局有限公司', price: '13100.20', rank: '3', isWinner: false },
+  ]);
+
+  const [contractDetails, setContractDetails] = useState([
+    { id: 1, contractId: 'HT-2024-001', name: '某高速公路工程施工合同', date: '2024-03-15', amount: '12560.88', owner: '某交通运输局', status: '已签署', fulfillmentDate: '2026-03-15' },
+  ]);
+
+  const [bidFiles, setBidFiles] = useState([
+    { id: 1, name: '投标文件_技术标.pdf', size: '15.2MB', time: '2024-03-01 10:00' },
+    { id: 2, name: '投标文件_商务标.pdf', size: '8.5MB', time: '2024-03-01 10:05' },
+  ]);
+
+  const [openingFiles, setOpeningFiles] = useState([
+    { id: 1, name: '开标记录表.pdf', size: '2.1MB', time: '2024-03-10 15:30' },
+  ]);
+
+  const [contractFiles, setContractFiles] = useState([
+    { id: 1, name: '施工合同扫描件.pdf', size: '25.6MB', time: '2024-03-20 09:00' },
+  ]);
+
+  const [isWinner, setIsWinner] = useState(true);
+
+  const addOpeningRow = () => {
+    const newId = openingDetails.length > 0 ? Math.max(...openingDetails.map(d => d.id)) + 1 : 1;
+    setOpeningDetails([...openingDetails, { id: newId, unit: '', price: '', rank: '', isWinner: false }]);
+  };
+
+  const removeOpeningRow = (id: number) => {
+    setOpeningDetails(openingDetails.filter(d => d.id !== id));
+  };
+
+  const addContractRow = () => {
+    const newId = contractDetails.length > 0 ? Math.max(...contractDetails.map(d => d.id)) + 1 : 1;
+    setContractDetails([...contractDetails, { id: newId, contractId: '', name: '', date: '', amount: '', owner: '', status: '待签署', fulfillmentDate: '' }]);
+  };
+
+  const removeContractRow = (id: number) => {
+    setContractDetails(contractDetails.filter(d => d.id !== id));
+  };
+
+  return (
+    <div className={`bg-slate-50 min-h-screen -m-8 p-8 ${isPaused ? 'opacity-75' : ''}`}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm sticky top-0 z-10">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={onBack} 
+            className="size-10 bg-slate-50 border border-slate-200 rounded-full flex items-center justify-center text-slate-600 hover:bg-white hover:border-primary hover:text-primary transition-all shadow-sm group"
+            title="返回"
+          >
+            <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+          </button>
+          <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <span className="w-1.5 h-6 bg-primary rounded-full"></span>
+            项目归档登记详情
+          </h3>
+        </div>
+        <div className="flex gap-3">
+          <button className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all flex items-center gap-2">
+            <Download size={16} />
+            导出详情
+          </button>
+          <button 
+            onClick={() => {
+              if (isPaused) {
+                alert('此项目已暂停');
+                return;
+              }
+              onBack();
+            }}
+            className={`px-6 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <Check size={16} />
+            保存全部
+          </button>
+        </div>
       </div>
-      <div className="flex gap-3">
-        {isPaused && (
-          <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full flex items-center gap-1 mr-2">
-            <Ban size={14} /> 此项目已暂停
-          </span>
-        )}
-        <button 
-          onClick={() => {
-            if (isPaused) {
-              alert('此项目已暂停');
-              return;
-            }
-          }}
-          className={`px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          提交归档
-        </button>
+
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Project Info */}
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-1 h-4 bg-primary rounded-full"></div>
+            <h4 className="font-bold text-slate-900">项目基本信息</h4>
+          </div>
+          <div className="grid grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">关联项目</label>
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 font-medium">
+                某高速公路工程施工项目
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">开标日期</label>
+              <div className="relative">
+                <input 
+                  type="date" 
+                  defaultValue="2024-03-10"
+                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  disabled={isPaused}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tender Registration */}
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-1 h-4 bg-primary rounded-full"></div>
+            <h4 className="font-bold text-slate-900">投标登记</h4>
+          </div>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                <FileText size={16} className="text-primary" />
+                投标文件
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                {bidFiles.map(file => (
+                  <div key={file.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-lg group hover:border-primary/30 transition-all">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm">
+                        <FileText size={20} />
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">{file.name}</div>
+                        <div className="text-xs text-slate-500">{file.size} · {file.time}</div>
+                      </div>
+                    </div>
+                    <button className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+                <button className="border-2 border-dashed border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">
+                  <Plus size={24} />
+                  <span className="text-sm font-bold">添加投标文件</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                <Users size={16} className="text-primary" />
+                投标人员
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {['张三 (项目经理)', '李四 (技术负责人)', '王五 (商务负责人)'].map((person, idx) => (
+                  <div key={idx} className="px-3 py-1.5 bg-primary/5 text-primary border border-primary/20 rounded-full text-sm font-medium flex items-center gap-2">
+                    {person}
+                    <button className="hover:text-primary/70"><X size={14} /></button>
+                  </div>
+                ))}
+                <button className="px-3 py-1.5 border border-dashed border-slate-300 text-slate-500 rounded-full text-sm font-medium hover:border-primary hover:text-primary transition-all flex items-center gap-1">
+                  <Plus size={14} />
+                  添加人员
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Opening & Winning Records */}
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-1 h-4 bg-primary rounded-full"></div>
+            <h4 className="font-bold text-slate-900">开标/中标情况</h4>
+          </div>
+          
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                <FileText size={16} className="text-primary" />
+                开标记录
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                {openingFiles.map(file => (
+                  <div key={file.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-lg group hover:border-primary/30 transition-all">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm">
+                        <FileText size={20} />
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">{file.name}</div>
+                        <div className="text-xs text-slate-500">{file.size} · {file.time}</div>
+                      </div>
+                    </div>
+                    <button className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+                <button className="border-2 border-dashed border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">
+                  <Plus size={24} />
+                  <span className="text-sm font-bold">添加开标记录</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-bold text-slate-700">开标明细</label>
+                <button 
+                  onClick={addOpeningRow}
+                  className="text-primary text-sm font-bold flex items-center gap-1 hover:underline"
+                >
+                  <Plus size={14} />
+                  添加单位
+                </button>
+              </div>
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 border-bottom border-slate-200">
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">投标单位</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">投标报价 (万元)</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">排名</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">是否中标</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-16">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {openingDetails.map(row => (
+                      <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 py-3">
+                          <input 
+                            type="text" 
+                            defaultValue={row.unit}
+                            className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900"
+                            placeholder="请输入单位名称"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <input 
+                            type="number" 
+                            defaultValue={row.price}
+                            className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900"
+                            placeholder="0.00"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <input 
+                            type="number" 
+                            defaultValue={row.rank}
+                            className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900"
+                            placeholder="1"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <input 
+                              type="checkbox" 
+                              checked={row.isWinner}
+                              onChange={(e) => {
+                                setOpeningDetails(openingDetails.map(d => d.id === row.id ? { ...d, isWinner: e.target.checked } : d));
+                                if (e.target.checked) setIsWinner(true);
+                              }}
+                              className="size-4 text-primary rounded border-slate-300 focus:ring-primary"
+                            />
+                            <span className={`text-xs font-bold ${row.isWinner ? 'text-green-600' : 'text-slate-400'}`}>
+                              {row.isWinner ? '已中标' : '未中标'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button 
+                            onClick={() => removeOpeningRow(row.id)}
+                            className="text-slate-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="space-y-6 pt-4 border-t border-slate-100">
+              <div className="flex items-center gap-4">
+                <label className="text-sm font-bold text-slate-700">中标情况</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input 
+                      type="radio" 
+                      name="isSelfWinner" 
+                      checked={isWinner} 
+                      onChange={() => setIsWinner(true)}
+                      className="size-4 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">我方中标</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input 
+                      type="radio" 
+                      name="isSelfWinner" 
+                      checked={!isWinner} 
+                      onChange={() => setIsWinner(false)}
+                      className="size-4 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">他方中标</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">中标单位</label>
+                  <input 
+                    type="text" 
+                    defaultValue={isWinner ? '中铁一局集团有限公司' : ''}
+                    className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    placeholder="请输入中标单位全称"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">中标金额 (万元)</label>
+                  <input 
+                    type="number" 
+                    defaultValue={isWinner ? '12560.88' : ''}
+                    className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">中标日期</label>
+                  <input 
+                    type="date" 
+                    defaultValue="2024-03-12"
+                    className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">公示链接</label>
+                  <div className="relative">
+                    <input 
+                      type="url" 
+                      className="w-full p-3 pr-10 bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                      placeholder="https://..."
+                    />
+                    <ExternalLink size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  </div>
+                </div>
+              </div>
+
+              {!isWinner && (
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">未中标原因分析</label>
+                  <textarea 
+                    className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all min-h-[100px]"
+                    placeholder="请分析未中标原因（如：价格偏高、技术方案不足等）"
+                  ></textarea>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Contract Registration */}
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-1 h-4 bg-primary rounded-full"></div>
+            <h4 className="font-bold text-slate-900">合同登记</h4>
+          </div>
+
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-bold text-slate-700">合同明细</label>
+                <button 
+                  onClick={addContractRow}
+                  className="text-primary text-sm font-bold flex items-center gap-1 hover:underline"
+                >
+                  <Plus size={14} />
+                  添加合同
+                </button>
+              </div>
+              <div className="border border-slate-200 rounded-xl overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[1000px]">
+                  <thead>
+                    <tr className="bg-slate-50 border-bottom border-slate-200">
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">合同编号</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">合同名称</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">签订日期</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">合同金额 (万元)</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">甲方单位</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">状态</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-16">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {contractDetails.map(row => (
+                      <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 py-3">
+                          <input type="text" defaultValue={row.contractId} className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900" placeholder="HT-..." />
+                        </td>
+                        <td className="px-4 py-3">
+                          <input type="text" defaultValue={row.name} className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900" placeholder="合同名称" />
+                        </td>
+                        <td className="px-4 py-3">
+                          <input type="date" defaultValue={row.date} className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900" />
+                        </td>
+                        <td className="px-4 py-3">
+                          <input type="number" defaultValue={row.amount} className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900" placeholder="0.00" />
+                        </td>
+                        <td className="px-4 py-3">
+                          <input type="text" defaultValue={row.owner} className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900" placeholder="甲方单位" />
+                        </td>
+                        <td className="px-4 py-3">
+                          <select defaultValue={row.status} className="bg-transparent border-none focus:ring-0 text-sm text-slate-900 font-medium">
+                            <option>待签署</option>
+                            <option>已签署</option>
+                            <option>履行中</option>
+                            <option>已完成</option>
+                          </select>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button 
+                            onClick={() => removeContractRow(row.id)}
+                            className="text-slate-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                <Paperclip size={16} className="text-primary" />
+                合同附件
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                {contractFiles.map(file => (
+                  <div key={file.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-lg group hover:border-primary/30 transition-all">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm">
+                        <FileText size={20} />
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">{file.name}</div>
+                        <div className="text-xs text-slate-500">{file.size} · {file.time}</div>
+                      </div>
+                    </div>
+                    <button className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+                <button className="border-2 border-dashed border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">
+                  <Plus size={24} />
+                  <span className="text-sm font-bold">添加合同附件</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex justify-end gap-4 pt-6 pb-12">
+          <button 
+            onClick={onBack}
+            className="px-8 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-all shadow-sm"
+          >
+            取消
+          </button>
+          <button 
+            onClick={() => {
+              if (isPaused) {
+                alert('此项目已暂停');
+                return;
+              }
+              onBack();
+            }}
+            className={`px-12 py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            保存全部
+          </button>
+        </div>
       </div>
     </div>
-    <div className="bg-white rounded-xl p-8 border border-slate-100 shadow-sm">
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">中标单位</label>
-          <input type="text" className="w-full p-2 border border-slate-200 rounded-lg" placeholder="请输入中标单位全称" disabled={isPaused} />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">中标金额 (万元)</label>
-          <input type="number" className="w-full p-2 border border-slate-200 rounded-lg" placeholder="0.00" disabled={isPaused} />
-        </div>
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 
 const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRightTab, initialProjectData, isTenderUploaded, projectData, handleProjectDataChange, uploadedFiles, setUploadedFiles, isPaused }: { 

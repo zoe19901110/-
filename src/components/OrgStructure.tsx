@@ -584,7 +584,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                   </div>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left">
+                  <table className="w-full text-left whitespace-nowrap">
                     <thead>
                     <tr className="bg-slate-50/50 text-slate-400 text-[11px] font-bold uppercase tracking-wider">
                       <th className="px-6 py-4">姓名</th>
@@ -602,25 +602,38 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                       <tr key={user.id} className={`${user.id === highlightedUserId ? 'bg-primary/20' : 'hover:bg-slate-50/50'} transition-colors group`}>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="size-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold text-sm shadow-sm">
+                            <div className="size-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold text-sm shadow-sm shrink-0">
                               {user.name.charAt(0)}
                             </div>
                             <span className="text-sm font-bold text-slate-900">{user.name}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1">
-                            {user.enterprises?.map((ent, idx) => (
-                              <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
-                                {ent}
+                        <td className="px-6 py-4 max-w-[200px]">
+                          {user.enterprises && user.enterprises.length > 0 ? (
+                            <div className="relative group inline-flex items-center">
+                              <span className="truncate inline-block max-w-[180px] px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 cursor-help">
+                                {user.enterprises[0]}
+                                {user.enterprises.length > 1 && ' ...'}
                               </span>
-                            ))}
-                          </div>
+                              {user.enterprises.length > 1 && (
+                                <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-max max-w-[250px] bg-slate-800 text-white text-xs rounded-lg p-2 shadow-xl z-10">
+                                  <div className="flex flex-col gap-1">
+                                    {user.enterprises.map((ent, idx) => (
+                                      <span key={idx} className="truncate">{ent}</span>
+                                    ))}
+                                  </div>
+                                  <div className="absolute left-4 top-full border-4 border-transparent border-t-slate-800"></div>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 text-xs">--</span>
+                          )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 max-w-[200px]">
                           <div className="space-y-0.5">
-                            <p className="text-xs font-bold text-slate-700">{user.depts.join(', ')}</p>
-                            <p className="text-[10px] text-slate-400">{user.position}</p>
+                            <p className="text-xs font-bold text-slate-700 truncate" title={user.depts.join(', ')}>{user.depts.join(', ')}</p>
+                            <p className="text-[10px] text-slate-400 truncate" title={user.position}>{user.position}</p>
                           </div>
                         </td>
                         <td className="px-6 py-4">
