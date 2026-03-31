@@ -1,0 +1,68 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and identity settings",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique identifier for the user" },
+        "email": { "type": "string", "description": "The user's email address" },
+        "displayName": { "type": "string", "description": "The user's display name" },
+        "currentIdentityId": { "type": "string", "description": "The active identity ID ('personal' or enterprise ID)" }
+      },
+      "required": ["uid", "email", "currentIdentityId"]
+    },
+    "Enterprise": {
+      "title": "Enterprise",
+      "description": "Enterprise details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique identifier for the enterprise" },
+        "name": { "type": "string", "description": "The name of the enterprise" },
+        "ownerId": { "type": "string", "description": "The user ID of the enterprise owner" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The creation timestamp" }
+      },
+      "required": ["id", "name", "ownerId", "createdAt"]
+    },
+    "EnterpriseMember": {
+      "title": "EnterpriseMember",
+      "description": "Mapping of users to enterprises",
+      "type": "object",
+      "properties": {
+        "enterpriseId": { "type": "string", "description": "The enterprise ID" },
+        "userId": { "type": "string", "description": "The user ID" },
+        "role": { "type": "string", "enum": ["admin", "member"], "description": "The user's role in the enterprise" }
+      },
+      "required": ["enterpriseId", "userId", "role"]
+    },
+    "PersonalNote": {
+      "title": "PersonalNote",
+      "description": "Data isolated to a personal identity",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The owner's user ID" },
+        "content": { "type": "string", "description": "The note content" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The creation timestamp" }
+      },
+      "required": ["userId", "content", "createdAt"]
+    },
+    "EnterpriseProject": {
+      "title": "EnterpriseProject",
+      "description": "Data isolated to an enterprise identity",
+      "type": "object",
+      "properties": {
+        "enterpriseId": { "type": "string", "description": "The enterprise ID" },
+        "name": { "type": "string", "description": "The project name" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The creation timestamp" }
+      },
+      "required": ["enterpriseId", "name", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "User profiles" },
+    "/enterprises/{enterpriseId}": { "schema": "Enterprise", "description": "Enterprise details" },
+    "/enterpriseMembers/{memberId}": { "schema": "EnterpriseMember", "description": "Enterprise membership mapping" },
+    "/personalNotes/{noteId}": { "schema": "PersonalNote", "description": "Personal notes" },
+    "/enterpriseProjects/{projectId}": { "schema": "EnterpriseProject", "description": "Enterprise projects" }
+  }
+}

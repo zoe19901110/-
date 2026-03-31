@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
-import Dashboard from './components/Dashboard';
 import BusinessDashboard from './components/BusinessDashboard';
 import Workbench from './components/Workbench';
 import BidParsing from './components/BidParsing';
@@ -16,10 +15,14 @@ import EnterpriseInfo from './components/EnterpriseInfo';
 import Certificates from './components/Certificates';
 import Materials from './components/Materials';
 import Login from './components/Login';
+import { UserCenter } from './components/UserCenter';
+import { IdentityDashboard } from './components/IdentityDashboard';
+import { IdentityProvider, useIdentity } from './contexts/IdentityContext';
 
 import { motion, AnimatePresence } from 'motion/react';
 
-export default function App() {
+function AppContent() {
+  const { user, currentIdentityId, switchIdentity, activeEnterprise, loading } = useIdentity();
   const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('isLoggedIn') === 'true');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [workbenchStage, setWorkbenchStage] = useState<string | undefined>(undefined);
@@ -29,22 +32,15 @@ export default function App() {
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, boolean>>({
     'tender-doc': true
   });
+  const [isUserCenterOpen, setIsUserCenterOpen] = useState(false);
 
   const [enterprises, setEnterprises] = useState([
-    { id: 'personal', name: '陈经理', status: '13800138000' },
-    { id: '1', name: '中建八局第三建设有限公司', status: '已加入' },
-    { id: '2', name: '中铁建工集团有限公司', status: '已加入' },
-    { id: '3', name: '中国建筑第一局(集团)有限公司', status: '审核中' },
+    { id: 'personal', name: '个人身份', status: '13800138000' },
   ]);
-  const [currentEnterprise, setCurrentEnterprise] = useState(enterprises[1]);
+  
+  const currentEnterprise = activeEnterprise || { id: 'personal', name: user?.displayName || '个人身份' };
 
   const handleLogin = (enterpriseId: string) => {
-    const selected = enterprises.find(e => e.id === enterpriseId);
-    if (selected) {
-      setCurrentEnterprise(selected);
-    } else if (enterpriseId === 'personal') {
-      setCurrentEnterprise(enterprises[0]);
-    }
     setIsLoggedIn(true);
     localStorage.setItem('isLoggedIn', 'true');
   };
@@ -60,7 +56,7 @@ export default function App() {
       { id: '7', name: `XX区公共图书馆数字化升级`, code: 'ZB-2024-025', tenderer: 'XX区文广旅局', tendererContact: '孙工 010-55556666', agent: 'DD咨询管理公司', agentContact: '李经理 010-77778888', bidOpeningTime: '2024-11-20 14:00', status: '进行中', deposit: '¥25,000', depositDeadline: '2024-11-15 17:00', openingLocation: 'XX区图书馆', collectionTime: '2024-10-01', requirements: '数字化阅读系统...', otherRemarks: '' },
       { id: '8', name: `XX市污水处理厂扩容工程`, code: 'ZB-2024-030', tenderer: 'XX市水务局', tendererContact: '周工 010-33334444', agent: 'EE工程管理公司', agentContact: '郑经理 010-55556666', bidOpeningTime: '2024-12-05 09:30', status: '进行中', deposit: '¥60,000', depositDeadline: '2024-12-01 17:00', openingLocation: 'XX市水务局会议室', collectionTime: '2024-11-01', requirements: '污水处理设备...', otherRemarks: '' }
     ]);
-  }, [currentEnterprise]);
+  }, [currentIdentityId]);
 
   const handleUpdateProject = (updatedProject: any) => {
     setProjects(prev => prev.map(p => p.id === updatedProject.id ? { ...p, ...updatedProject } : p));
@@ -96,12 +92,7 @@ export default function App() {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <Dashboard 
-            onEnterWorkbench={handleEnterWorkbench} 
-            setActiveTab={setActiveTab} 
-            currentEnterprise={currentEnterprise} 
-            projects={projects}
-          />
+          <IdentityDashboard />
         );
       case 'business-dashboard':
         return <BusinessDashboard currentEnterprise={currentEnterprise} projects={projects} />;
@@ -140,7 +131,7 @@ export default function App() {
         return <TenderOpeningStatusManagement currentEnterprise={currentEnterprise} projects={projects} />;
       case 'other-materials':
         return <OtherProjectMaterials currentEnterprise={currentEnterprise} projects={projects} />;
-      case 'personal-center':
+      case 'user-center':
         return <PersonalCenter currentEnterprise={currentEnterprise} />;
       default:
         return (
@@ -160,7 +151,15 @@ export default function App() {
     }
   };
 
-  if (!isLoggedIn) {
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-bg-light">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn || !user) {
     return <Login onLogin={handleLogin} />;
   }
 
@@ -173,7 +172,7 @@ export default function App() {
           enterprises={enterprises} 
           setEnterprises={setEnterprises}
           currentEnterprise={currentEnterprise}
-          setCurrentEnterprise={setCurrentEnterprise}
+          setCurrentEnterprise={switchIdentity as any}
         />
       )}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -181,11 +180,12 @@ export default function App() {
           setActiveTab={setActiveTab} 
           enterprises={enterprises} 
           currentEnterprise={currentEnterprise}
-          setCurrentEnterprise={setCurrentEnterprise}
+          setCurrentEnterprise={switchIdentity as any}
           onLogout={() => {
             setIsLoggedIn(false);
             localStorage.removeItem('isLoggedIn');
           }}
+          onOpenUserCenter={() => setIsUserCenterOpen(true)}
         />
         <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-[1600px] mx-auto w-full">
@@ -206,7 +206,16 @@ export default function App() {
           </footer>
         </main>
       </div>
+      <UserCenter isOpen={isUserCenterOpen} onClose={() => setIsUserCenterOpen(false)} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <IdentityProvider>
+      <AppContent />
+    </IdentityProvider>
   );
 }
 

@@ -4,6 +4,7 @@ import MarginReceiptUpload from './MarginReceiptUpload';
 import { 
   Fingerprint, 
   ClipboardList, 
+  ClipboardCheck,
   Share2, 
   Check, 
   UploadCloud, 
@@ -56,6 +57,7 @@ import {
   RefreshCw,
   ExternalLink,
   Plus,
+  PlusCircle,
   Award,
   MessageSquare,
   Printer,
@@ -74,10 +76,16 @@ import {
   Paperclip,
   Upload,
   Frown,
+  Sparkles,
+  Library,
+  Lightbulb,
+  Lock,
   EyeOff,
   File,
   FileText as FileTextIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Tag,
+  CheckSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -141,7 +149,10 @@ const Workbench: React.FC<WorkbenchProps> = ({
   setUploadedFiles,
   onUpdateProject
 }) => {
-  const [currentPhase, setCurrentPhase] = useState<Phase>(initialPhase || 'preparation');
+  const [currentPhase, setCurrentPhase] = useState<Phase>(() => {
+    const saved = localStorage.getItem('workbench-phase');
+    return saved ? JSON.parse(saved) : (initialPhase || 'preparation');
+  });
   const [subView, setSubView] = useState<SubView>('main');
   const [showToolModal, setShowToolModal] = useState(false);
   const [isToolInstalled, setIsToolInstalled] = useState(false); // Mock state
@@ -150,6 +161,25 @@ const Workbench: React.FC<WorkbenchProps> = ({
   const [showCollaborativeSharing, setShowCollaborativeSharing] = useState(false);
   const [showFileViewer, setShowFileViewer] = useState(false);
   const [activeViewerTab, setActiveViewerTab] = useState<'core' | 'risk' | 'custom'>('risk');
+
+  const [insights, setInsights] = useState(() => {
+    const saved = localStorage.getItem('workbench-insights');
+    return saved ? JSON.parse(saved) : [
+      { id: '1', content: '本项目对大跨度钢结构有特殊要求，建议在技术标中重点突出我们在同类项目中的施工经验。', isPublic: false, author: '我', date: '2024-03-25', type: 'idea', deadline: '', status: 'active' },
+      { id: '2', content: '注意甲方对环保要求的敏感度，材料选择上要优先考虑绿色建材。', isPublic: true, author: '我', date: '2024-03-26', type: 'task', deadline: '2024-04-10', status: 'active' },
+      { id: '3', content: '今天下午3点与设计院进行图纸会审，请各专业负责人准时参加。', isPublic: true, author: '李茂盛', date: '2024-03-27', type: 'meeting', deadline: '', status: 'active' },
+      { id: '4', content: '更新了BIM模型，解决了地下室管线碰撞问题，请大家查看最新版本。', isPublic: true, author: '王志远', date: '2024-03-28', type: 'task', deadline: '2024-03-30', status: 'active' },
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('workbench-insights', JSON.stringify(insights));
+  }, [insights]);
+
+  useEffect(() => {
+    localStorage.setItem('workbench-phase', JSON.stringify(currentPhase));
+  }, [currentPhase]);
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [showDocDropdown, setShowDocDropdown] = useState(false);
   const [viewingDoc, setViewingDoc] = useState<string>('tender-doc');
@@ -247,18 +277,32 @@ const Workbench: React.FC<WorkbenchProps> = ({
     ]
   };
 
-  const notifications = [
+  const baseNotifications = [
     { id: 1, type: 'warning', text: '保证金缴纳截止时间提醒：2023-11-25 17:00', time: '2小时前', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50' },
     { id: 2, type: 'info', text: '开标时间提醒：2023-12-20 09:30', time: '5小时前', icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-50' },
     { id: 3, type: 'alert', text: '文件领取截止时间提醒：2024-04-15', time: '1天前', icon: Info, color: 'text-purple-500', bg: 'bg-purple-50' },
   ];
+
+  const insightNotifications = insights
+    .filter(i => (i.type === 'task' || i.type === 'meeting') && i.status === 'active')
+    .map(i => ({
+      id: `insight-${i.id}`,
+      type: i.type === 'task' ? 'warning' : 'info',
+      text: `${i.type === 'task' ? '任务' : '会议'}提醒：${i.content}${i.deadline ? ` (截止: ${i.deadline})` : ''}`,
+      time: i.date,
+      icon: i.type === 'task' ? CheckSquare : FileTextIcon,
+      color: i.type === 'task' ? 'text-amber-500' : 'text-indigo-500',
+      bg: i.type === 'task' ? 'bg-amber-50' : 'bg-indigo-50'
+    }));
+
+  const notifications = [...baseNotifications, ...insightNotifications];
 
   useEffect(() => {
     const timer = setInterval(() => {
       setNotifIndex((prev) => (prev + 1) % notifications.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [notifications.length]);
 
   const phases = [
     { id: 'preparation', label: '准备阶段' },
@@ -864,7 +908,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
 
                 {activeRightTab === 'resource-center' && (
                   <div className="h-full flex flex-col bg-slate-50">
-                    <ResourceCenterView onBack={() => setActiveRightTab(null)} isPaused={isPaused} />
+                    <ResourceCenterView onBack={() => setActiveRightTab(null)} isPaused={isPaused} insights={insights} setInsights={setInsights} />
                   </div>
                 )}
 
@@ -1713,7 +1757,7 @@ const CollaborativeSharingModal = ({ onClose }: { onClose: () => void }) => {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[80vh]"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl h-[600px] overflow-hidden flex flex-col max-h-[80vh]"
       >
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -1831,1123 +1875,1406 @@ const CollaborativeSharingModal = ({ onClose }: { onClose: () => void }) => {
               </div>
             </>
           ) : (
-            <div className="w-full overflow-y-auto p-6 bg-slate-50/30">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-sm font-bold text-slate-800">当前协作人员</h3>
-                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-full uppercase tracking-wider">
-                  Total: {existingCollaborators.length}
-                </span>
-              </div>
-              
-              {existingCollaborators.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-300">
-                  <Users size={48} className="mb-4 opacity-20" />
-                  <p className="text-sm">暂无协作人员</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  {existingCollaborators.map(user => (
-                    <div key={user.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
-                      <div className="flex items-center gap-3">
-                        <div className="size-10 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center text-sm font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                          {user.name[0]}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">{user.name}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] text-slate-400">{user.role}</span>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                              user.permission === 'edit' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'
-                            }`}>
-                              {user.permission === 'edit' ? '可编辑' : '可查看'}
-                            </span>
-                          </div>
-                        </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">现有协作成员</h3>
+              <div className="space-y-3">
+                {existingCollaborators.map(user => (
+                  <div key={user.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 bg-slate-100 rounded-full flex items-center justify-center text-sm font-bold text-slate-600">
+                        {user.name[0]}
                       </div>
-                      <button 
-                        onClick={() => {
-                          if (confirm(`确定要取消 ${user.name} 的协作权限吗？`)) {
-                            setExistingCollaborators(existingCollaborators.filter(u => u.id !== user.id));
-                          }
-                        }}
-                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
-                        title="取消协作"
-                      >
-                        <Trash2 size={18} />
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">{user.name}</p>
+                        <p className="text-[10px] text-slate-400">{user.role}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${user.permission === 'edit' ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
+                        {user.permission === 'edit' ? '可编辑' : '仅查看'}
+                      </span>
+                      <button className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                        <Trash2 size={16} />
                       </button>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
-        <div className="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
-          <button onClick={onClose} className="px-6 py-2 text-sm font-bold text-slate-500 hover:text-slate-700">取消</button>
-          {modalTab === 'add' && (
-            <button 
-              onClick={() => {
-                const newUsers = selectedUsers.map(id => {
-                  const u = orgData.flatMap(d => d.children).find(user => user.id === id);
-                  return {
-                    id: u!.id,
-                    name: u!.name,
-                    role: u!.role,
-                    permission: permissions[id]
-                  };
-                });
-                setExistingCollaborators([...existingCollaborators, ...newUsers]);
-                setSelectedUsers([]);
-                setPermissions({});
-                setModalTab('manage');
-                alert('分享成功！');
-              }}
-              disabled={selectedUsers.length === 0}
-              className="px-8 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 disabled:shadow-none"
-            >
-              确认分享
-            </button>
-          )}
+        <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+          <button onClick={onClose} className="px-6 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors">
+            取消
+          </button>
+          <button 
+            onClick={() => {
+              // Logic to add collaborators
+              onClose();
+            }}
+            className="px-8 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+          >
+            确认添加
+          </button>
         </div>
       </motion.div>
     </div>
   );
 };
 
-const ResourceCenterView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => {
+const ResourceCenterView = ({ onBack, isPaused, insights, setInsights }: { onBack: () => void, isPaused: boolean, insights: any[], setInsights: React.Dispatch<React.SetStateAction<any[]>> }) => {
+  const [activeMainTab, setActiveMainTab] = useState('recommend'); // 'recommend', 'library', 'insights'
   const [activeTab, setActiveTab] = useState('enterprise'); // 'enterprise', 'license', 'material'
-  const [activeFilter, setActiveFilter] = useState('personnel'); // 'personnel', 'performance', 'finance', 'qualification'
-  const [activeLicenseFilter, setActiveLicenseFilter] = useState('business_license'); // 'business_license', 'qualification', 'permit', 'honor'
-  const [activeMaterialFilter, setActiveMaterialFilter] = useState('tech'); // 'tech', 'business'
+  const [activeFilter, setActiveFilter] = useState('personnel');
+  const [activeLicenseFilter, setActiveLicenseFilter] = useState('business_license');
+  const [activeMaterialFilter, setActiveMaterialFilter] = useState('tech');
   const [expandedCard, setExpandedCard] = useState<string | null>('li');
-  const [innerTab, setInnerTab] = useState('basic'); // 'basic', 'performance', 'qualification'
+  const [innerTab, setInnerTab] = useState('basic');
   const [materialSearch, setMaterialSearch] = useState('');
+  
+  const [preSelectedIds, setPreSelectedIds] = useState<Set<string>>(new Set());
+  const [detailItem, setDetailItem] = useState<any>(null);
+
+  const [newInsight, setNewInsight] = useState('');
+  const [newInsightType, setNewInsightType] = useState('task');
+  const [newInsightDeadline, setNewInsightDeadline] = useState('');
+  const [insightFilter, setInsightFilter] = useState('all');
+
+  const handleAddInsight = () => {
+    if (!newInsight.trim()) return;
+    const insight = {
+      id: Date.now().toString(),
+      content: newInsight,
+      isPublic: newInsightType !== 'idea',
+      author: '我',
+      date: new Date().toISOString().split('T')[0],
+      type: newInsightType,
+      deadline: newInsightType === 'task' ? newInsightDeadline : '',
+      status: 'active'
+    };
+    setInsights([insight, ...insights]);
+    setNewInsight('');
+    setNewInsightType('task');
+    setNewInsightDeadline('');
+  };
+
+  const toggleInsightStatus = (id: string) => {
+    setInsights(insights.map(i => 
+      i.id === id ? { ...i, status: i.status === 'void' ? 'active' : 'void' } : i
+    ));
+  };
+
+  const togglePreSelect = (id: string) => {
+    setPreSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const recommendations = {
+    personnel: [
+      { 
+        id: 'p1', 
+        name: '李茂盛', 
+        role: '高级结构工程师', 
+        reason: '拥有3个同类大跨度公建项目经验', 
+        match: 95,
+        details: {
+          basic: '15年从业经验，国家一级注册结构工程师，曾主导多个地标性建筑结构设计。',
+          performance: [
+            { title: '上海中心大厦结构顾问', date: '2018-2020' },
+            { title: '北京大兴机场航站楼结构设计', date: '2015-2017' }
+          ],
+          qualifications: ['一级注册结构工程师', '高级工程师职称']
+        }
+      },
+      { 
+        id: 'p2', 
+        name: '王志远', 
+        role: '机电负责人', 
+        reason: '擅长超高层机电系统优化', 
+        match: 88,
+        details: {
+          basic: '机电工程专家，精通BIM技术在复杂机电系统中的应用。',
+          performance: [
+            { title: '深圳平安金融中心机电总监', date: '2019-2021' },
+            { title: '广州周大福中心机电优化项目', date: '2017-2018' }
+          ],
+          qualifications: ['注册机电工程师', 'BIM高级应用师']
+        }
+      },
+    ],
+    performance: [
+      { id: 'perf1', title: '大都会CBD二期综合体', amount: '1.25亿', reason: '结构体系与本项目高度相似', match: 92 },
+      { id: 'perf2', title: '滨江大道景观提升工程', amount: '8900万', reason: '包含类似的软土基坑处理', match: 85 },
+    ],
+    qualification: [
+      { id: 'qual1', title: '建筑工程施工总承包壹级', reason: '本项目必备资质', match: 100, attachment: 'https://picsum.photos/seed/qual1/800/1200' },
+      { id: 'qual2', title: '钢结构工程专业承包壹级', reason: '针对大跨度钢结构加分项', match: 100, attachment: 'https://picsum.photos/seed/qual2/800/1200' },
+    ]
+  };
+
+
 
   return (
-    <div className={`flex flex-col h-full bg-slate-50 ${isPaused ? 'opacity-75' : ''}`}>
-      {/* Header / Tabs */}
-      <div className="bg-white px-6 pt-6 border-b border-slate-200 shrink-0">
-        <h2 className="text-lg font-bold text-slate-800 mb-4">全局资产库</h2>
-        <div className="flex gap-8 border-b border-slate-200">
-          {[
-            { id: 'enterprise', label: '企业信息' },
-            { id: 'license', label: '证照库' },
-            { id: 'material', label: '素材库' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 text-sm font-bold transition-colors relative ${
-                activeTab === tab.id ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {tab.label}
-              {activeTab === tab.id && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
-              )}
-            </button>
-          ))}
+    <div className={`flex h-full w-full bg-white ${isPaused ? 'opacity-75' : ''}`}>
+      {/* Left Navigation Rail - Redesigned to be lighter and more modern */}
+      <div className="w-20 bg-slate-50 border-r border-slate-200 flex flex-col items-center py-8 gap-8 shrink-0">
+        {[
+          { id: 'recommend', icon: Sparkles, label: '推荐' },
+          { id: 'library', icon: Library, label: '库' },
+          { id: 'insights', icon: Lightbulb, label: '想法' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveMainTab(tab.id)}
+            className={`flex flex-col items-center gap-1 transition-all group ${
+              activeMainTab === tab.id ? 'text-primary' : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <div className={`p-3 rounded-2xl transition-all ${
+              activeMainTab === tab.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white border border-slate-200 group-hover:border-primary group-hover:text-primary'
+            }`}>
+              <tab.icon size={20} />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-widest">{tab.label}</span>
+          </button>
+        ))}
+        
+        <div className="mt-auto">
+          <button 
+            onClick={onBack}
+            className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-2xl transition-all"
+          >
+            <X size={20} />
+          </button>
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar Filters */}
-        <div className="w-[120px] shrink-0 bg-white border-r border-slate-100 overflow-y-auto py-4">
-          <div className="flex flex-col gap-2 px-2">
-            {activeTab === 'enterprise' && [
-              { id: 'personnel', label: '人员选择' },
-              { id: 'performance', label: '业绩选择' },
-              { id: 'finance', label: '财务报表' },
-              { id: 'qualification', label: '企业资质' }
-            ].map(filter => (
-              <button
-                key={filter.id}
-                onClick={() => setActiveFilter(filter.id)}
-                className={`px-3 py-2 text-sm transition-colors text-center rounded-full ${
-                  activeFilter === filter.id 
-                    ? 'bg-blue-600 text-white font-bold' 
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
-
-            {activeTab === 'license' && [
-              { id: 'business_license', label: '企业营业执照' },
-              { id: 'qualification', label: '资质' },
-              { id: 'permit', label: '许可证' },
-              { id: 'honor', label: '荣誉' },
-              { id: 'basic_info', label: '基本信息' },
-              { id: 'legal_person', label: '法人信息' },
-              { id: 'professionals', label: '职业人员' },
-              { id: 'enterprise_qualification', label: '企业资质' },
-              { id: 'bidding_performance', label: '投标业绩' }
-            ].map(filter => (
-              <button
-                key={filter.id}
-                onClick={() => setActiveLicenseFilter(filter.id)}
-                className={`px-3 py-2 text-sm transition-colors text-center rounded-full ${
-                  activeLicenseFilter === filter.id 
-                    ? 'bg-blue-600 text-white font-bold' 
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
-
-            {activeTab === 'material' && [
-              { id: 'tech', label: '技术标素材' },
-              { id: 'business', label: '商务标素材' }
-            ].map(filter => (
-              <button
-                key={filter.id}
-                onClick={() => setActiveMaterialFilter(filter.id)}
-                className={`px-3 py-2 text-sm transition-colors text-center rounded-full ${
-                  activeMaterialFilter === filter.id 
-                    ? 'bg-blue-600 text-white font-bold' 
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">
+              {activeMainTab === 'recommend' && '智能推荐资源'}
+              {activeMainTab === 'library' && '全局资产全库'}
+              {activeMainTab === 'insights' && '我的灵感想法'}
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">针对当前项目：某高速公路工程施工项目</p>
           </div>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {activeTab === 'material' && (
-          <div className="space-y-6">
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input 
-                type="text" 
-                placeholder="搜索素材..."
-                value={materialSearch}
-                onChange={(e) => setMaterialSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-              />
-            </div>
-
-            {/* Technical Materials Section */}
-            {activeMaterialFilter === 'tech' && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-slate-500 font-bold text-sm mb-4">
-                  技术标素材
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+          {/* 1. Smart Recommendation */}
+          {activeMainTab === 'recommend' && (
+            <div className="space-y-10">
+              {/* Personnel Recommendations */}
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <Users size={16} className="text-primary" />
+                      推荐人员
+                    </h3>
+                    <span className="text-[10px] text-slate-400 font-medium ml-2">基于项目规模与技术要求匹配</span>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setActiveMainTab('library');
+                      setActiveTab('enterprise');
+                      setActiveFilter('personnel');
+                    }}
+                    className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                  >
+                    查看更多 <ChevronRight size={14} />
+                  </button>
                 </div>
-                
-                <div className="space-y-3">
-                  {[
-                    { title: '施工组织设计标准模板', type: '标准文本段落', icon: 'blue' },
-                    { title: '质量保证措施(通用版)', type: '标准文本段落', icon: 'blue' },
-                    { title: '安全生产应急预案', type: '标准文本段落', icon: 'blue' }
-                  ].map((item, i) => (
-                    <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between hover:border-blue-200 hover:shadow-sm transition-all group">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                          <FileText size={20} />
+                <div className="grid grid-cols-2 gap-4">
+                  {recommendations.personnel.map((p, i) => (
+                    <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-primary/30 hover:bg-white hover:shadow-md transition-all group relative">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center font-bold">
+                            {p.name[0]}
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-slate-900">{p.name}</div>
+                            <div className="text-[10px] text-slate-500">{p.role}</div>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="font-bold text-slate-900 text-sm">{item.title}</h4>
-                          <p className="text-xs text-slate-500 mt-0.5">{item.type}</p>
+                        <div className="text-right">
+                          <div className="text-primary font-black text-lg leading-none">{p.match}%</div>
+                          <div className="text-[9px] text-slate-400 uppercase font-bold">匹配度</div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-blue-600 text-xs font-bold">
-                        <button className="hover:underline">查看</button>
-                        <span className="text-slate-200 font-normal">|</span>
-                        <button className="hover:underline">插入</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Commercial Materials Section */}
-            {activeMaterialFilter === 'business' && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-slate-500 font-bold text-sm mb-4">
-                  商务标素材
-                </div>
-                
-                <div className="space-y-3">
-                  {[
-                    { title: '公司简介(2024最新版)', type: '标准文本段落', icon: 'orange' },
-                    { title: '售后服务承诺书', type: '标准文本段落', icon: 'orange' },
-                    { title: '反商业贿赂承诺书', type: '标准文本段落', icon: 'orange' }
-                  ].map((item, i) => (
-                    <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between hover:border-blue-200 hover:shadow-sm transition-all group">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-50 text-orange-600 rounded-lg">
-                          <FileText size={20} />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-slate-900 text-sm">{item.title}</h4>
-                          <p className="text-xs text-slate-500 mt-0.5">{item.type}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-blue-600 text-xs font-bold">
-                        <button className="hover:underline">查看</button>
-                        <span className="text-slate-200 font-normal">|</span>
-                        <button className="hover:underline">插入</button>
+                      <p className="text-xs text-slate-600 bg-white/50 p-2 rounded-lg border border-slate-100 mb-4">{p.reason}</p>
+                      
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => setDetailItem({ type: 'personnel', ...p })}
+                          className="flex-1 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-1"
+                        >
+                          <Eye size={14} /> 查看
+                        </button>
+                        <button 
+                          onClick={() => togglePreSelect(p.id)}
+                          className={`flex-1 py-2 border rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                            preSelectedIds.has(p.id) 
+                              ? 'bg-primary/10 border-primary text-primary' 
+                              : 'bg-primary text-white border-primary hover:bg-primary/90'
+                          }`}
+                        >
+                          {preSelectedIds.has(p.id) ? <CheckCircle2 size={14} /> : <Plus size={14} />}
+                          {preSelectedIds.has(p.id) ? '已预选' : '预选'}
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              </section>
 
-        {activeTab === 'enterprise' && activeFilter === 'personnel' && (
-          <>
-            {/* Card 1 */}
-            <div className={`bg-white rounded-xl border ${expandedCard === 'li' ? 'border-blue-200 shadow-sm' : 'border-slate-200'} overflow-hidden transition-all`}>
-              <div 
-                className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50"
-                onClick={() => setExpandedCard(expandedCard === 'li' ? null : 'li')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="size-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
-                    李
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-sm">李茂盛</h4>
-                    <p className="text-xs text-slate-500 mt-0.5">高级结构工程师 • 15年经验</p>
-                  </div>
+              {/* Performance Recommendations */}
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Trophy size={16} className="text-emerald-500" />
+                    推荐业绩
+                  </h3>
+                  <button 
+                    onClick={() => {
+                      setActiveMainTab('library');
+                      setActiveTab('enterprise');
+                      setActiveFilter('performance');
+                    }}
+                    className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                  >
+                    查看更多 <ChevronRight size={14} />
+                  </button>
                 </div>
-                <ChevronDown className={`text-slate-400 transition-transform ${expandedCard === 'li' ? 'rotate-180' : ''}`} size={20} />
-              </div>
-
-              {expandedCard === 'li' && (
-                <div className="border-t border-slate-100 p-4">
-                  <div className="flex gap-6 border-b border-slate-100 mb-4">
-                    {[
-                      { id: 'basic', label: '基本信息' },
-                      { id: 'performance', label: '人员业绩' },
-                      { id: 'qualification', label: '人员资质' }
-                    ].map(tab => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setInnerTab(tab.id)}
-                        className={`pb-2 text-xs font-bold transition-colors relative ${
-                          innerTab === tab.id ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                      >
-                        {tab.label}
-                        {innerTab === tab.id && (
-                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="mb-6">
-                    {innerTab === 'basic' && (
-                      <div>
-                        <div className="flex items-center gap-2 text-slate-700 font-bold text-sm mb-2">
-                          <User size={16} className="text-blue-600" />
-                          基本信息
-                        </div>
-                        <p className="text-xs text-slate-600 leading-relaxed">
-                          国家一级注册结构师。曾主导大都会歌剧院、市民科技馆等多个地标建筑的结构体系设计，擅长复杂大跨度钢结构及高层剪力墙体系。
-                        </p>
+                <div className="grid grid-cols-2 gap-4">
+                  {recommendations.performance.map((p, i) => (
+                    <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-primary/30 hover:bg-white hover:shadow-md transition-all">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-bold text-slate-900">{p.title}</div>
+                        <div className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full">{p.match}% 相似</div>
                       </div>
-                    )}
-                    {innerTab === 'performance' && (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-slate-700">大都会歌剧院结构设计</span>
-                          <span className="text-slate-500">2021-2023</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-slate-700">市民科技馆主体结构</span>
-                          <span className="text-slate-500">2019-2021</span>
-                        </div>
+                      <div className="text-[10px] text-slate-500 mb-3">合同金额：{p.amount}</div>
+                      <p className="text-xs text-slate-600 italic mb-4">“{p.reason}”</p>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => setDetailItem({ type: 'performance', ...p })}
+                          className="flex-1 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-1"
+                        >
+                          <Eye size={14} /> 查看
+                        </button>
+                        <button 
+                          onClick={() => togglePreSelect(p.id)}
+                          className={`flex-1 py-2 border rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                            preSelectedIds.has(p.id) 
+                              ? 'bg-primary/10 border-primary text-primary' 
+                              : 'bg-primary text-white border-primary hover:bg-primary/90'
+                          }`}
+                        >
+                          {preSelectedIds.has(p.id) ? <CheckCircle2 size={14} /> : <Plus size={14} />}
+                          {preSelectedIds.has(p.id) ? '已预选' : '预选'}
+                        </button>
                       </div>
-                    )}
-                    {innerTab === 'qualification' && (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-slate-700">一级注册结构工程师</span>
-                          <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded">有效</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-slate-700">高级工程师职称</span>
-                          <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded">有效</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button className="flex-1 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors">
-                      查看
-                    </button>
-                    <button className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-                      <Plus size={16} /> 插入
-                    </button>
-                  </div>
+                    </div>
+                  ))}
                 </div>
-              )}
+              </section>
+
+              {/* Qualification Recommendations */}
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <ShieldCheck size={16} className="text-indigo-500" />
+                    推荐资质
+                  </h3>
+                  <button 
+                    onClick={() => {
+                      setActiveMainTab('library');
+                      setActiveTab('enterprise');
+                      setActiveFilter('qualification');
+                    }}
+                    className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                  >
+                    查看更多 <ChevronRight size={14} />
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {recommendations.qualification.map((q, i) => (
+                    <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-primary/30 hover:bg-white hover:shadow-md transition-all">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="size-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                          <Receipt size={20} />
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold text-slate-900">{q.title}</div>
+                          <div className="text-[10px] text-slate-500">{q.reason}</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => setDetailItem({ type: 'qualification', ...q })}
+                          className="flex-1 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-1"
+                        >
+                          <Eye size={14} /> 查看
+                        </button>
+                        <button 
+                          onClick={() => togglePreSelect(q.id)}
+                          className={`flex-1 py-2 border rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                            preSelectedIds.has(q.id) 
+                              ? 'bg-primary/10 border-primary text-primary' 
+                              : 'bg-primary text-white border-primary hover:bg-primary/90'
+                          }`}
+                        >
+                          {preSelectedIds.has(q.id) ? <CheckCircle2 size={14} /> : <Plus size={14} />}
+                          {preSelectedIds.has(q.id) ? '已预选' : '预选'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             </div>
+          )}
 
-            {/* Card 2 */}
-            <div className={`bg-white rounded-xl border ${expandedCard === 'wang' ? 'border-blue-200 shadow-sm' : 'border-slate-200'} overflow-hidden transition-all`}>
-              <div 
-                className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50"
-                onClick={() => setExpandedCard(expandedCard === 'wang' ? null : 'wang')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="size-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
-                    王
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-sm">王志远</h4>
-                    <p className="text-xs text-slate-500 mt-0.5">机电专业负责人 • 12年经验</p>
-                  </div>
-                </div>
-                <ChevronDown className={`text-slate-400 transition-transform ${expandedCard === 'wang' ? 'rotate-180' : ''}`} size={20} />
+          {/* 2. Asset Library (View All) */}
+          {activeMainTab === 'library' && (
+            <div className="flex flex-col h-full">
+              <div className="bg-slate-50 px-8 py-4 border-b border-slate-200 flex gap-6 shrink-0">
+                {[
+                  { id: 'enterprise', label: '企业信息' },
+                  { id: 'license', label: '证照库' },
+                  { id: 'material', label: '素材库' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`text-sm font-bold transition-all ${
+                      activeTab === tab.id ? 'text-primary border-b-2 border-primary pb-1' : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
               
-              {expandedCard === 'wang' && (
-                <div className="border-t border-slate-100 p-4">
-                  <div className="flex gap-6 border-b border-slate-100 mb-4">
-                    {[
-                      { id: 'basic', label: '基本信息' },
-                      { id: 'performance', label: '人员业绩' },
-                      { id: 'qualification', label: '人员资质' }
-                    ].map(tab => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setInnerTab(tab.id)}
-                        className={`pb-2 text-xs font-bold transition-colors relative ${
-                          innerTab === tab.id ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                      >
-                        {tab.label}
-                        {innerTab === tab.id && (
-                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="mb-6">
-                    {innerTab === 'basic' && (
-                      <div>
-                        <div className="flex items-center gap-2 text-slate-700 font-bold text-sm mb-2">
-                          <User size={16} className="text-blue-600" />
-                          基本信息
-                        </div>
-                        <p className="text-xs text-slate-600 leading-relaxed">
-                          注册公用设备工程师（暖通空调）。拥有丰富的超高层及大型商业综合体机电设计经验，熟悉各类节能技术应用。
-                        </p>
-                      </div>
-                    )}
-                    {innerTab === 'performance' && (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-slate-700">环球金融中心机电设计</span>
-                          <span className="text-slate-500">2020-2022</span>
-                        </div>
-                      </div>
-                    )}
-                    {innerTab === 'qualification' && (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-slate-700">注册公用设备工程师</span>
-                          <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded">有效</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button className="flex-1 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors">
-                      查看
-                    </button>
-                    <button className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-                      <Plus size={16} /> 插入
-                    </button>
-                  </div>
+              <div className="flex flex-1 overflow-hidden">
+                <div className="w-40 bg-white border-r border-slate-100 py-6 px-4 space-y-2 overflow-y-auto">
+                  {activeTab === 'enterprise' && [
+                    { id: 'personnel', label: '人员选择' },
+                    { id: 'performance', label: '业绩选择' },
+                    { id: 'finance', label: '财务报表' },
+                    { id: 'qualification', label: '企业资质' }
+                  ].map(f => (
+                    <button key={f.id} onClick={() => setActiveFilter(f.id)} className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-all ${activeFilter === f.id ? 'bg-primary/10 text-primary' : 'text-slate-500 hover:bg-slate-50'}`}>{f.label}</button>
+                  ))}
+                  {activeTab === 'license' && [
+                    { id: 'business_license', label: '营业执照' },
+                    { id: 'qualification', label: '资质' },
+                    { id: 'permit', label: '许可证' },
+                    { id: 'honor', label: '荣誉' }
+                  ].map(f => (
+                    <button key={f.id} onClick={() => setActiveLicenseFilter(f.id)} className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-all ${activeLicenseFilter === f.id ? 'bg-primary/10 text-primary' : 'text-slate-500 hover:bg-slate-50'}`}>{f.label}</button>
+                  ))}
+                  {activeTab === 'material' && [
+                    { id: 'tech', label: '技术素材' },
+                    { id: 'business', label: '商务素材' }
+                  ].map(f => (
+                    <button key={f.id} onClick={() => setActiveMaterialFilter(f.id)} className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-all ${activeMaterialFilter === f.id ? 'bg-primary/10 text-primary' : 'text-slate-500 hover:bg-slate-50'}`}>{f.label}</button>
+                  ))}
                 </div>
-              )}
+                
+                <div className="flex-1 p-8 overflow-y-auto">
+                  {activeTab === 'material' && (
+                    <div className="grid grid-cols-1 gap-4">
+                      {[1, 2, 3].map(i => {
+                        const id = `lib-mat-${i}`;
+                        const isPreSelected = preSelectedIds.has(id);
+                        return (
+                          <div key={i} className="p-4 bg-white border border-slate-200 rounded-xl flex items-center justify-between hover:border-primary/30 transition-all">
+                            <div className="flex items-center gap-3">
+                              <FileTextIcon size={20} className="text-primary" />
+                              <span className="text-sm font-bold text-slate-700">素材文件 {i}</span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:border-primary hover:text-primary transition-all flex items-center gap-1 whitespace-nowrap">
+                                <Eye size={14} /> 查看
+                              </button>
+                              <button 
+                                onClick={() => togglePreSelect(id)}
+                                className={`px-4 py-2 border rounded-xl text-xs font-bold transition-all flex items-center gap-1 whitespace-nowrap ${
+                                  isPreSelected 
+                                    ? 'bg-primary/10 border-primary text-primary' 
+                                    : 'bg-primary text-white border-primary hover:bg-primary/90'
+                                }`}
+                              >
+                                {isPreSelected ? <CheckCircle2 size={14} /> : <Plus size={14} />}
+                                {isPreSelected ? '已预选' : '预选'}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {activeTab === 'license' && (
+                    <div className="grid grid-cols-3 gap-4">
+                      {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="bg-white rounded-xl border border-slate-200 overflow-hidden group hover:border-primary transition-all relative">
+                          <div className="aspect-video bg-slate-100 relative">
+                            <img src={`https://picsum.photos/seed/lic${i}/400/300`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <button 
+                                onClick={() => setDetailItem({ type: 'license', title: `证照名称 ${i}`, attachment: `https://picsum.photos/seed/lic${i}/800/1200` })}
+                                className="p-2 bg-white rounded-full text-primary shadow-lg"
+                              >
+                                <Eye size={20} />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="p-3 text-xs font-bold text-slate-700">证照名称 {i}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {activeTab === 'enterprise' && activeFilter === 'personnel' && (
+                    <div className="space-y-4">
+                      {[1, 2, 3, 4].map(i => {
+                        const id = `lib-p-${i}`;
+                        const isPreSelected = preSelectedIds.has(id);
+                        const p = {
+                          id,
+                          name: `人员姓名 ${i}`,
+                          role: '专业职称 / 经验年限',
+                          details: {
+                            basic: `人员姓名 ${i} 的基本背景介绍，拥有丰富的行业经验。`,
+                            performance: [{ title: '某大型公建项目', date: '2022' }],
+                            qualifications: ['高级工程师']
+                          }
+                        };
+                        return (
+                          <div key={i} className="p-4 bg-white border border-slate-200 rounded-xl flex items-center justify-between hover:border-primary/30 transition-all">
+                            <div className="flex items-center gap-3">
+                              <div className="size-10 bg-slate-100 rounded-full flex items-center justify-center font-bold">人</div>
+                              <div>
+                                <div className="text-sm font-bold text-slate-900">{p.name}</div>
+                                <div className="text-[10px] text-slate-500">{p.role}</div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button 
+                                onClick={() => setDetailItem({ type: 'personnel', ...p })}
+                                className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:border-primary hover:text-primary transition-all flex items-center gap-1 whitespace-nowrap"
+                              >
+                                <Eye size={14} /> 查看
+                              </button>
+                              <button 
+                                onClick={() => togglePreSelect(id)}
+                                className={`px-4 py-2 border rounded-xl text-xs font-bold transition-all flex items-center gap-1 whitespace-nowrap ${
+                                  isPreSelected 
+                                    ? 'bg-primary/10 border-primary text-primary' 
+                                    : 'bg-primary text-white border-primary hover:bg-primary/90'
+                                }`}
+                              >
+                                {isPreSelected ? <CheckCircle2 size={14} /> : <Plus size={14} />}
+                                {isPreSelected ? '已预选' : '预选'}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {activeTab === 'enterprise' && activeFilter === 'performance' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      {[1, 2, 3, 4].map(i => {
+                        const id = `lib-perf-${i}`;
+                        const isPreSelected = preSelectedIds.has(id);
+                        return (
+                          <div key={i} className="p-4 bg-white border border-slate-200 rounded-xl hover:border-primary/30 transition-all group">
+                            <div className="text-sm font-bold text-slate-900 mb-2">业绩项目名称 {i}</div>
+                            <div className="text-[10px] text-slate-500 mb-4">合同金额：5000万 | 竣工日期：2023-12</div>
+                            <div className="flex gap-2 shrink-0 mt-4">
+                              <button 
+                                onClick={() => setDetailItem({ type: 'performance', id, title: `业绩项目名称 ${i}`, amount: '5000万' })}
+                                className="flex-1 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-1 whitespace-nowrap"
+                              >
+                                <Eye size={14} /> 查看
+                              </button>
+                              <button 
+                                onClick={() => togglePreSelect(id)}
+                                className={`flex-1 py-2 border rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 whitespace-nowrap ${
+                                  isPreSelected 
+                                    ? 'bg-primary/10 border-primary text-primary' 
+                                    : 'bg-primary text-white border-primary hover:bg-primary/90'
+                                }`}
+                              >
+                                {isPreSelected ? <CheckCircle2 size={14} /> : <Plus size={14} />}
+                                {isPreSelected ? '已预选' : '预选'}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {activeTab === 'enterprise' && activeFilter === 'qualification' && (
+                    <div className="grid grid-cols-1 gap-4">
+                      {[1, 2, 3].map(i => {
+                        const id = `lib-qual-${i}`;
+                        const isPreSelected = preSelectedIds.has(id);
+                        return (
+                          <div key={i} className="p-4 bg-white border border-slate-200 rounded-xl flex items-center justify-between hover:border-primary/30 transition-all">
+                            <div className="flex items-center gap-3">
+                              <div className="size-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                                <ShieldCheck size={20} />
+                              </div>
+                              <div>
+                                <div className="text-sm font-bold text-slate-900">企业资质证书 {i}</div>
+                                <div className="text-[10px] text-slate-400">有效期至：2028-12-31</div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button 
+                                onClick={() => setDetailItem({ type: 'qualification', id, title: `企业资质证书 ${i}`, reason: '有效期至：2028-12-31', attachment: `https://picsum.photos/seed/qual${i}/800/1200` })}
+                                className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:border-primary hover:text-primary transition-all flex items-center gap-1 whitespace-nowrap"
+                              >
+                                <Eye size={14} /> 查看
+                              </button>
+                              <button 
+                                onClick={() => togglePreSelect(id)}
+                                className={`px-4 py-2 border rounded-xl text-xs font-bold transition-all flex items-center gap-1 whitespace-nowrap ${
+                                  isPreSelected 
+                                    ? 'bg-primary/10 border-primary text-primary' 
+                                    : 'bg-primary text-white border-primary hover:bg-primary/90'
+                                }`}
+                              >
+                                {isPreSelected ? <CheckCircle2 size={14} /> : <Plus size={14} />}
+                                {isPreSelected ? '已预选' : '预选'}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </>
-        )}
-        
-        {/* Placeholder for other tabs/filters */}
-        {!(activeTab === 'enterprise' && ['personnel', 'performance', 'finance', 'qualification'].includes(activeFilter)) && activeTab !== 'license' && activeTab !== 'material' && (
-          <div className="py-12 flex flex-col items-center justify-center text-slate-400">
-            <FolderOpen size={48} className="mb-4 opacity-20" />
-            <p className="text-sm font-medium">内容建设中</p>
-          </div>
-        )}
+          )}
 
-        {activeTab === 'license' && (
-          <div className="grid grid-cols-2 gap-4">
-            {(activeLicenseFilter === 'business_license' ? [
-              { title: '营业执照正本', img: 'https://picsum.photos/seed/license1/400/300?blur=2' },
-              { title: '营业执照副本', img: 'https://picsum.photos/seed/license2/400/300?blur=2' }
-            ] : activeLicenseFilter === 'qualification' ? [
-              { title: '建筑工程施工总承包壹级', img: 'https://picsum.photos/seed/qual1/400/300?blur=2' },
-              { title: '市政公用工程施工总承包贰级', img: 'https://picsum.photos/seed/qual2/400/300?blur=2' }
-            ] : activeLicenseFilter === 'permit' ? [
-              { title: '安全生产许可证', img: 'https://picsum.photos/seed/permit1/400/300?blur=2' },
-              { title: '排污许可证', img: 'https://picsum.photos/seed/permit2/400/300?blur=2' }
-            ] : activeLicenseFilter === 'honor' ? [
-              { title: '鲁班奖证书', img: 'https://picsum.photos/seed/honor1/400/300?blur=2' },
-              { title: '省级优秀企业', img: 'https://picsum.photos/seed/honor2/400/300?blur=2' },
-              { title: '高新技术企业证书', img: 'https://picsum.photos/seed/honor3/400/300?blur=2' }
-            ] : activeLicenseFilter === 'basic_info' ? [
-              { title: '开户许可证', img: 'https://picsum.photos/seed/basic1/400/300?blur=2' },
-              { title: '机构信用代码证', img: 'https://picsum.photos/seed/basic2/400/300?blur=2' }
-            ] : activeLicenseFilter === 'legal_person' ? [
-              { title: '法人身份证（正）', img: 'https://picsum.photos/seed/legal1/400/300?blur=2' },
-              { title: '法人身份证（反）', img: 'https://picsum.photos/seed/legal2/400/300?blur=2' }
-            ] : activeLicenseFilter === 'professionals' ? [
-              { title: '一级建造师注册证', img: 'https://picsum.photos/seed/prof1/400/300?blur=2' },
-              { title: '造价工程师注册证', img: 'https://picsum.photos/seed/prof2/400/300?blur=2' }
-            ] : activeLicenseFilter === 'enterprise_qualification' ? [
-              { title: '工程设计综合甲级', img: 'https://picsum.photos/seed/entqual1/400/300?blur=2' },
-              { title: '工程勘察综合甲级', img: 'https://picsum.photos/seed/entqual2/400/300?blur=2' }
-            ] : [
-              { title: '中标通知书', img: 'https://picsum.photos/seed/bid1/400/300?blur=2' },
-              { title: '施工合同', img: 'https://picsum.photos/seed/bid2/400/300?blur=2' }
-            ]).map((item, i) => (
-              <div key={i} className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col hover:border-blue-300 hover:shadow-md transition-all group">
-                <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
-                  <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
-                </div>
-                <div className="p-3 flex flex-col flex-1">
-                  <h4 className="font-bold text-slate-900 text-xs mb-3 line-clamp-2 flex-1" title={item.title}>{item.title}</h4>
-                  <div className="flex gap-2 mt-auto">
-                    <button className="flex-1 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-md text-xs font-bold hover:bg-slate-100 transition-colors">
-                      查看
-                    </button>
-                    <button className="flex-1 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold hover:bg-blue-700 transition-colors">
-                      插入
-                    </button>
+          {/* 4. My Insights */}
+          {activeMainTab === 'insights' && (
+            <div className="space-y-8">
+              {/* New Insight Input */}
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 space-y-4">
+                <textarea
+                  value={newInsight}
+                  onChange={(e) => setNewInsight(e.target.value)}
+                  placeholder="记录下你对这个项目的想法、灵感或注意事项..."
+                  className="w-full h-32 bg-white border border-slate-200 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
+                />
+                
+                <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-slate-200/60">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-500 flex items-center gap-1"><Tag size={14} /> 标签:</span>
+                    <select
+                      value={newInsightType}
+                      onChange={(e) => setNewInsightType(e.target.value)}
+                      className="text-xs border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white text-slate-700 font-medium cursor-pointer"
+                    >
+                      <option value="task">任务</option>
+                      <option value="meeting">会议纪要</option>
+                      <option value="idea">想法</option>
+                    </select>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
 
-        {activeTab === 'enterprise' && activeFilter === 'performance' && (
-          <div className="space-y-4">
-            {[
-              { title: '大都会CBD二期综合体', status: '已竣工', start: '2020年3月', end: '2023年5月', amount: '¥12,500,000' },
-              { title: '滨江市民广场', status: '已竣工', start: '2018年6月', end: '2021年10月', amount: '¥8,200,000' }
-            ].map((item, i) => (
-              <div key={i} className="bg-white rounded-xl border border-slate-200 p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-bold text-slate-900 text-sm">{item.title}</h4>
-                  <span className="px-2 py-1 bg-green-50 text-green-600 rounded text-xs font-bold">{item.status}</span>
+                  {newInsightType === 'task' && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-500 flex items-center gap-1"><Calendar size={14} /> 截止时间:</span>
+                      <input 
+                        type="date" 
+                        value={newInsightDeadline}
+                        onChange={(e) => setNewInsightDeadline(e.target.value)}
+                        className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+                      />
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-2 mb-4">
-                  <div className="flex text-xs">
-                    <span className="text-slate-500 w-20">开始时间：</span>
-                    <span className="text-slate-700">{item.start}</span>
+
+                <div className="flex items-center justify-between pt-2">
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                    {newInsightType === 'idea' ? (
+                      <><Lock size={12} /> 发布后仅自己可见</>
+                    ) : (
+                      <><Globe size={12} /> 发布后全员可见</>
+                    )}
                   </div>
-                  <div className="flex text-xs">
-                    <span className="text-slate-500 w-20">竣工时间：</span>
-                    <span className="text-slate-700">{item.end}</span>
-                  </div>
-                  <div className="flex text-xs">
-                    <span className="text-slate-500 w-20">项目金额：</span>
-                    <span className="text-slate-700">{item.amount}</span>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <button className="flex-1 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors">
-                    查看
-                  </button>
-                  <button className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
-                    插入
+                  <button 
+                    onClick={handleAddInsight}
+                    className="px-6 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                  >
+                    发布
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
 
-        {activeTab === 'enterprise' && activeFilter === 'finance' && (
-          <div className="space-y-4">
-            {[
-              { title: '2023年度审计报告', subtitle: '经第三方会计师事务所审计', income: '¥45,200万', profit: '¥5,800万' },
-              { title: '2022年度审计报告', subtitle: '经第三方会计师事务所审计', income: '¥41,500万', profit: '¥4,900万' },
-              { title: '2021年度审计报告', subtitle: '经第三方会计师事务所审计', income: '¥38,000万', profit: '¥4,200万' }
-            ].map((item, i) => (
-              <div key={i} className="bg-white rounded-xl border border-slate-200 p-4">
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
-                    <FileText size={20} />
+              {/* Insights List */}
+              <div className="space-y-4">
+                {/* Filter Tabs */}
+                <div className="flex items-center gap-6 border-b border-slate-200 mb-6">
+                  {[
+                    { id: 'all', label: '全部' },
+                    { id: 'task', label: '任务' },
+                    { id: 'meeting', label: '会议纪要' },
+                    { id: 'idea', label: '想法' }
+                  ].map(f => (
+                    <button
+                      key={f.id}
+                      onClick={() => setInsightFilter(f.id)}
+                      className={`pb-3 text-sm font-bold transition-all relative ${
+                        insightFilter === f.id 
+                          ? 'text-primary' 
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {f.label}
+                      {insightFilter === f.id && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {insights.filter(i => insightFilter === 'all' || i.type === insightFilter).map(i => (
+                  <div key={i.id} className={`bg-white border rounded-2xl p-6 hover:shadow-md transition-all relative group ${i.status === 'void' ? 'border-slate-200 opacity-60 bg-slate-50' : 'border-slate-200'}`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`size-8 rounded-full flex items-center justify-center text-xs font-bold ${i.author === '我' ? 'bg-slate-100 text-slate-600' : 'bg-primary/10 text-primary'}`}>
+                          {i.author === '我' ? '我' : i.author[0]}
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                            {i.author !== '我' && <span>{i.author}</span>}
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 ${
+                              i.type === 'task' ? 'bg-amber-100 text-amber-700' :
+                              i.type === 'meeting' ? 'bg-indigo-100 text-indigo-700' :
+                              'bg-emerald-100 text-emerald-700'
+                            }`}>
+                              {i.type === 'task' && <CheckSquare size={10} />}
+                              {i.type === 'meeting' && <FileTextIcon size={10} />}
+                              {i.type === 'idea' && <Lightbulb size={10} />}
+                              {i.type === 'task' ? '任务' : i.type === 'meeting' ? '会议纪要' : '想法'}
+                            </span>
+                            {i.status === 'void' && (
+                              <span className="px-2 py-0.5 bg-slate-200 text-slate-500 rounded text-[9px] font-bold flex items-center gap-1">
+                                <Ban size={10} /> 已作废
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-1">{i.date}</div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="flex items-center gap-3">
+                          {i.author === '我' && (
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                              <button 
+                                onClick={() => toggleInsightStatus(i.id)}
+                                className="p-1 text-slate-400 hover:text-amber-500 transition-colors"
+                                title={i.status === 'void' ? '恢复' : '作废'}
+                              >
+                                {i.status === 'void' ? <RefreshCw size={14} /> : <Ban size={14} />}
+                              </button>
+                              <button className="p-1 text-slate-400 hover:text-red-500 transition-colors">
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          )}
+                          <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider ${i.isPublic ? 'text-primary' : 'text-slate-400'}`}>
+                            {i.isPublic ? <Globe size={10} /> : <Lock size={10} />}
+                            {i.isPublic ? '公开' : '私密'}
+                          </div>
+                        </div>
+                        {i.type === 'task' && i.deadline && (
+                          <div className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md ${i.status === 'void' ? 'text-slate-500 bg-slate-200/50' : 'text-amber-600 bg-amber-50'}`}>
+                            <Calendar size={10} /> 截止: {i.deadline}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <p className={`text-sm leading-relaxed mt-2 ${i.status === 'void' ? 'text-slate-500 line-through' : 'text-slate-700'}`}>{i.content}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+      {/* Detail Modal */}
+      <AnimatePresence>
+        {detailItem && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div className="flex items-center gap-4">
+                  <div className="size-12 bg-primary text-white rounded-2xl flex items-center justify-center font-bold text-xl">
+                    {detailItem.name ? detailItem.name[0] : (detailItem.type === 'qualification' || detailItem.type === 'license' ? <ShieldCheck /> : <Trophy />)}
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-sm">{item.title}</h4>
-                    <p className="text-xs text-slate-500 mt-0.5">{item.subtitle}</p>
+                    <h3 className="text-lg font-bold text-slate-900">{detailItem.name || detailItem.title}</h3>
+                    <p className="text-xs text-slate-500">{detailItem.role || detailItem.reason || detailItem.amount}</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs text-slate-500 mb-1">营业收入</p>
-                    <p className="text-sm font-bold text-slate-900">{item.income}</p>
-                  </div>
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs text-slate-500 mb-1">净利润</p>
-                    <p className="text-sm font-bold text-slate-900">{item.profit}</p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <button className="flex-1 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors">
-                    查看
-                  </button>
-                  <button className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
-                    插入
-                  </button>
-                </div>
+                <button 
+                  onClick={() => setDetailItem(null)}
+                  className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
               </div>
-            ))}
-          </div>
-        )}
 
-        {activeTab === 'enterprise' && activeFilter === 'qualification' && (
-          <div className="space-y-4">
-            {[
-              { title: '建筑业企业资质证书', badge: '建筑工程施工总承包壹级', issuer: '住房和城乡建设部', expiry: '2028-12-31', scope: '可承担单项建安合同额不超过企业注册资本金5倍的建筑工程施工。' },
-              { title: '工程设计资质证书', badge: '建筑行业（建筑工程）甲级', issuer: '住房和城乡建设部', expiry: '2027-06-30', scope: '可承担建筑工程专业建设工程项目主体工程及其配套工程的设计业务，其规模不受限制。' },
-              { title: '质量管理体系认证', badge: 'ISO 9001:2015', issuer: '中国质量认证中心', expiry: '2026-10-15', scope: '覆盖工程设计与咨询服务、建筑工程施工总承包。' }
-            ].map((item, i) => (
-              <div key={i} className="bg-white rounded-xl border border-slate-200 p-4">
-                <div className="flex items-start justify-between mb-4 gap-2">
-                  <h4 className="font-bold text-slate-900 text-sm leading-tight">{item.title}</h4>
-                  <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs font-bold whitespace-nowrap shrink-0">{item.badge}</span>
-                </div>
-                <div className="space-y-2 mb-4">
-                  <div className="flex text-xs">
-                    <span className="text-slate-500 w-20 shrink-0">发证机关：</span>
-                    <span className="text-slate-700">{item.issuer}</span>
+              <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                {detailItem.type === 'personnel' && (
+                  <div className="space-y-8">
+                    <section>
+                      <h4 className="text-sm font-bold text-slate-900 mb-3">基本信息</h4>
+                      <p className="text-sm text-slate-600 leading-relaxed">{detailItem.details?.basic}</p>
+                    </section>
+                    <section>
+                      <h4 className="text-sm font-bold text-slate-900 mb-3">过往业绩</h4>
+                      <div className="space-y-3">
+                        {detailItem.details?.performance.map((perf: any, i: number) => (
+                          <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="text-xs font-bold text-slate-800">{perf.title}</div>
+                            <div className="text-[10px] text-slate-400 mt-1">{perf.date}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                    <section>
+                      <h4 className="text-sm font-bold text-slate-900 mb-3">相关资质</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {detailItem.details?.qualifications.map((q: string, i: number) => (
+                          <span key={i} className="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full border border-indigo-100">{q}</span>
+                        ))}
+                      </div>
+                    </section>
                   </div>
-                  <div className="flex text-xs">
-                    <span className="text-slate-500 w-20 shrink-0">有效期至：</span>
-                    <span className="text-slate-700">{item.expiry}</span>
+                )}
+
+                {(detailItem.type === 'qualification' || detailItem.type === 'license') && (
+                  <div className="space-y-6">
+                    <div className="aspect-[3/4] bg-slate-100 rounded-2xl overflow-hidden border border-slate-200">
+                      <img src={detailItem.attachment} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                    </div>
+                    <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                      <div className="flex items-center gap-2 text-indigo-600 mb-1">
+                        <Info size={14} />
+                        <span className="text-xs font-bold">资质说明</span>
+                      </div>
+                      <p className="text-[10px] text-indigo-500 leading-relaxed">{detailItem.reason || '该资质已通过平台审核，真实有效。'}</p>
+                    </div>
                   </div>
-                  <div className="flex text-xs">
-                    <span className="text-slate-500 w-20 shrink-0">许可范围：</span>
-                    <span className="text-slate-700 leading-relaxed">{item.scope}</span>
+                )}
+
+                {detailItem.type === 'performance' && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">合同金额</div>
+                        <div className="text-lg font-black text-slate-900">{detailItem.amount}</div>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">匹配度</div>
+                        <div className="text-lg font-black text-emerald-500">{detailItem.match}%</div>
+                      </div>
+                    </div>
+                    <section>
+                      <h4 className="text-sm font-bold text-slate-900 mb-3">推荐理由</h4>
+                      <p className="text-sm text-slate-600 italic">“{detailItem.reason}”</p>
+                    </section>
+                    <section>
+                      <h4 className="text-sm font-bold text-slate-900 mb-3">项目概况</h4>
+                      <p className="text-sm text-slate-600 leading-relaxed">该项目在结构形式、施工工艺及环境条件上与当前项目具有极高的相似性，可作为重点业绩支撑。</p>
+                    </section>
                   </div>
-                </div>
-                <div className="flex gap-3">
-                  <button className="flex-1 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors">
-                    查看
-                  </button>
-                  <button className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
-                    插入
-                  </button>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
+
+              <div className="px-8 py-6 border-t border-slate-100 bg-slate-50 flex gap-4">
+                <button 
+                  onClick={() => setDetailItem(null)}
+                  className="flex-1 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all"
+                >
+                  关闭
+                </button>
+                <button 
+                  onClick={() => {
+                    togglePreSelect(detailItem.id);
+                    setDetailItem(null);
+                  }}
+                  className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg ${
+                    preSelectedIds.has(detailItem.id)
+                      ? 'bg-primary/10 text-primary border border-primary'
+                      : 'bg-primary text-white shadow-primary/20 hover:bg-primary/90'
+                  }`}
+                >
+                  {preSelectedIds.has(detailItem.id) ? '取消预选' : '立即预选'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
+        </div>
       </div>
     </div>
   );
 };
 
 const ArchiveRegisterView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => {
-  const [openingDetails, setOpeningDetails] = useState([
-    { id: 1, unit: '中铁一局集团有限公司', price: '12560.88', rank: '1', isWinner: true },
-    { id: 2, unit: '中建三局集团有限公司', price: '12890.50', rank: '2', isWinner: false },
-    { id: 3, unit: '中交第二公路工程局有限公司', price: '13100.20', rank: '3', isWinner: false },
+  const [openingRecords, setOpeningRecords] = useState([
+    { units: '中铁一局集团有限公司', price: 125608800, rank: '1', isWinner: true, isSelf: true },
+    { units: '中建三局集团有限公司', price: 128905000, rank: '2', isWinner: false, isSelf: false },
+    { units: '中交第二公路工程局有限公司', price: 131002000, rank: '3', isWinner: false, isSelf: false },
   ]);
 
-  const [contractDetails, setContractDetails] = useState([
-    { id: 1, contractId: 'HT-2024-001', name: '某高速公路工程施工合同', date: '2024-03-15', amount: '12560.88', owner: '某交通运输局', status: '已签署', fulfillmentDate: '2026-03-15' },
+  const [contractRecords, setContractRecords] = useState([
+    { id: 'HT-2024-001', name: '某高速公路工程施工合同', date: '2024-03-15', amount: 125608800, owner: '张三', status: '履行中', fulfillmentDate: '2026-03-15' },
   ]);
 
   const [bidFiles, setBidFiles] = useState([
-    { id: 1, name: '投标文件_技术标.pdf', size: '15.2MB', time: '2024-03-01 10:00' },
-    { id: 2, name: '投标文件_商务标.pdf', size: '8.5MB', time: '2024-03-01 10:05' },
+    { id: '1', name: '投标文件_技术标.pdf', size: '15.2MB', date: '2024-03-01' },
+    { id: '2', name: '投标文件_商务标.pdf', size: '8.5MB', date: '2024-03-01' },
   ]);
 
   const [openingFiles, setOpeningFiles] = useState([
-    { id: 1, name: '开标记录表.pdf', size: '2.1MB', time: '2024-03-10 15:30' },
+    { id: '1', name: '开标记录表.pdf', size: '2.1MB', date: '2024-03-10' },
   ]);
 
-  const [contractFiles, setContractFiles] = useState([
-    { id: 1, name: '施工合同扫描件.pdf', size: '25.6MB', time: '2024-03-20 09:00' },
+  const [contractAttachments, setContractAttachments] = useState([
+    { id: '1', name: '施工合同扫描件.pdf', size: '25.6MB', date: '2024-03-20', category: '合同' },
+    { id: '2', name: '中标通知书.pdf', size: '1.2MB', date: '2024-03-12', category: '中标通知书' },
   ]);
 
-  const [isWinner, setIsWinner] = useState(true);
+  const [unsuccessfulReason, setUnsuccessfulReason] = useState('');
 
-  const addOpeningRow = () => {
-    const newId = openingDetails.length > 0 ? Math.max(...openingDetails.map(d => d.id)) + 1 : 1;
-    setOpeningDetails([...openingDetails, { id: newId, unit: '', price: '', rank: '', isWinner: false }]);
-  };
-
-  const removeOpeningRow = (id: number) => {
-    setOpeningDetails(openingDetails.filter(d => d.id !== id));
-  };
-
-  const addContractRow = () => {
-    const newId = contractDetails.length > 0 ? Math.max(...contractDetails.map(d => d.id)) + 1 : 1;
-    setContractDetails([...contractDetails, { id: newId, contractId: '', name: '', date: '', amount: '', owner: '', status: '待签署', fulfillmentDate: '' }]);
-  };
-
-  const removeContractRow = (id: number) => {
-    setContractDetails(contractDetails.filter(d => d.id !== id));
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(val);
   };
 
   return (
-    <div className={`bg-slate-50 min-h-screen -m-8 p-8 ${isPaused ? 'opacity-75' : ''}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={onBack} 
-            className="size-10 bg-slate-50 border border-slate-200 rounded-full flex items-center justify-center text-slate-600 hover:bg-white hover:border-primary hover:text-primary transition-all shadow-sm group"
-            title="返回"
-          >
-            <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
-          </button>
-          <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <span className="w-1.5 h-6 bg-primary rounded-full"></span>
-            项目归档登记详情
-          </h3>
+    <div className={`bg-white min-h-screen -m-8 flex flex-col ${isPaused ? 'opacity-75' : ''}`}>
+      {/* Header - Exactly matching TenderOpeningStatusManagement */}
+      <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+            <Archive size={24} />
+          </div>
+          <h3 className="text-xl font-bold text-slate-900">项目归档登记详情</h3>
         </div>
         <div className="flex gap-3">
-          <button className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all flex items-center gap-2">
+          <button className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-bold hover:bg-emerald-100 transition-all flex items-center gap-2">
             <Download size={16} />
             导出详情
           </button>
           <button 
-            onClick={() => {
-              if (isPaused) {
-                alert('此项目已暂停');
-                return;
-              }
-              onBack();
-            }}
-            className={`px-6 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={onBack}
+            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
           >
-            <Check size={16} />
-            保存全部
+            <X size={24} />
           </button>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Project Info */}
-        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-1 h-4 bg-primary rounded-full"></div>
-            <h4 className="font-bold text-slate-900">项目基本信息</h4>
-          </div>
-          <div className="grid grid-cols-2 gap-8">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">关联项目</label>
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 font-medium">
-                某高速公路工程施工项目
+      {/* Content Area */}
+      <div className="p-8 flex-1 flex flex-col overflow-hidden">
+        <div className="space-y-10 flex-1 overflow-y-auto pr-4 custom-scrollbar">
+          
+          {/* Project Info Block */}
+          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">关联项目 <span className="text-red-500">*</span></p>
+                <p className="text-sm font-bold text-slate-900">某高速公路工程施工项目</p>
               </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">开标日期</label>
-              <div className="relative">
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">开标日期 <span className="text-red-500">*</span></p>
                 <input 
                   type="date" 
-                  defaultValue="2024-03-10"
-                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  defaultValue="2024-03-10" 
+                  className="text-sm font-bold text-slate-900 bg-transparent border-none p-0 focus:ring-0 w-full"
                   disabled={isPaused}
                 />
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Tender Registration */}
-        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-1 h-4 bg-primary rounded-full"></div>
-            <h4 className="font-bold text-slate-900">投标登记</h4>
-          </div>
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                <FileText size={16} className="text-primary" />
-                投标文件
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                {bidFiles.map(file => (
-                  <div key={file.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-lg group hover:border-primary/30 transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="size-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm">
-                        <FileText size={20} />
+          {/* Tender Registration Section */}
+          <section className="space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2 text-slate-900 font-bold">
+                <ClipboardCheck size={20} className="text-primary" />
+                <h4 className="text-lg">投标登记</h4>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-10">
+              {/* Bid Files */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <Upload size={16} className="text-slate-400" />
+                    投标附件
+                  </h5>
+                  <button className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 rounded-lg transition-colors">
+                    <Plus size={14} /> 上传附件
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {bidFiles.map(file => (
+                    <div key={file.id} className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100 group hover:bg-white hover:border-primary/20 hover:shadow-lg transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="size-12 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
+                          <FileText size={24} />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-slate-700 truncate max-w-[200px]">{file.name}</span>
+                          <span className="text-[11px] text-slate-400 font-medium">{file.size} · {file.date}</span>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-sm font-bold text-slate-900">{file.name}</div>
-                        <div className="text-xs text-slate-500">{file.size} · {file.time}</div>
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="p-2.5 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all" title="下载"><Download size={16} /></button>
+                        <button className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="删除"><Trash2 size={16} /></button>
                       </div>
                     </div>
-                    <button className="p-2 text-slate-400 hover:text-red-500 transition-colors">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-                <button className="border-2 border-dashed border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">
-                  <Plus size={24} />
-                  <span className="text-sm font-bold">添加投标文件</span>
-                </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-3">
-              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                <Users size={16} className="text-primary" />
-                投标人员
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {['张三 (项目经理)', '李四 (技术负责人)', '王五 (商务负责人)'].map((person, idx) => (
-                  <div key={idx} className="px-3 py-1.5 bg-primary/5 text-primary border border-primary/20 rounded-full text-sm font-medium flex items-center gap-2">
-                    {person}
-                    <button className="hover:text-primary/70"><X size={14} /></button>
-                  </div>
-                ))}
-                <button className="px-3 py-1.5 border border-dashed border-slate-300 text-slate-500 rounded-full text-sm font-medium hover:border-primary hover:text-primary transition-all flex items-center gap-1">
-                  <Plus size={14} />
-                  添加人员
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Opening & Winning Records */}
-        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-1 h-4 bg-primary rounded-full"></div>
-            <h4 className="font-bold text-slate-900">开标/中标情况</h4>
-          </div>
-          
-          <div className="space-y-8">
-            <div className="space-y-3">
-              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                <FileText size={16} className="text-primary" />
-                开标记录
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                {openingFiles.map(file => (
-                  <div key={file.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-lg group hover:border-primary/30 transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="size-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm">
-                        <FileText size={20} />
+              {/* Bid Personnel */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <Users size={16} className="text-slate-400" />
+                    参标人员
+                  </h5>
+                  <button className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 rounded-lg transition-colors">
+                    <Plus size={14} /> 添加人员
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {['张三 (项目经理)', '李四 (技术负责人)', '王五 (商务负责人)'].map((person, idx) => (
+                    <div key={idx} className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-sm font-bold text-slate-700 hover:border-primary/30 hover:bg-white hover:shadow-md transition-all cursor-default">
+                      <div className="size-6 bg-primary/10 rounded-full flex items-center justify-center text-primary text-[10px]">
+                        {person[0]}
                       </div>
-                      <div>
-                        <div className="text-sm font-bold text-slate-900">{file.name}</div>
-                        <div className="text-xs text-slate-500">{file.size} · {file.time}</div>
+                      {person}
+                      <button className="text-slate-300 hover:text-red-500 transition-colors ml-1"><X size={12} /></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Opening & Winning Records Section */}
+          <section className="space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2 text-slate-900 font-bold">
+                <Trophy size={20} className="text-primary" />
+                <h4 className="text-lg">开标与中标记录</h4>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-10">
+              {/* Opening Details */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <ClipboardList size={16} className="text-slate-400" />
+                    开标详情
+                  </h5>
+                  <button 
+                    onClick={() => setOpeningRecords([...openingRecords, { units: '', price: 0, rank: '', isWinner: false, isSelf: false }])}
+                    className="text-sm font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-1"
+                  >
+                    <Plus size={18} /> 添加参标单位
+                  </button>
+                </div>
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                        <th className="px-6 py-4">参标单位 <span className="text-red-500">*</span></th>
+                        <th className="px-6 py-4">投标报价（元） <span className="text-red-500">*</span></th>
+                        <th className="px-6 py-4">排名 <span className="text-red-500">*</span></th>
+                        <th className="px-6 py-4 text-center">是否中标 <span className="text-red-500">*</span></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {openingRecords.map((row, i) => (
+                        <tr key={i} className={`hover:bg-slate-50/50 transition-colors ${row.isWinner ? 'bg-emerald-50/30' : ''}`}>
+                          <td className="px-6 py-4">
+                            <input 
+                              value={row.units} 
+                              onChange={(e) => {
+                                const newRecords = [...openingRecords];
+                                newRecords[i].units = e.target.value;
+                                setOpeningRecords(newRecords);
+                              }}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm focus:border-primary outline-none"
+                              placeholder="请输入参标单位"
+                            />
+                          </td>
+                          <td className="px-6 py-4">
+                            <input 
+                              type="number"
+                              value={row.price} 
+                              onChange={(e) => {
+                                const newRecords = [...openingRecords];
+                                newRecords[i].price = parseFloat(e.target.value) || 0;
+                                setOpeningRecords(newRecords);
+                              }}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold text-primary"
+                              placeholder="0.00"
+                            />
+                          </td>
+                          <td className="px-6 py-4">
+                            <input 
+                              value={row.rank} 
+                              onChange={(e) => {
+                                const newRecords = [...openingRecords];
+                                newRecords[i].rank = e.target.value;
+                                setOpeningRecords(newRecords);
+                              }}
+                              className="w-16 border border-slate-200 rounded px-2 py-1 text-sm"
+                              placeholder="排名"
+                            />
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <input 
+                              type="radio"
+                              name="isWinner"
+                              checked={row.isWinner}
+                              onChange={() => {
+                                const newRecords = openingRecords.map((r, idx) => ({ ...r, isWinner: idx === i }));
+                                setOpeningRecords(newRecords);
+                              }}
+                              className="size-4 rounded-full border-slate-300 text-primary focus:ring-primary"
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Opening Attachments */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <Paperclip size={16} className="text-slate-400" />
+                    开标记录附件
+                  </h5>
+                  <button className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 rounded-lg transition-colors">
+                    <Plus size={14} /> 上传附件
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {openingFiles.map(file => (
+                    <div key={file.id} className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100 group hover:bg-white hover:border-primary/20 hover:shadow-lg transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="size-12 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
+                          <FileText size={24} />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-slate-700 truncate max-w-[200px]">{file.name}</span>
+                          <span className="text-[11px] text-slate-400 font-medium">{file.size} · {file.date}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="p-2.5 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all" title="下载"><Download size={16} /></button>
+                        <button className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="删除"><Trash2 size={16} /></button>
                       </div>
                     </div>
-                    <button className="p-2 text-slate-400 hover:text-red-500 transition-colors">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-                <button className="border-2 border-dashed border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">
-                  <Plus size={24} />
-                  <span className="text-sm font-bold">添加开标记录</span>
-                </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-bold text-slate-700">开标明细</label>
-                <button 
-                  onClick={addOpeningRow}
-                  className="text-primary text-sm font-bold flex items-center gap-1 hover:underline"
-                >
-                  <Plus size={14} />
-                  添加单位
-                </button>
-              </div>
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 border-bottom border-slate-200">
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">投标单位</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">投标报价 (万元)</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">排名</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">是否中标</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-16">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {openingDetails.map(row => (
-                      <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-4 py-3">
+              {/* Winning Details */}
+              <div className="space-y-4">
+                <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                  <Trophy size={16} className="text-emerald-500" />
+                  中标详情
+                </h5>
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                        <th className="px-6 py-4">中标单位</th>
+                        <th className="px-6 py-4">是否本单位 <span className="text-red-500">*</span></th>
+                        <th className="px-6 py-4">中标金额（元）</th>
+                        <th className="px-6 py-4">通知书日期</th>
+                        <th className="px-6 py-4">公示链接</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      <tr className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4">
                           <input 
-                            type="text" 
-                            defaultValue={row.unit}
-                            className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900"
-                            placeholder="请输入单位名称"
+                            defaultValue="中铁一局集团有限公司"
+                            className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-bold text-slate-900"
+                            placeholder="请输入中标单位"
                           />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-6 py-4">
+                          <select className="w-full border border-slate-200 rounded px-2 py-1 text-sm focus:border-primary outline-none">
+                            <option value="true">是</option>
+                            <option value="false">否</option>
+                          </select>
+                        </td>
+                        <td className="px-6 py-4">
                           <input 
-                            type="number" 
-                            defaultValue={row.price}
-                            className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900"
+                            type="number"
+                            defaultValue="125608800"
+                            className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold text-emerald-600"
                             placeholder="0.00"
                           />
                         </td>
-                        <td className="px-4 py-3">
-                          <input 
-                            type="number" 
-                            defaultValue={row.rank}
-                            className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900"
-                            placeholder="1"
-                          />
+                        <td className="px-6 py-4">
+                          <input type="date" defaultValue="2024-03-12" className="w-full border border-slate-200 rounded px-2 py-1 text-sm" />
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
+                        <td className="px-6 py-4">
+                          <input className="w-full border border-slate-200 rounded px-2 py-1 text-xs text-primary" placeholder="http://..." />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Unsuccessful Bid Reason Analysis - Conditional */}
+          {openingRecords.some(r => r.isSelf && !r.isWinner) && (
+            <section className="space-y-6">
+              <div className="flex items-center gap-2 text-slate-900 font-bold border-b border-slate-100 pb-4">
+                <Frown size={20} className="text-primary" />
+                <h4 className="text-lg">未中标原因分析</h4>
+              </div>
+              <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+                <textarea 
+                  value={unsuccessfulReason}
+                  onChange={(e) => setUnsuccessfulReason(e.target.value)}
+                  placeholder="请输入未中标原因分析..."
+                  className="w-full h-32 border border-slate-200 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all resize-none shadow-inner bg-slate-50/30 font-medium"
+                />
+              </div>
+            </section>
+          )}
+
+          {/* Contract Registration Section */}
+          <section className="space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2 text-slate-900 font-bold">
+                <Receipt size={20} className="text-primary" />
+                <h4 className="text-lg">合同归档</h4>
+              </div>
+              <button 
+                onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: 0, owner: '', status: '履行中', fulfillmentDate: '' }])}
+                className="text-sm font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-1"
+              >
+                <Plus size={18} /> 添加合同
+              </button>
+            </div>
+
+            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-10">
+              {/* Contract Details */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <ClipboardList size={16} className="text-slate-400" />
+                    合同详情
+                  </h5>
+                </div>
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                        <th className="px-6 py-4">合同编号/名称</th>
+                        <th className="px-6 py-4">签署日期</th>
+                        <th className="px-6 py-4">合同金额（元）</th>
+                        <th className="px-6 py-4">负责人</th>
+                        <th className="px-6 py-4">履行时间</th>
+                        <th className="px-6 py-4">履行状态</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {contractRecords.map((row, i) => (
+                        <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="space-y-1">
+                              <input 
+                                value={row.name} 
+                                onChange={(e) => {
+                                  const newRecords = [...contractRecords];
+                                  newRecords[i].name = e.target.value;
+                                  setContractRecords(newRecords);
+                                }}
+                                placeholder="合同名称"
+                                className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-bold"
+                              />
+                              <input 
+                                value={row.id} 
+                                onChange={(e) => {
+                                  const newRecords = [...contractRecords];
+                                  newRecords[i].id = e.target.value;
+                                  setContractRecords(newRecords);
+                                }}
+                                placeholder="合同编号"
+                                className="w-full border border-slate-200 rounded px-2 py-1 text-[10px]"
+                              />
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
                             <input 
-                              type="checkbox" 
-                              checked={row.isWinner}
+                              type="date"
+                              value={row.date} 
                               onChange={(e) => {
-                                setOpeningDetails(openingDetails.map(d => d.id === row.id ? { ...d, isWinner: e.target.checked } : d));
-                                if (e.target.checked) setIsWinner(true);
+                                const newRecords = [...contractRecords];
+                                newRecords[i].date = e.target.value;
+                                setContractRecords(newRecords);
                               }}
-                              className="size-4 text-primary rounded border-slate-300 focus:ring-primary"
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
                             />
-                            <span className={`text-xs font-bold ${row.isWinner ? 'text-green-600' : 'text-slate-400'}`}>
-                              {row.isWinner ? '已中标' : '未中标'}
-                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <input 
+                              type="number"
+                              value={row.amount} 
+                              onChange={(e) => {
+                                const newRecords = [...contractRecords];
+                                newRecords[i].amount = parseFloat(e.target.value) || 0;
+                                setContractRecords(newRecords);
+                              }}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold"
+                              placeholder="0.00"
+                            />
+                          </td>
+                          <td className="px-6 py-4">
+                            <input 
+                              value={row.owner} 
+                              onChange={(e) => {
+                                const newRecords = [...contractRecords];
+                                newRecords[i].owner = e.target.value;
+                                setContractRecords(newRecords);
+                              }}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                              placeholder="负责人"
+                            />
+                          </td>
+                          <td className="px-6 py-4">
+                            <input 
+                              type="date"
+                              value={row.fulfillmentDate} 
+                              onChange={(e) => {
+                                const newRecords = [...contractRecords];
+                                newRecords[i].fulfillmentDate = e.target.value;
+                                setContractRecords(newRecords);
+                              }}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                            />
+                          </td>
+                          <td className="px-6 py-4">
+                            <select 
+                              value={row.status}
+                              onChange={(e) => {
+                                const newRecords = [...contractRecords];
+                                newRecords[i].status = e.target.value;
+                                setContractRecords(newRecords);
+                              }}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                            >
+                              <option value="履行中">履行中</option>
+                              <option value="已完成">已完成</option>
+                              <option value="已终止">已终止</option>
+                            </select>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Contract Attachments */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <Paperclip size={16} className="text-slate-400" />
+                    合同附件
+                  </h5>
+                  <button className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 rounded-lg transition-colors">
+                    <Plus size={14} /> 上传附件
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {contractAttachments.map(file => (
+                    <div key={file.id} className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100 group hover:bg-white hover:border-primary/20 hover:shadow-lg transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="size-12 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
+                          <FileText size={24} />
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-slate-700 truncate max-w-[150px]">{file.name}</span>
+                            <span className="px-1.5 py-0.5 bg-slate-200 text-slate-500 rounded text-[9px] font-bold">{file.category}</span>
                           </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <button 
-                            onClick={() => removeOpeningRow(row.id)}
-                            className="text-slate-400 hover:text-red-500 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="space-y-6 pt-4 border-t border-slate-100">
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-bold text-slate-700">中标情况</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input 
-                      type="radio" 
-                      name="isSelfWinner" 
-                      checked={isWinner} 
-                      onChange={() => setIsWinner(true)}
-                      className="size-4 text-primary focus:ring-primary"
-                    />
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">我方中标</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input 
-                      type="radio" 
-                      name="isSelfWinner" 
-                      checked={!isWinner} 
-                      onChange={() => setIsWinner(false)}
-                      className="size-4 text-primary focus:ring-primary"
-                    />
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">他方中标</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700">中标单位</label>
-                  <input 
-                    type="text" 
-                    defaultValue={isWinner ? '中铁一局集团有限公司' : ''}
-                    className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                    placeholder="请输入中标单位全称"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700">中标金额 (万元)</label>
-                  <input 
-                    type="number" 
-                    defaultValue={isWinner ? '12560.88' : ''}
-                    className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                    placeholder="0.00"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700">中标日期</label>
-                  <input 
-                    type="date" 
-                    defaultValue="2024-03-12"
-                    className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700">公示链接</label>
-                  <div className="relative">
-                    <input 
-                      type="url" 
-                      className="w-full p-3 pr-10 bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                      placeholder="https://..."
-                    />
-                    <ExternalLink size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  </div>
-                </div>
-              </div>
-
-              {!isWinner && (
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700">未中标原因分析</label>
-                  <textarea 
-                    className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all min-h-[100px]"
-                    placeholder="请分析未中标原因（如：价格偏高、技术方案不足等）"
-                  ></textarea>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Contract Registration */}
-        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-1 h-4 bg-primary rounded-full"></div>
-            <h4 className="font-bold text-slate-900">合同登记</h4>
-          </div>
-
-          <div className="space-y-8">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-bold text-slate-700">合同明细</label>
-                <button 
-                  onClick={addContractRow}
-                  className="text-primary text-sm font-bold flex items-center gap-1 hover:underline"
-                >
-                  <Plus size={14} />
-                  添加合同
-                </button>
-              </div>
-              <div className="border border-slate-200 rounded-xl overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[1000px]">
-                  <thead>
-                    <tr className="bg-slate-50 border-bottom border-slate-200">
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">合同编号</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">合同名称</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">签订日期</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">合同金额 (万元)</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">甲方单位</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">状态</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-16">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {contractDetails.map(row => (
-                      <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-4 py-3">
-                          <input type="text" defaultValue={row.contractId} className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900" placeholder="HT-..." />
-                        </td>
-                        <td className="px-4 py-3">
-                          <input type="text" defaultValue={row.name} className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900" placeholder="合同名称" />
-                        </td>
-                        <td className="px-4 py-3">
-                          <input type="date" defaultValue={row.date} className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900" />
-                        </td>
-                        <td className="px-4 py-3">
-                          <input type="number" defaultValue={row.amount} className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900" placeholder="0.00" />
-                        </td>
-                        <td className="px-4 py-3">
-                          <input type="text" defaultValue={row.owner} className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900" placeholder="甲方单位" />
-                        </td>
-                        <td className="px-4 py-3">
-                          <select defaultValue={row.status} className="bg-transparent border-none focus:ring-0 text-sm text-slate-900 font-medium">
-                            <option>待签署</option>
-                            <option>已签署</option>
-                            <option>履行中</option>
-                            <option>已完成</option>
-                          </select>
-                        </td>
-                        <td className="px-4 py-3">
-                          <button 
-                            onClick={() => removeContractRow(row.id)}
-                            className="text-slate-400 hover:text-red-500 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                <Paperclip size={16} className="text-primary" />
-                合同附件
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                {contractFiles.map(file => (
-                  <div key={file.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-lg group hover:border-primary/30 transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="size-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm">
-                        <FileText size={20} />
+                          <span className="text-[11px] text-slate-400 font-medium">{file.size} · {file.date}</span>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-sm font-bold text-slate-900">{file.name}</div>
-                        <div className="text-xs text-slate-500">{file.size} · {file.time}</div>
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="p-2.5 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all" title="下载"><Download size={16} /></button>
+                        <button className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="删除"><Trash2 size={16} /></button>
                       </div>
                     </div>
-                    <button className="p-2 text-slate-400 hover:text-red-500 transition-colors">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-                <button className="border-2 border-dashed border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">
-                  <Plus size={24} />
-                  <span className="text-sm font-bold">添加合同附件</span>
-                </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          </section>
         </div>
 
         {/* Footer Actions */}
-        <div className="flex justify-end gap-4 pt-6 pb-12">
+        <div className="flex items-center justify-end gap-4 pt-8 border-t border-slate-100 mt-8 shrink-0 bg-white">
           <button 
-            onClick={onBack}
-            className="px-8 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-all shadow-sm"
+            onClick={onBack} 
+            className="px-8 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-all"
           >
             取消
           </button>
           <button 
-            onClick={() => {
-              if (isPaused) {
-                alert('此项目已暂停');
-                return;
-              }
-              onBack();
-            }}
-            className={`px-12 py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={onBack} 
+            className="px-8 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
           >
             保存全部
           </button>
@@ -2956,7 +3283,6 @@ const ArchiveRegisterView = ({ onBack, isPaused }: { onBack: () => void, isPause
     </div>
   );
 };
-
 
 const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRightTab, initialProjectData, isTenderUploaded, projectData, handleProjectDataChange, uploadedFiles, setUploadedFiles, isPaused }: { 
   onNavigate: (view: SubView) => void, 
@@ -4373,9 +4699,20 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
 
         {/* Opening Records Section */}
         <section className="space-y-4">
-          <div className="flex items-center gap-2 text-slate-900 font-bold border-b border-slate-100 pb-4">
-            <ClipboardList size={20} className="text-primary" />
-            <h4 className="text-lg">开标详情</h4>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-2 text-slate-900 font-bold">
+              <ClipboardList size={20} className="text-primary" />
+              <h4 className="text-lg">开标详情</h4>
+            </div>
+            {isEditing && (
+              <button 
+                onClick={() => setOpeningRecords([...openingRecords, { units: '', price: 0, rank: '', isWinner: false, isSelf: false }])}
+                disabled={isPaused}
+                className={`text-sm font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-1 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Plus size={18} /> 添加参标单位
+              </button>
+            )}
           </div>
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <table className="w-full text-left border-collapse">
@@ -4452,13 +4789,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
           </div>
           {isEditing && (
             <div className="flex justify-end mt-2">
-              <button 
-                onClick={() => setOpeningRecords([...openingRecords, { units: '', price: 0, rank: '', isWinner: false, isSelf: false }])}
-                disabled={isPaused}
-                className={`text-sm font-bold text-primary hover:underline flex items-center gap-1 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <Plus size={16} /> 添加参标单位
-              </button>
+              {/* Button moved to header */}
             </div>
           )}
         </section>
@@ -4682,6 +5013,15 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
               <Receipt size={20} className="text-primary" />
               <h4 className="text-lg">合同归档</h4>
             </div>
+            {isEditing && (
+              <button 
+                onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: 0, owner: '', status: '履行中', fulfillmentDate: '' }])}
+                disabled={isPaused}
+                className={`text-sm font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-1 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Plus size={18} /> 添加合同
+              </button>
+            )}
           </div>
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <table className="w-full text-left border-collapse">
@@ -4801,17 +5141,6 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
               </tbody>
             </table>
           </div>
-          {isEditing && (
-            <div className="flex justify-end">
-              <button 
-                onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: 0, owner: '', status: '履行中', fulfillmentDate: '' }])}
-                disabled={isPaused}
-                className={`text-xs font-bold text-primary hover:underline flex items-center gap-1 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <Plus size={14} /> 添加合同
-              </button>
-            </div>
-          )}
         </section>
 
         {/* Contract Attachments Section */}
@@ -4958,157 +5287,180 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
   );
 };
 
-const AnnotationView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => (
-  <div className={`h-[calc(100vh-200px)] flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm ${isPaused ? 'opacity-75' : ''}`}>
-    <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-      <div className="flex items-center gap-4">
-        <button onClick={onBack} className="size-8 flex items-center justify-center hover:bg-slate-200 rounded-full transition-colors text-slate-600">
-          <ChevronLeft size={20} />
-        </button>
-        <h3 className="font-bold text-slate-900 flex items-center gap-2">
-          <PenTool size={18} className="text-primary" />
-          在线批注模式
-        </h3>
-      </div>
-      <div className="flex items-center gap-2">
-        {isPaused && (
-          <span className="px-3 py-1 bg-red-50 text-red-600 text-[10px] font-bold rounded-full flex items-center gap-1 mr-2">
-            <Ban size={12} /> 此项目已暂停
-          </span>
-        )}
-        <button 
-          onClick={() => {
-            if (isPaused) {
-              alert('此项目已暂停');
-              return;
-            }
-          }}
-          className={`px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          <Download size={14} /> 导出批注
-        </button>
-        <button 
-          onClick={() => {
-            if (isPaused) {
-              alert('此项目已暂停');
-              return;
-            }
-          }}
-          className={`px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          <Share2 size={14} /> 协作分享
-        </button>
-      </div>
-    </div>
-    
-    <div className="flex-1 flex overflow-hidden">
-      {/* Document Viewer Area */}
-      <div className="flex-1 overflow-y-auto p-12 bg-slate-100/50 shadow-inner">
-        <div className="max-w-4xl mx-auto bg-white shadow-2xl p-20 min-h-[1500px] relative border border-slate-200">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-primary"></div>
-          
-          <div className="text-center mb-16">
-            <h1 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">城市基础设施二期项目</h1>
-            <h2 className="text-2xl font-bold text-slate-500">招标文件</h2>
-            <div className="mt-8 flex justify-center gap-8 text-sm text-slate-400 font-medium">
-              <span>项目编号：BID-2023-00892</span>
-              <span>发布日期：2023-11-15</span>
-            </div>
-          </div>
+interface Reply { id: string; author: string; content: string; time: string; }
+interface Annotation { id: string; author: string; role: string; time: string; content: string; replies: Reply[]; location: string; }
 
-          <div className="space-y-12 text-slate-800 leading-relaxed text-lg">
-            <section>
-              <h3 className="text-2xl font-bold mb-6 text-slate-900 border-b-2 border-slate-100 pb-3 flex items-center gap-3">
-                <span className="size-8 bg-slate-900 text-white rounded flex items-center justify-center text-sm">01</span>
-                第一章 招标公告
-              </h3>
-              <p className="mb-4">受招标人委托，对城市基础设施二期项目进行公开招标。本项目已具备招标条件，现欢迎符合条件的投标人参加投标。</p>
-              <p>1.1 项目概况：本项目主要包含城市道路绿化、照明系统升级及智慧交通设施建设。</p>
-            </section>
+const AnnotationView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => {
+  const [annotations, setAnnotations] = useState<Annotation[]>([
+    { id: '1', author: '张工', role: '技术专家', time: '10:30', content: '此技术参数需进一步核实，GB/T 标准可能有更新版本，需确认是否适用最新标准。', replies: [], location: 'marker-1' },
+    { id: '2', author: '李经理', role: '商务总监', time: '昨天', content: '30天的交付周期对于目前的供应链情况来说极具挑战，建议在答疑环节申请延长至45天。', replies: [], location: 'marker-2' },
+  ]);
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
+  const [newAnnotation, setNewAnnotation] = useState('');
 
-            <section className="relative">
-              <h3 className="text-2xl font-bold mb-6 text-slate-900 border-b-2 border-slate-100 pb-3 flex items-center gap-3">
-                <span className="size-8 bg-slate-900 text-white rounded flex items-center justify-center text-sm">02</span>
-                第二章 投标人须知
-              </h3>
-              <div className="relative group">
-                <p className="bg-blue-50 border-l-4 border-blue-500 pl-6 py-4 rounded-r-lg shadow-sm transition-all hover:bg-blue-100/50">
-                  <span className="font-bold text-blue-700 block mb-1">2.1 技术参数要求：</span>
-                  本项目涉及的所有智慧交通感应设备必须符合国家 GB/T 12345-2023 标准，且具备行业领先水平，支持 5G 毫秒级响应。
-                </p>
-                <div className="absolute -right-3 top-1/2 -translate-y-1/2 size-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-black shadow-xl border-4 border-white cursor-pointer hover:scale-125 transition-all animate-pulse">
-                  1
-                </div>
-              </div>
-              <p className="mt-6">2.2 投标有效期：自投标截止之日起 90 个日历天内有效。</p>
-            </section>
+  const handleAddReply = (annotationId: string) => {
+    if (!replyText[annotationId]?.trim()) return;
+    setAnnotations(prev => prev.map(ann => ann.id === annotationId ? {
+      ...ann,
+      replies: [...ann.replies, { id: Date.now().toString(), author: '我', content: replyText[annotationId], time: '刚刚' }]
+    } : ann));
+    setReplyText(prev => ({ ...prev, [annotationId]: '' }));
+  };
 
-            <section className="relative">
-              <h3 className="text-2xl font-bold mb-6 text-slate-900 border-b-2 border-slate-100 pb-3 flex items-center gap-3">
-                <span className="size-8 bg-slate-900 text-white rounded flex items-center justify-center text-sm">03</span>
-                第三章 商务条款
-              </h3>
-              <div className="relative group">
-                <p className="bg-orange-50 border-l-4 border-orange-500 pl-6 py-4 rounded-r-lg shadow-sm transition-all hover:bg-orange-100/50">
-                  <span className="font-bold text-orange-700 block mb-1">3.1 交付周期：</span>
-                  中标人须在合同签订后 30 个日历天内完成所有设备的交付与安装调试，并确保系统上线运行。
-                </p>
-                <div className="absolute -right-3 top-1/2 -translate-y-1/2 size-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-black shadow-xl border-4 border-white cursor-pointer hover:scale-125 transition-all animate-pulse">
-                  2
-                </div>
-              </div>
-              <p className="mt-6 italic text-slate-400 text-base">注：逾期交付将面临每日合同总额 0.5% 的违约金处罚。</p>
-            </section>
-          </div>
+  const scrollToMarker = (location: string) => {
+    const element = document.getElementById(location);
+    if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  return (
+    <div className={`h-[calc(100vh-200px)] flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm ${isPaused ? 'opacity-75' : ''}`}>
+      <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="size-8 flex items-center justify-center hover:bg-slate-200 rounded-full transition-colors text-slate-600">
+            <ChevronLeft size={20} />
+          </button>
+          <h3 className="font-bold text-slate-900 flex items-center gap-2">
+            <PenTool size={18} className="text-primary" />
+            在线批注模式
+          </h3>
         </div>
-      </div>
-
-      {/* Annotations Sidebar */}
-      <div className="w-80 border-l border-slate-100 bg-white flex flex-col">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-          <h4 className="font-black text-slate-900 flex items-center justify-between">
-            <span className="flex items-center gap-2 text-sm">
-              <PenTool size={16} className="text-primary" />
-              批注列表
-            </span>
-            <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] rounded-full">2 条记录</span>
-          </h4>
-        </div>
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {[
-            { id: 1, user: '张工', role: '技术专家', time: '10:30', content: '此处技术参数需进一步核实，GB/T 标准可能有更新版本。', type: 'technical' },
-            { id: 2, user: '李经理', role: '商务总监', time: '昨天', content: '30天的交付周期对于目前的供应链情况来说极具挑战。', type: 'business' },
-          ].map((note, i) => (
-            <div key={i} className="group relative bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="size-6 bg-slate-900 text-white rounded-lg flex items-center justify-center text-[10px] font-black">
-                    {note.user[0]}
-                  </div>
-                  <span className="text-[10px] font-black text-slate-900">{note.user}</span>
-                </div>
-                <span className="text-[10px] text-slate-400">{note.time}</span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">{note.content}</p>
-              <div className={`absolute -left-px top-4 w-1 h-8 rounded-r-full ${note.type === 'technical' ? 'bg-blue-500' : 'bg-orange-500'}`}></div>
-            </div>
-          ))}
-          <button 
-            onClick={() => {
-              if (isPaused) {
-                alert('此项目已暂停');
-                return;
-              }
-            }}
-            className={`w-full py-3 border-2 border-dashed border-slate-100 rounded-xl text-slate-400 text-[10px] font-black hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            <Plus size={14} /> 添加新批注
+        <div className="flex items-center gap-2">
+          <button className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2">
+            <Download size={14} /> 导出批注
+          </button>
+          <button className="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20">
+            <Share2 size={14} /> 协作分享
           </button>
         </div>
       </div>
+      
+      <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-12 bg-slate-100/50 shadow-inner">
+          <div className="max-w-4xl mx-auto bg-white shadow-2xl p-20 min-h-[1500px] relative border border-slate-200">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-primary"></div>
+            
+            <div className="space-y-12 text-slate-800 leading-relaxed text-lg">
+              <section>
+                <h3 className="text-2xl font-bold mb-6 text-slate-900 border-b-2 border-slate-100 pb-3">第一章 招标公告</h3>
+                <p>1.1 项目概况：本项目主要包含城市道路绿化、照明系统升级及智慧交通设施建设。</p>
+              </section>
+
+              <section className="relative">
+                <h3 className="text-2xl font-bold mb-6 text-slate-900 border-b-2 border-slate-100 pb-3">第二章 投标人须知</h3>
+                <div className="relative group" id="marker-1">
+                  <p className="bg-blue-50 border-l-4 border-blue-500 pl-6 py-4 rounded-r-lg shadow-sm">
+                    <span className="font-bold text-blue-700 block mb-1">2.1 技术参数要求：</span>
+                    本项目涉及的所有智慧交通感应设备必须符合国家 GB/T 12345-2023 标准。
+                  </p>
+                  <div 
+                    onClick={() => {
+                      const el = document.getElementById('annotation-1');
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className="absolute -right-3 top-1/2 -translate-y-1/2 size-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-black shadow-xl border-4 border-white cursor-pointer hover:scale-125 transition-all animate-pulse"
+                  >
+                    1
+                  </div>
+                </div>
+              </section>
+
+              <section className="relative">
+                <h3 className="text-2xl font-bold mb-6 text-slate-900 border-b-2 border-slate-100 pb-3">第三章 商务条款</h3>
+                <div className="relative group" id="marker-2">
+                  <p className="bg-orange-50 border-l-4 border-orange-500 pl-6 py-4 rounded-r-lg shadow-sm">
+                    <span className="font-bold text-orange-700 block mb-1">3.1 交付周期：</span>
+                    中标人须在合同签订后 30 个日历天内完成所有设备的交付与安装调试。
+                  </p>
+                  <div 
+                    onClick={() => {
+                      const el = document.getElementById('annotation-2');
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className="absolute -right-3 top-1/2 -translate-y-1/2 size-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-black shadow-xl border-4 border-white cursor-pointer hover:scale-125 transition-all animate-pulse"
+                  >
+                    2
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-80 border-l border-slate-100 bg-white flex flex-col">
+          <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+            <h4 className="font-black text-slate-900 flex items-center justify-between">
+              <span className="flex items-center gap-2 text-sm">
+                <PenTool size={16} className="text-primary" />
+                批注列表
+              </span>
+              <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] rounded-full">{annotations.length} 条记录</span>
+            </h4>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {annotations.map(ann => (
+              <div 
+                key={ann.id} 
+                id={`annotation-${ann.id}`}
+                className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-primary/30" 
+                onClick={() => scrollToMarker(ann.location)}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="size-6 bg-slate-900 text-white rounded-lg flex items-center justify-center text-[10px] font-black">{ann.author[0]}</div>
+                    <span className="text-[10px] font-black text-slate-900">{ann.author}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400">{ann.time}</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed font-medium mb-3">{ann.content}</p>
+                {ann.replies.map(reply => (
+                  <div key={reply.id} className="ml-4 mt-2 pl-3 border-l-2 border-slate-200 text-[10px] text-slate-500">
+                    <p className="font-bold text-slate-700">{reply.author}: {reply.content}</p>
+                  </div>
+                ))}
+                <div className="mt-3 flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  <input 
+                    type="text" 
+                    placeholder="回复..." 
+                    className="flex-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:ring-1 focus:ring-primary/20"
+                    value={replyText[ann.id] || ''}
+                    onChange={(e) => setReplyText(prev => ({ ...prev, [ann.id]: e.target.value }))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAddReply(ann.id);
+                      }
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <button onClick={(e) => { e.stopPropagation(); handleAddReply(ann.id); }} className="px-2 py-1 bg-primary text-white rounded text-[10px] font-bold">回复</button>
+                  <button onClick={(e) => { e.stopPropagation(); setAnnotations(prev => prev.filter(a => a.id !== ann.id)); }} className="px-2 py-1 bg-rose-50 text-rose-600 rounded text-[10px] font-bold hover:bg-rose-100">删除</button>
+                </div>
+              </div>
+            ))}
+            <div className="pt-4 border-t border-slate-100">
+              <input 
+                type="text" 
+                placeholder="添加新批注..." 
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-primary/20"
+                value={newAnnotation}
+                onChange={(e) => setNewAnnotation(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newAnnotation.trim()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setAnnotations(prev => [...prev, { id: Date.now().toString(), author: '我', role: '用户', time: '刚刚', content: newAnnotation, replies: [], location: 'marker-1' }]);
+                    setNewAnnotation('');
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const KeyInfoView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => (
   <div className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm ${isPaused ? 'opacity-75' : ''}`}>
@@ -5296,6 +5648,24 @@ const RiskView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean 
               </button>
             </div>
             <p className="text-slate-600 leading-relaxed">{risk.content}</p>
+            <div className="mt-6 pt-6 border-t border-slate-200/50">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">批注</span>
+              </div>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="添加批注..." 
+                  className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-primary/20"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      // Logic to save comment would go here
+                      (e.target as HTMLInputElement).value = '';
+                    }
+                  }}
+                />
+              </div>
+            </div>
           </div>
         ))}
       </div>

@@ -62,17 +62,22 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
     otherRemarks: ''
   });
 
-  const handleFileUpload = () => {
+  const handleFileUpload = (file: File) => {
     setIsAnalyzing(true);
+    
+    // Check if it's a ZF or CF file
+    const fileName = file.name.toLowerCase();
+    const isSpecialFormat = fileName.endsWith('.zf') || fileName.endsWith('.cf');
+
     // Simulate AI Analysis
     setTimeout(() => {
       setAnalyzedData({
         projectName: '2024年XX市智慧交通管理平台建设项目',
         projectNumber: 'T2024-ZHJT-001',
         tenderer: 'XX市交通运输局',
-        tendererContact: '张工 010-88888888',
+        tendererContact: '010-88888888',
         tenderAgent: 'XX招标代理有限公司',
-        tenderAgentContact: '李经理 010-66666666',
+        tenderAgentContact: '010-66666666',
         openingTime: '2024-01-15T09:30',
         depositDeadline: '2024-01-12T17:00',
         openingLocation: 'XX市公共资源交易中心 301 会议室',
@@ -83,7 +88,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
       });
       setIsAnalyzing(false);
       setIsAnalyzed(true);
-      setIsTenderUploaded(true);
+      setIsTenderUploaded(isSpecialFormat); // Only auto-fill if ZF or CF
     }, 2500);
   };
 
@@ -448,9 +453,21 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
                   {/* Import Section */}
                   {!isAnalyzed && !isAnalyzing && !isEditing && (
                     <div 
-                      onClick={handleFileUpload}
                       className="border-2 border-dashed border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center gap-4 bg-slate-50/50 hover:bg-primary/5 hover:border-primary/30 transition-all cursor-pointer group shrink-0"
+                      onClick={() => document.getElementById('file-upload')?.click()}
                     >
+                      <input 
+                        id="file-upload"
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.doc,.docx,.zf,.cf"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleFileUpload(file);
+                          }
+                        }}
+                      />
                       <div className="size-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
                         <Upload size={32} />
                       </div>

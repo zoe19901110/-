@@ -815,9 +815,9 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                           {isEditing && (
                             <button 
                               onClick={() => setOpeningRecords([...openingRecords, { units: '', price: '', rank: '', isWinner: false, isSelf: false }])}
-                              className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                              className="text-sm font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-1"
                             >
-                              <Plus size={14} /> 添加参标单位
+                              <Plus size={18} /> 添加参标单位
                             </button>
                           )}
                         </div>
@@ -1109,9 +1109,9 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                         {isEditing && (
                           <button 
                             onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: '', owner: '', status: '履行中', fulfillmentDate: '' }])}
-                            className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                            className="text-sm font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-1"
                           >
-                            <Plus size={14} /> 添加合同
+                            <Plus size={18} /> 添加合同
                           </button>
                         )}
                       </div>

@@ -504,9 +504,9 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                           {isEditing && (
                             <button 
                               onClick={() => setOpeningRecords([...openingRecords, { units: '', price: '', rank: '', isWinner: false, isSelf: false }])}
-                              className="px-4 py-2 bg-primary/10 text-primary rounded-lg text-xs font-bold hover:bg-primary/20 transition-all flex items-center gap-2 shrink-0"
+                              className="text-sm font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-1"
                             >
-                              <Plus size={14} /> 添加参标单位
+                              <Plus size={18} /> 添加参标单位
                             </button>
                           )}
                         </div>
@@ -676,17 +676,17 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
 
                     {/* Contract Archiving Section */}
                     <section className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                          <Receipt size={16} className="text-[#0052d9]" />
-                          合同归档
-                        </h5>
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                        <div className="flex items-center gap-2 text-slate-900 font-bold">
+                          <Receipt size={20} className="text-primary" />
+                          <h4 className="text-lg">合同归档</h4>
+                        </div>
                         {isEditing && (
                           <button 
                             onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: '', owner: '', status: '履行中', fulfillmentDate: '' }])}
-                            className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-xs font-bold hover:bg-primary/20 transition-all flex items-center gap-1"
+                            className="text-sm font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-1"
                           >
-                            <Plus size={14} /> 添加合同
+                            <Plus size={18} /> 添加合同
                           </button>
                         )}
                       </div>

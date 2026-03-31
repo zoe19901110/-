@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Users, 
   UserPlus, 
@@ -8,6 +8,7 @@ import {
   Search, 
   MoreHorizontal, 
   ChevronRight,
+  ChevronDown,
   Plus,
   UserCheck,
   Building,
@@ -17,7 +18,8 @@ import {
   Trash2,
   X,
   GripVertical,
-  RefreshCw
+  RefreshCw,
+  CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
 
@@ -46,6 +48,7 @@ interface Role {
   name: string;
   desc: string;
   userCount: number;
+  isDefault?: boolean;
 }
 
 interface Enterprise {
@@ -66,12 +69,24 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
   // Modals
   const [showDeptModal, setShowDeptModal] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [isDeptDropdownOpen, setIsDeptDropdownOpen] = useState(false);
+  const deptDropdownRef = useRef<HTMLDivElement>(null);
   const [editingDept, setEditingDept] = useState<Department | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [highlightedUserId, setHighlightedUserId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ message: string, onConfirm: () => void } | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   // Form States
   const [deptForm, setDeptForm] = useState({ name: '' });
+  const [roleForm, setRoleForm] = useState({ name: '', desc: '查看自己创建的数据' });
   const [userForm, setUserForm] = useState({
     name: '',
     depts: [] as string[], // 修改为数组
@@ -150,6 +165,19 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
     localStorage.setItem('users', JSON.stringify(users));
   }, [users]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (deptDropdownRef.current && !deptDropdownRef.current.contains(event.target as Node)) {
+        setIsDeptDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const departmentsWithCounts = React.useMemo(() => {
     return departments.map(dept => {
       const count = users.filter(u => {
@@ -160,12 +188,33 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
     });
   }, [departments, users, currentEnterprise]);
 
-  const roles: Role[] = [
-    { id: '1', name: '超级管理员', desc: '拥有系统所有权限', userCount: users.filter(u => u.roleId === '1').length },
-    { id: '2', name: '部门经理', desc: '负责部门内部项目审批与管理', userCount: users.filter(u => u.roleId === '2').length },
-    { id: '3', name: '普通员工', desc: '参与项目执行与标书制作', userCount: users.filter(u => u.roleId === '3').length },
-    { id: '4', name: '财务审计', desc: '仅拥有财务相关查看与审核权限', userCount: users.filter(u => u.roleId === '4').length },
-  ];
+  const [rolesData, setRolesData] = useState<Role[]>(() => {
+    const saved = localStorage.getItem('roles');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return parsed.map((r: Role) => {
+        if (['1', '2', '3', '4'].includes(r.id)) {
+          return { ...r, isDefault: true };
+        }
+        return r;
+      });
+    }
+    return [
+      { id: '1', name: '超级管理员', desc: '拥有全部数据查看权限', userCount: 0, isDefault: true },
+      { id: '2', name: '部门经理', desc: '拥有本部门数据查看权限', userCount: 0, isDefault: true },
+      { id: '3', name: '普通员工', desc: '查看自己创建的数据', userCount: 0, isDefault: true },
+      { id: '4', name: '财务审计', desc: '仅拥有财务查看相关权限', userCount: 0, isDefault: true },
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('roles', JSON.stringify(rolesData));
+  }, [rolesData]);
+
+  const roles: Role[] = rolesData.map(role => ({
+    ...role,
+    userCount: users.filter(u => u.roleId === role.id).length
+  }));
 
   const tabs = [
     { id: 'dept', label: '部门与人员', icon: Users },
@@ -264,10 +313,13 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
   };
 
   const handleDeleteDept = (id: string) => {
-    if (window.confirm('确定要删除该部门吗？')) {
-      setDepartments(departments.filter(d => d.id !== id));
-      if (selectedDeptId === id) setSelectedDeptId(null);
-    }
+    setConfirmDialog({
+      message: '确定要删除该部门吗？',
+      onConfirm: () => {
+        setDepartments(departments.filter(d => d.id !== id));
+        if (selectedDeptId === id) setSelectedDeptId(null);
+      }
+    });
   };
 
   const handleAddUser = () => {
@@ -305,7 +357,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
   const handleSaveUser = () => {
     // 修复：部门选择框的值为空数组时，不应触发保存
     if (!userForm.name || !userForm.depts || userForm.depts.length === 0 || !userForm.phone) {
-      alert("请填写完整信息，并至少选择一个部门");
+      showToast("请填写完整姓名、联系电话，并至少选择一个部门");
       return;
     }
     
@@ -340,7 +392,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
       }
       
       if (!isNewAccount) {
-        alert(`账号 ${userForm.phone} 已存在，已将其关联到选定的部门。`);
+        showToast(`账号 ${userForm.phone} 已存在，已将其关联到选定的部门。`);
       }
     } else if (editingUser) {
       // Standard edit for non-conflicting phone
@@ -372,22 +424,55 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
     // Update dept counts
     setDepartments(updatedUsers.length > 0 ? departments : departments); // Dummy to trigger re-render if needed, but useMemo handles it
     
-    if (isNewAccount) {
-      alert('账号已创建，初始密码为123456，请及时修改密码。');
+    if (!editingUser) {
+      showToast('新增成功，初始密码6个1');
     }
 
     setShowUserModal(false);
   };
 
+  const handleSaveRole = () => {
+    if (!roleForm.name) {
+      showToast("请填写角色名称");
+      return;
+    }
+    
+    if (editingRole) {
+      setRolesData(rolesData.map(r => r.id === editingRole.id ? { ...r, name: roleForm.name, desc: roleForm.desc } : r));
+      showToast("角色修改成功");
+    } else {
+      const newRole = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: roleForm.name,
+        desc: roleForm.desc,
+        userCount: 0,
+        isDefault: false
+      };
+      setRolesData([...rolesData, newRole]);
+      showToast("角色新增成功");
+    }
+    
+    setShowRoleModal(false);
+    setEditingRole(null);
+  };
+
   const handleResetPassword = () => {
-    alert('密码已重置为初始密码：123456');
+    showToast('重置成功，初始密码6个1');
   };
 
   const handleRemoveUser = (id: string) => {
-    if (window.confirm('确定要将该人员从企业中移除吗？移除后该账号将无法登录且在企业中消失。')) {
-      const updatedUsers = users.filter(u => u.id !== id);
-      setUsers(updatedUsers);
-    }
+    setConfirmDialog({
+      message: '确定要将该人员从企业中移除吗？移除后该账号将无法登录且在企业中消失。',
+      onConfirm: () => {
+        const updatedUsers = users.filter(u => u.id !== id);
+        setUsers(updatedUsers);
+      }
+    });
+  };
+
+  const handleToggleUserStatus = (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === '正常' ? '禁用' : '正常';
+    setUsers(users.map(u => u.id === id ? { ...u, status: newStatus } : u));
   };
 
   const filteredUsers = users.filter(user => {
@@ -399,11 +484,14 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
   });
 
   const handleResetData = () => {
-    if (window.confirm('确定要重置所有组织架构数据吗？这将清除您手动添加的数据并恢复初始示例数据。')) {
-      localStorage.removeItem('users');
-      localStorage.removeItem('departments');
-      window.location.reload();
-    }
+    setConfirmDialog({
+      message: '确定要重置所有组织架构数据吗？这将清除您手动添加的数据并恢复初始示例数据。',
+      onConfirm: () => {
+        localStorage.removeItem('users');
+        localStorage.removeItem('departments');
+        window.location.reload();
+      }
+    });
   };
 
   return (
@@ -438,7 +526,14 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
             </>
           )}
           {activeSubTab === 'role' && (
-            <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90">
+            <button 
+              onClick={() => {
+                setEditingRole(null);
+                setRoleForm({ name: '', desc: '查看自己创建的数据' });
+                setShowRoleModal(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+            >
               <Shield size={16} /> 新增角色
             </button>
           )}
@@ -509,8 +604,6 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                           <div className="flex items-center gap-2">
                             <Building size={16} className={selectedDeptId === dept.id ? 'text-primary' : 'text-slate-400'} />
                             <span className="text-sm font-medium">{dept.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                               selectedDeptId === dept.id ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'
                             }`}>
@@ -593,7 +686,6 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                       <th className="px-6 py-4">系统角色</th>
                       <th className="px-6 py-4">联系方式/账号</th>
                       <th className="px-6 py-4">账号状态</th>
-                      <th className="px-6 py-4">系统状态</th>
                       <th className="px-6 py-4 text-right">操作</th>
                     </tr>
                   </thead>
@@ -610,19 +702,20 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                         </td>
                         <td className="px-6 py-4 max-w-[200px]">
                           {user.enterprises && user.enterprises.length > 0 ? (
-                            <div className="relative group inline-flex items-center">
+                            <div className="relative group/ent inline-flex items-center">
                               <span className="truncate inline-block max-w-[180px] px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 cursor-help">
                                 {user.enterprises[0]}
                                 {user.enterprises.length > 1 && ' ...'}
                               </span>
                               {user.enterprises.length > 1 && (
-                                <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-max max-w-[250px] bg-slate-800 text-white text-xs rounded-lg p-2 shadow-xl z-10">
-                                  <div className="flex flex-col gap-1">
+                                <div className="absolute left-0 bottom-full mb-2 hidden group-hover/ent:block w-max max-w-[250px] bg-white text-slate-700 text-xs rounded-lg p-3 shadow-xl border border-slate-200 z-10">
+                                  <div className="flex flex-col gap-1.5">
                                     {user.enterprises.map((ent, idx) => (
                                       <span key={idx} className="truncate">{ent}</span>
                                     ))}
                                   </div>
-                                  <div className="absolute left-4 top-full border-4 border-transparent border-t-slate-800"></div>
+                                  <div className="absolute left-4 top-full border-4 border-transparent border-t-white"></div>
+                                  <div className="absolute left-4 top-full border-4 border-transparent border-t-slate-200 -z-10 translate-y-[1px]"></div>
                                 </div>
                               )}
                             </div>
@@ -648,23 +741,16 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          {user.hasAccount ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold">
-                              <Key size={10} /> 已开通
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-400 text-[10px] font-bold">
-                              <UserPlus size={10} /> 待分配
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold w-fit ${
-                            user.status === '正常' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
-                          }`}>
+                          <button 
+                            onClick={() => handleToggleUserStatus(user.id, user.status)}
+                            title={`点击${user.status === '正常' ? '禁用' : '启用'}账号`}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold w-fit cursor-pointer transition-all active:scale-95 ${
+                              user.status === '正常' ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-red-50 text-red-600 hover:bg-red-100'
+                            }`}
+                          >
                             <span className={`size-1.5 rounded-full ${user.status === '正常' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                            系统{user.status}
-                          </span>
+                            {user.status}
+                          </button>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -704,24 +790,59 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
         )}
 
         {activeSubTab === 'role' && (
-          <div className="col-span-12 grid grid-cols-3 gap-6">
-            {roles.map((role) => (
-              <div key={role.id} className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="size-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                    <Shield size={24} />
+          <div className="col-span-12">
+            <div className="grid grid-cols-3 gap-6">
+              {roles.map((role) => (
+                <div key={role.id} className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                        <Shield size={20} />
+                      </div>
+                      <h4 className="text-lg font-bold text-slate-900">{role.name}</h4>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => {
+                          setEditingRole(role);
+                          setRoleForm({ name: role.name, desc: role.desc });
+                          setShowRoleModal(true);
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                        title="编辑"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      {!role.isDefault && (
+                        <button 
+                          onClick={() => {
+                            setConfirmDialog({
+                              message: `确定要删除角色“${role.name}”吗？关联的用户将被重置为“普通员工”。`,
+                              onConfirm: () => {
+                                setRolesData(rolesData.filter(r => r.id !== role.id));
+                                setUsers(users.map(u => u.roleId === role.id ? { ...u, roleId: '3' } : u));
+                                if (selectedRoleId === role.id) {
+                                  setSelectedRoleId('1');
+                                }
+                                showToast('角色删除成功');
+                              }
+                            });
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="删除"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <button className="p-1.5 text-slate-400 hover:text-primary hover:bg-slate-50 rounded-lg">
-                    <MoreHorizontal size={18} />
-                  </button>
+                  <p className="text-sm text-slate-500 mb-6 leading-relaxed h-10 line-clamp-2">{role.desc}</p>
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                    <span className="text-xs text-slate-400">关联用户: <span className="font-bold text-slate-700">{role.userCount}</span></span>
+                  </div>
                 </div>
-                <h4 className="text-lg font-bold text-slate-900 mb-2">{role.name}</h4>
-                <p className="text-sm text-slate-500 mb-6 leading-relaxed">{role.desc}</p>
-                <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                  <span className="text-xs text-slate-400">关联用户: <span className="font-bold text-slate-700">{role.userCount}</span></span>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
@@ -876,69 +997,98 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                 <button onClick={() => setShowUserModal(false)} className="p-2 hover:bg-slate-100 rounded-full"><X size={20} /></button>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-1">
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">姓名</label>
-                  <input 
-                    type="text" 
-                    value={userForm.name}
-                    onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
-                  />
-                </div>
-                <div className="col-span-1">
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">部门 (可多选)</label>
-                  <div className="max-h-32 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
-                    {departments.map(d => (
-                      <label key={d.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 p-1 rounded">
-                        <input 
-                          type="checkbox"
-                          checked={userForm.depts.includes(d.name)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setUserForm({ ...userForm, depts: [...userForm.depts, d.name] });
-                            } else {
-                              setUserForm({ ...userForm, depts: userForm.depts.filter(name => name !== d.name) });
-                            }
-                          }}
-                          className="rounded border-slate-300 text-primary focus:ring-primary"
-                        />
-                        <span className="text-sm text-slate-700">{d.name}</span>
-                      </label>
-                    ))}
+                <div className="col-span-2 sm:col-span-1 flex flex-col gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">姓名</label>
+                    <input 
+                      type="text" 
+                      value={userForm.name}
+                      onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">职位</label>
+                    <input 
+                      type="text" 
+                      value={userForm.position}
+                      onChange={(e) => setUserForm({ ...userForm, position: e.target.value })}
+                      placeholder="如：项目经理"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">账号状态</label>
+                    <select 
+                      value={userForm.status}
+                      onChange={(e) => setUserForm({ ...userForm, status: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
+                    >
+                      <option value="正常">正常</option>
+                      <option value="禁用">禁用</option>
+                    </select>
                   </div>
                 </div>
-                <div className="col-span-1">
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">职位</label>
-                  <input 
-                    type="text" 
-                    value={userForm.position}
-                    onChange={(e) => setUserForm({ ...userForm, position: e.target.value })}
-                    placeholder="如：项目经理"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-                <div className="col-span-1">
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">系统角色 (关联权限)</label>
-                  <select 
-                    value={userForm.roleId}
-                    onChange={(e) => setUserForm({ ...userForm, roleId: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                  >
-                    {roles.map(role => (
-                      <option key={role.id} value={role.id}>{role.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-span-1">
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">状态</label>
-                  <select 
-                    value={userForm.status}
-                    onChange={(e) => setUserForm({ ...userForm, status: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
-                  >
-                    <option value="正常">正常</option>
-                    <option value="禁用">禁用</option>
-                  </select>
+                <div className="col-span-2 sm:col-span-1 flex flex-col gap-4">
+                  <div className="relative" ref={deptDropdownRef}>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">部门 (可多选)</label>
+                    <div 
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm cursor-pointer flex items-center justify-between hover:bg-slate-100 transition-colors"
+                      onClick={() => setIsDeptDropdownOpen(!isDeptDropdownOpen)}
+                    >
+                      <span className={`truncate mr-2 ${userForm.depts.length === 0 ? "text-slate-400" : "text-slate-900"}`}>
+                        {userForm.depts.length === 0 
+                          ? "请选择部门" 
+                          : userForm.depts.length <= 2 
+                            ? userForm.depts.join(', ') 
+                            : `已选择 ${userForm.depts.length} 个部门`}
+                      </span>
+                      <ChevronDown size={16} className={`text-slate-400 transition-transform flex-shrink-0 ${isDeptDropdownOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                    
+                    <AnimatePresence>
+                      {isDeptDropdownOpen && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto"
+                        >
+                          <div className="p-2 space-y-1">
+                            {departments.map(d => (
+                              <label key={d.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded transition-colors">
+                                <input 
+                                  type="checkbox"
+                                  checked={userForm.depts.includes(d.name)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setUserForm({ ...userForm, depts: [...userForm.depts, d.name] });
+                                    } else {
+                                      setUserForm({ ...userForm, depts: userForm.depts.filter(name => name !== d.name) });
+                                    }
+                                  }}
+                                  className="rounded border-slate-300 text-primary focus:ring-primary w-4 h-4"
+                                />
+                                <span className="text-sm text-slate-700">{d.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">系统角色 (关联权限)</label>
+                    <select 
+                      value={userForm.roleId}
+                      onChange={(e) => setUserForm({ ...userForm, roleId: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                    >
+                      {roles.map(role => (
+                        <option key={role.id} value={role.id}>{role.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">联系电话 (即系统登录账号)</label>
@@ -981,7 +1131,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                                 <span className="text-[8px] text-slate-400 mt-0.5">已自动同步: {existingUser.name}</span>
                               </div>
                             );
-                          } else if (!editingUser || !editingUser.hasAccount) {
+                          } else if (!editingUser) {
                             return (
                               <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded flex items-center gap-1">
                                 <Plus size={10} /> 将自动创建账号
@@ -1002,7 +1152,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                       <Key size={16} className="text-primary" />
                       <span className="text-sm font-bold text-slate-900">账号安全设置</span>
                     </div>
-                    {editingUser && editingUser.hasAccount && (
+                    {editingUser && (
                       <button 
                         onClick={handleResetPassword}
                         className="text-[10px] font-bold text-primary hover:bg-primary/5 px-2 py-1 rounded-md transition-colors flex items-center gap-1"
@@ -1023,6 +1173,135 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                 <button 
                   onClick={handleSaveUser}
                   className="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20"
+                >
+                  确定
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Role Modal */}
+      <AnimatePresence>
+        {showRoleModal && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                    <Shield size={20} />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">{editingRole ? '编辑角色' : '新增角色'}</h3>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowRoleModal(false);
+                    setEditingRole(null);
+                  }}
+                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">角色名称</label>
+                  <input 
+                    type="text" 
+                    value={roleForm.name}
+                    onChange={(e) => setRoleForm({ ...roleForm, name: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                    placeholder="请输入角色名称"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">权限级别</label>
+                  <select 
+                    value={roleForm.desc}
+                    onChange={(e) => setRoleForm({ ...roleForm, desc: e.target.value })}
+                    disabled={!!editingRole}
+                    className={`w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 ${
+                      editingRole ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <option value="拥有全部数据查看权限">查看全部数据</option>
+                    <option value="拥有本部门数据查看权限">查看本部门数据</option>
+                    <option value="查看自己创建的数据">查看自己数据</option>
+                    <option value="仅拥有财务查看相关权限">查看财务数据</option>
+                  </select>
+                  {editingRole && (
+                    <p className="text-[10px] text-slate-400 mt-1.5">提示：现有角色的权限级别不可修改</p>
+                  )}
+                </div>
+              </div>
+              <div className="p-6 border-t border-slate-100 bg-slate-50 flex gap-3">
+                <button 
+                  onClick={() => {
+                    setShowRoleModal(false);
+                    setEditingRole(null);
+                  }}
+                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-white"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={handleSaveRole}
+                  className="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20"
+                >
+                  确定
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3"
+          >
+            <CheckCircle2 size={18} className="text-green-400" />
+            <span className="text-sm font-medium">{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Confirm Dialog */}
+      <AnimatePresence>
+        {confirmDialog && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+            >
+              <h3 className="text-lg font-bold text-slate-900 mb-2">确认操作</h3>
+              <p className="text-sm text-slate-600 mb-6">{confirmDialog.message}</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmDialog(null)}
+                  className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    confirmDialog.onConfirm();
+                    setConfirmDialog(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 shadow-lg shadow-red-500/20"
                 >
                   确定
                 </button>

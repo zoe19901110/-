@@ -10,21 +10,60 @@ import {
   Save,
   Eye,
   EyeOff,
-  CheckCircle2
+  CheckCircle2,
+  Plus,
+  Check,
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useIdentity } from '../contexts/IdentityContext';
+import { db } from '../firebase';
+import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { useEffect } from 'react';
 
 interface PersonalCenterProps {
   currentEnterprise?: { id: string; name: string };
-  initialSection?: 'profile' | 'password';
+  initialSection?: 'profile' | 'password' | 'enterprise';
 }
 
-const PersonalCenter: React.FC<PersonalCenterProps> = ({ currentEnterprise, initialSection = 'profile' }) => {
-  const [activeSection, setActiveSection] = useState<'profile' | 'password'>(initialSection);
+const PersonalCenter: React.FC<PersonalCenterProps> = ({ currentEnterprise: propEnterprise, initialSection = 'profile' }) => {
+  const { user, currentIdentityId, switchIdentity } = useIdentity();
+  const [activeSection, setActiveSection] = useState<'profile' | 'password' | 'enterprise'>(initialSection);
+  const [enterprises, setEnterprises] = useState<any[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    const q = query(collection(db, 'enterpriseMembers'), where('userId', '==', user.uid));
+    const unsubscribeMembers = onSnapshot(q, (snapshot) => {
+      const enterpriseIds = snapshot.docs.map(doc => doc.data().enterpriseId);
+      
+      if (enterpriseIds.length === 0) {
+        setEnterprises([]);
+        return;
+      }
+
+      // To keep it simple and avoid complex nested listener management,
+      // we'll fetch the enterprise details. Since this is the User Center,
+      // a one-time fetch or a simpler listener is better.
+      const fetchEnterprises = async () => {
+        const enterprisePromises = enterpriseIds.map(async (id) => {
+          const eDoc = await getDoc(doc(db, 'enterprises', id));
+          return eDoc.exists() ? { id: eDoc.id, ...eDoc.data() } : null;
+        });
+        const results = await Promise.all(enterprisePromises);
+        setEnterprises(results.filter(e => e !== null));
+      };
+
+      fetchEnterprises();
+    });
+
+    return () => unsubscribeMembers();
+  }, [user]);
 
   const handleSave = () => {
     setSaveSuccess(true);
@@ -49,7 +88,7 @@ const PersonalCenter: React.FC<PersonalCenterProps> = ({ currentEnterprise, init
         </div>
         <div>
           <h3 className="text-lg font-bold text-slate-900">陈经理</h3>
-          <p className="text-sm text-slate-500 font-medium">项目总监 · {currentEnterprise?.name || '数字化招采部'}</p>
+          <p className="text-sm text-slate-500 font-medium">项目总监 · {propEnterprise?.name || '数字化招采部'}</p>
           <div className="flex items-center gap-2 mt-2">
             <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold flex items-center gap-1">
               <ShieldCheck size={10} />
@@ -196,6 +235,78 @@ const PersonalCenter: React.FC<PersonalCenterProps> = ({ currentEnterprise, init
     </div>
   );
 
+  const renderEnterprise = () => (
+    <div className="space-y-6 max-w-2xl">
+      <div className="grid grid-cols-1 gap-4">
+        {/* Personal Identity */}
+        <div className="p-1 border-b border-slate-100 pb-4 mb-2">
+          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">当前身份</h4>
+          <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-2xl">
+            <div className="flex items-center gap-4">
+              <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                {currentIdentityId === 'personal' ? <User size={24} /> : <Building2 size={24} />}
+              </div>
+              <div>
+                <p className="font-bold text-slate-900">{currentIdentityId === 'personal' ? '个人身份' : enterprises.find(e => e.id === currentIdentityId)?.name}</p>
+                <p className="text-xs text-slate-500">正在使用此身份访问系统</p>
+              </div>
+            </div>
+            <div className="px-3 py-1 bg-primary text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
+              当前激活
+            </div>
+          </div>
+        </div>
+
+        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-4">所有身份</h4>
+        
+        {/* Personal */}
+        <button 
+          onClick={() => switchIdentity('personal')}
+          className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
+            currentIdentityId === 'personal' 
+              ? 'border-primary bg-primary/5 ring-1 ring-primary/20' 
+              : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <div className="flex items-center gap-4">
+            <div className="size-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
+              <User size={20} />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-bold text-slate-800">个人身份</p>
+              <p className="text-[10px] text-slate-400">{user?.email}</p>
+            </div>
+          </div>
+          {currentIdentityId === 'personal' && <Check size={18} className="text-primary" />}
+        </button>
+
+        {/* Enterprises */}
+        {enterprises.map(ent => (
+          <button 
+            key={ent.id}
+            onClick={() => switchIdentity(ent.id)}
+            className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
+              currentIdentityId === ent.id 
+                ? 'border-primary bg-primary/5 ring-1 ring-primary/20' 
+                : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <div className="flex items-center gap-4">
+              <div className="size-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
+                <Building2 size={20} />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-slate-800">{ent.name}</p>
+                <p className="text-[10px] text-slate-400">企业 ID: {ent.id.slice(0, 8)}...</p>
+              </div>
+            </div>
+            {currentIdentityId === ent.id && <Check size={18} className="text-primary" />}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <motion.div 
       initial={{ opacity: 0, x: 20 }}
@@ -203,7 +314,7 @@ const PersonalCenter: React.FC<PersonalCenterProps> = ({ currentEnterprise, init
       className="space-y-8"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-900">个人中心</h2>
+        <h2 className="text-2xl font-bold text-slate-900">用户中心</h2>
         <AnimatePresence>
           {saveSuccess && (
             <motion.div 
@@ -234,6 +345,17 @@ const PersonalCenter: React.FC<PersonalCenterProps> = ({ currentEnterprise, init
             个人资料
           </button>
           <button 
+            onClick={() => setActiveSection('enterprise')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all ${
+              activeSection === 'enterprise' 
+                ? 'bg-white text-primary shadow-sm border border-slate-100' 
+                : 'text-slate-500 hover:bg-slate-100'
+            }`}
+          >
+            <Building2 size={18} />
+            身份与企业
+          </button>
+          <button 
             onClick={() => setActiveSection('password')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all ${
               activeSection === 'password' 
@@ -258,16 +380,18 @@ const PersonalCenter: React.FC<PersonalCenterProps> = ({ currentEnterprise, init
             >
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-slate-900">
-                  {activeSection === 'profile' ? '个人资料' : '修改密码'}
+                  {activeSection === 'profile' ? '个人资料' : activeSection === 'enterprise' ? '身份与企业信息' : '修改密码'}
                 </h3>
                 <p className="text-sm text-slate-500 mt-1 font-medium">
                   {activeSection === 'profile' 
                     ? '管理您的个人信息、联系方式及头像设置' 
+                    : activeSection === 'enterprise'
+                    ? '查看个人身份信息，管理并切换您所属的企业身份'
                     : '为了您的账号安全，请定期更新您的登录密码'}
                 </p>
               </div>
 
-              {activeSection === 'profile' ? renderProfile() : renderPassword()}
+              {activeSection === 'profile' ? renderProfile() : activeSection === 'enterprise' ? renderEnterprise() : renderPassword()}
             </motion.div>
           </AnimatePresence>
         </div>
