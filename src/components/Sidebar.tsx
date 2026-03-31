@@ -17,8 +17,7 @@ import {
   ChevronDown,
   ChevronRight,
   Layers,
-  Database,
-  UserCircle
+  Database
 } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'motion/react';
@@ -54,7 +53,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, currentEnter
     ] : [
       { id: 'knowledge-base', label: '个人知识库', icon: Database },
     ]),
-    { id: 'user-center', label: '用户中心', icon: UserCircle },
   ];
 
   const businessItems: SubItem[] = [

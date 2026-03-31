@@ -98,46 +98,45 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnter
                   </button>
                 </div>
 
-                <div className="p-3">
-                  <div className="flex items-center justify-between mb-2 px-1">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">切换企业</p>
-                    <button className="text-xs text-primary hover:underline font-medium">新增企业</button>
+                <div className="p-2">
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <p className="text-xs font-bold text-slate-400 uppercase">切换企业</p>
+                    <button className="text-xs text-primary hover:text-primary/80 font-medium">新增企业</button>
                   </div>
                   
-                  <div className="bg-slate-50 rounded-lg p-2.5 border border-slate-100">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 overflow-hidden flex-1">
-                        <div className="size-8 rounded bg-white border border-slate-200 flex items-center justify-center shrink-0">
-                          {currentEnterprise.id === 'personal' ? <User size={16} className="text-slate-400" /> : <Building2 size={16} className="text-slate-400" />}
-                        </div>
-                        <span className="text-sm font-semibold text-slate-700 truncate">{currentEnterprise.name}</span>
+                  <div className="relative px-2">
+                    <button
+                      onClick={() => setShowEntSelect(!showEntSelect)}
+                      className="flex items-center justify-between w-full px-3 py-2 text-sm rounded-md bg-primary/10 text-primary font-bold"
+                    >
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        {currentEnterprise.id === 'personal' ? <User size={14} /> : <Building2 size={14} />}
+                        <span className="truncate">{currentEnterprise.name}</span>
                       </div>
-                      <button 
-                        onClick={() => setShowEntSelect(!showEntSelect)}
-                        className="px-3 py-1.5 bg-white border border-slate-200 rounded text-xs font-bold text-primary hover:bg-primary/5 hover:border-primary/20 shadow-sm transition-all shrink-0"
-                      >
-                        切换
-                      </button>
-                    </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                        <ChevronDown size={14} className={`transition-transform ${showEntSelect ? 'rotate-180' : ''}`} />
+                      </div>
+                    </button>
 
                     {showEntSelect && (
-                      <div className="mt-2.5 pt-2.5 border-t border-slate-200 space-y-1 max-h-48 overflow-y-auto">
-                        {enterprises.map((ent) => (
+                      <div className="absolute left-2 right-2 mt-1 bg-white border border-slate-200 rounded-md shadow-lg z-40 py-1 max-h-60 overflow-y-auto">
+                        {enterprises.filter(ent => ent.id !== currentEnterprise.id).map((ent) => (
                           <button
                             key={ent.id}
                             onClick={() => {
                               setCurrentEnterprise(ent);
                               setShowEntSelect(false);
                             }}
-                            className={`flex items-center justify-between w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors ${ent.id === currentEnterprise.id ? 'bg-primary/10 text-primary font-bold' : 'text-slate-600 hover:bg-white'}`}
+                            className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
                           >
-                            <div className="flex items-center gap-2 truncate">
-                              {ent.id === 'personal' ? <User size={14} className="opacity-50" /> : <Building2 size={14} className="opacity-50" />}
-                              <span className="truncate">{ent.name}</span>
-                            </div>
-                            {ent.id === currentEnterprise.id && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                            {ent.id === 'personal' ? <User size={14} className="text-slate-400" /> : <Building2 size={14} className="text-slate-400" />}
+                            <span className="truncate">{ent.name}</span>
                           </button>
                         ))}
+                        {enterprises.length <= 1 && (
+                          <p className="px-3 py-2 text-xs text-slate-400 italic">暂无其他企业</p>
+                        )}
                       </div>
                     )}
                   </div>
