@@ -415,7 +415,32 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     onClick={handleInitialLogin}
                     className="w-full py-5 bg-primary text-white rounded-[12px] font-bold text-xl shadow-xl shadow-primary/20 hover:shadow-2xl hover:bg-primary/90 active:scale-[0.98] transition-all mt-6"
                   >
-                    登录
+                    确认登录
+                  </button>
+
+                  <div className="relative my-8">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-slate-200"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-4 bg-white text-slate-400 font-medium">推荐使用</span>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={async () => {
+                      try {
+                        const { signIn } = await import('../firebase');
+                        await signIn();
+                        onLogin('personal');
+                      } catch (err) {
+                        triggerError('Google 登录失败，请检查 Firebase 配置');
+                      }
+                    }}
+                    className="w-full py-5 bg-white border-2 border-primary/20 text-primary rounded-[12px] font-bold text-xl hover:bg-primary/5 hover:border-primary transition-all flex items-center justify-center gap-3 shadow-lg shadow-primary/5"
+                  >
+                    <img src="https://www.google.com/favicon.ico" className="size-6" alt="Google" />
+                    使用 Google 账号登录
                   </button>
                 </div>
               </motion.div>

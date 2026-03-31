@@ -114,12 +114,107 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
     </div>
   );
 
+  const getEnterpriseData = () => {
+    const data: Record<string, any> = {
+      'personal': {
+        basicInfo: [
+          { label: '姓名', value: '张三' },
+          { label: '职业', value: '项目经理' },
+          { label: '联系方式', value: '13800138000' },
+          { label: '电子邮箱', value: 'zhangsan@example.com' },
+          { label: '擅长领域', value: '房建工程、市政工程' },
+          { label: '工作年限', value: '12年' },
+        ],
+        personnel: [
+          { name: '张三', title: '高级工程师', cert: '一级建造师', code: '京111060800001', date: '2025-12-31' },
+        ],
+        qualification: [
+          { name: '一级建造师执业资格', code: '京111060800001', date: '2025-12-31', status: 'valid' },
+        ],
+        performance: [
+          { name: '个人参与：某市中心医院项目', amount: '4.2 亿元', date: '2023-08-15', manager: '张三', location: '江苏省南京市' },
+        ]
+      },
+      'ent-1': {
+        basicInfo: [
+          { label: '法定代表人', value: '张建国' },
+          { label: '注册资本', value: '50,000.00 万人民币' },
+          { label: '成立日期', value: '2008-05-18' },
+          { label: '企业类型', value: '有限责任公司(国有独资)' },
+          { label: '所属行业', value: '房屋建筑业' },
+          { label: '登记机关', value: '北京市市场监督管理局' },
+          { label: '注册地址', value: '北京市朝阳区某某路某某大厦 18 层' },
+          { label: '经营范围', value: '各类房屋建筑工程施工总承包；市政公用工程施工总承包等。' },
+        ],
+        personnel: [
+          { name: '张建国', title: '高级工程师', cert: '一级建造师', code: '京111060800001', date: '2025-12-31' },
+          { name: '李晓明', title: '工程师', cert: '二级建造师', code: '京211060800002', date: '2024-06-15' },
+        ],
+        qualification: [
+          { name: '建筑工程施工总承包特级', code: 'A1011011000101', date: '2028-12-31', status: 'valid' },
+          { name: '市政公用工程施工总承包一级', code: 'A2021022000202', date: '2027-06-15', status: 'valid' },
+        ],
+        performance: [
+          { name: '某市中心医院综合大楼建设项目', amount: '4.2 亿元', date: '2023-08-15', manager: '王志强', location: '江苏省南京市' },
+          { name: '某新区市政道路及管网配套工程', amount: '8,500 万元', date: '2023-05-20', manager: '李晓明', location: '浙江省杭州市' },
+        ]
+      },
+      'ent-2': {
+        basicInfo: [
+          { label: '法定代表人', value: '李市政' },
+          { label: '注册资本', value: '20,000.00 万人民币' },
+          { label: '成立日期', value: '2012-10-22' },
+          { label: '企业类型', value: '有限责任公司' },
+          { label: '所属行业', value: '土木工程建筑业' },
+          { label: '登记机关', value: '上海市市场监督管理局' },
+          { label: '注册地址', value: '上海市浦东新区某某路 88 号' },
+          { label: '经营范围', value: '市政公用工程施工总承包；公路工程施工总承包等。' },
+        ],
+        personnel: [
+          { name: '李市政', title: '高级工程师', cert: '一级建造师', code: '沪111060800003', date: '2026-05-18' },
+          { name: '王路桥', title: '高级工程师', cert: '一级建造师', code: '沪111060800004', date: '2025-09-12' },
+        ],
+        qualification: [
+          { name: '市政公用工程施工总承包特级', code: 'S1011011000101', date: '2029-01-10', status: 'valid' },
+          { name: '公路工程施工总承包一级', code: 'G2021022000202', date: '2027-11-30', status: 'valid' },
+        ],
+        performance: [
+          { name: '上海市某跨海大桥建设项目', amount: '15.6 亿元', date: '2023-11-10', manager: '李市政', location: '上海市' },
+          { name: '某省高速公路扩建工程', amount: '8.2 亿元', date: '2023-04-05', manager: '王路桥', location: '浙江省' },
+        ]
+      },
+      'ent-3': {
+        basicInfo: [
+          { label: '院长', value: '王设计' },
+          { label: '注册资本', value: '10,000.00 万人民币' },
+          { label: '成立日期', value: '1995-03-15' },
+          { label: '企业类型', value: '事业单位' },
+          { label: '所属行业', value: '专业技术服务业' },
+          { label: '登记机关', value: '广东省市场监督管理局' },
+          { label: '注册地址', value: '广州市天天河区某某路 1 号' },
+          { label: '经营范围', value: '工程设计；工程勘察；工程咨询等。' },
+        ],
+        personnel: [
+          { name: '王设计', title: '国家一级注册建筑师', cert: '一级注册建筑师', code: '粤111060800005', date: '2027-03-15' },
+          { name: '陈结构', title: '国家一级注册结构工程师', cert: '一级注册结构工程师', code: '粤111060800006', date: '2026-12-20' },
+        ],
+        qualification: [
+          { name: '工程设计综合资质甲级', code: 'SJ1011011000101', date: '2030-05-18', status: 'valid' },
+          { name: '工程勘察综合资质甲级', code: 'KC2021022000202', date: '2028-09-12', status: 'valid' },
+        ],
+        performance: [
+          { name: '广州某地标性超高层建筑设计', amount: '2,800 万元', date: '2023-12-01', manager: '王设计', location: '广东省广州市' },
+          { name: '深圳某大型体育场馆方案设计', amount: '1,500 万元', date: '2023-06-20', manager: '陈结构', location: '广东省深圳市' },
+        ]
+      }
+    };
+    return data[enterpriseId] || data['ent-1'];
+  };
+
+  const currentData = getEnterpriseData();
+
   const renderPersonnel = () => {
-    const personnelData = [
-      { name: '张建国', title: '高级工程师', cert: '一级建造师', code: '京111060800001', date: '2025-12-31' },
-      { name: '李晓明', title: '工程师', cert: '二级建造师', code: '京211060800002', date: '2024-06-15' },
-      { name: '王志强', title: '高级会计师', cert: '注册会计师', code: '11000001', date: '2026-11-10' },
-    ].map(p => ({ ...p, name: `${p.name} (${enterpriseName})` }));
+    const personnelData = currentData.personnel.map((p: any) => ({ ...p, name: `${p.name} (${enterpriseName})` }));
 
     return (
     <div className="flex flex-col">
@@ -137,7 +232,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {personnelData.map((item, idx) => (
+            {personnelData.map((item: any, idx: number) => (
               <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                 <td className="px-6 py-4 font-bold text-slate-700">{item.name}</td>
                 <td className="px-6 py-4 text-sm text-slate-500">{item.title}</td>
@@ -354,16 +449,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
 };
 
   const renderBasicInfo = () => {
-    const basicInfoData = [
-      { label: '法定代表人', value: '张建国' },
-      { label: '注册资本', value: '50,000.00 万人民币' },
-      { label: '成立日期', value: '2008-05-18' },
-      { label: '企业类型', value: '有限责任公司(国有独资)' },
-      { label: '所属行业', value: '房屋建筑业' },
-      { label: '登记机关', value: '北京市市场监督管理局' },
-      { label: '注册地址', value: '北京市朝阳区某某路某某大厦 18 层' },
-      { label: '经营范围', value: '各类房屋建筑工程施工总承包；市政公用工程施工总承包；钢结构工程专业承包；机电设备安装工程专业承包；地基与基础工程专业承包；建筑装修装饰工程专业承包；建筑幕墙工程专业承包；园林古建筑工程专业承包；消防设施工程专业承包；起重设备安装工程专业承包；建筑工程设计；工程造价咨询；工程招标代理；工程监理；建筑材料销售。' },
-    ];
+    const basicInfoData = currentData.basicInfo;
 
     return (
     <div className="flex flex-col">
@@ -380,7 +466,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
       </div>
       <div className="p-0">
         <div className="grid grid-cols-1 divide-y divide-slate-100">
-          {basicInfoData.map((item, idx) => (
+          {basicInfoData.map((item: any, idx: number) => (
             <div key={idx} className="flex px-8 py-4 hover:bg-slate-50/50 transition-colors">
               <div className="w-40 shrink-0 text-xs font-bold text-slate-400 uppercase tracking-wider">{item.label}</div>
               <div className="text-sm text-slate-700 font-medium">{item.value}</div>
@@ -393,14 +479,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
   };
 
   const renderQualification = () => {
-    const qualificationData = [
-      { name: '建筑工程施工总承包特级', code: 'A1011011000101', date: '2028-12-31', status: 'valid' },
-      { name: '市政公用工程施工总承包一级', code: 'A2021022000202', date: '2027-06-15', status: 'valid' },
-      { name: '钢结构工程专业承包一级', code: 'B3031033000303', date: '2024-03-20', status: 'warning' },
-      { name: '建筑装修装饰工程专业承包一级', code: 'B4041044000404', date: '2026-11-10', status: 'valid' },
-      { name: '机电工程施工总承包一级', code: 'A5051055000505', date: '2025-08-22', status: 'valid' },
-      { name: '地基基础工程专业承包一级', code: 'B6061066000606', date: '2024-04-05', status: 'warning' },
-    ].map(q => ({ ...q, name: `${enterpriseName} - ${q.name}` }));
+    const qualificationData = currentData.qualification.map((q: any) => ({ ...q, name: `${enterpriseName} - ${q.name}` }));
 
     return (
     <div className="flex flex-col">
@@ -417,7 +496,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {qualificationData.map((item, idx) => (
+              {qualificationData.map((item: any, idx: number) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -471,13 +550,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
 };
 
   const renderPerformance = () => {
-    const performanceData = [
-      { name: '某市中心医院综合大楼建设项目', amount: '4.2 亿元', date: '2023-08-15', manager: '王志强', location: '江苏省南京市' },
-      { name: '某新区市政道路及管网配套工程', amount: '8,500 万元', date: '2023-05-20', manager: '李晓明', location: '浙江省杭州市' },
-      { name: '某大型商业综合体装修装饰工程', amount: '1.2 亿元', date: '2022-12-10', manager: '陈经理', location: '上海市浦东新区' },
-      { name: '某科技园区研发中心二期工程', amount: '2.8 亿元', date: '2022-09-30', manager: '张美玲', location: '广东省深圳市' },
-      { name: '某跨江大桥加固维修及亮化工程', amount: '4,500 万元', date: '2022-06-15', manager: '王志强', location: '湖北省武汉市' },
-    ].map(p => ({ ...p, name: `${enterpriseName} - ${p.name}` }));
+    const performanceData = currentData.performance.map((p: any) => ({ ...p, name: `${enterpriseName} - ${p.name}` }));
 
     return (
     <div className="flex flex-col">
@@ -495,7 +568,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {performanceData.map((item, idx) => (
+              {performanceData.map((item: any, idx: number) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">

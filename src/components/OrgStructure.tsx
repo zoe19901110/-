@@ -126,16 +126,16 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
     const saved = localStorage.getItem('users');
     const demoEnterprises = ['中建八局第三建设有限公司', '中铁建工集团有限公司', '陈经理'];
     const initialUsers = [
-      { id: '1', name: '陈经理', depts: ['总经办'], position: '项目总监', roleId: '1', email: 'chen@example.com', phone: '13800008888', status: '正常', hasAccount: true, username: '13800008888', enterprises: demoEnterprises },
-      { id: '1-2', name: '李助理', depts: ['总经办'], position: '行政助理', roleId: '3', email: 'li_asst@example.com', phone: '13800001111', status: '正常', hasAccount: true, username: '13800001111', enterprises: demoEnterprises },
-      { id: '2', name: '王志强', depts: ['市场部'], position: '市场经理', roleId: '2', email: 'wang@example.com', phone: '13900007777', status: '正常', hasAccount: true, username: '13900007777', enterprises: demoEnterprises },
-      { id: '2-2', name: '赵敏', depts: ['市场部'], position: '商务专员', roleId: '3', email: 'zhao@example.com', phone: '13900002222', status: '正常', hasAccount: true, username: '13900002222', enterprises: demoEnterprises },
-      { id: '3', name: '李晓明', depts: ['技术部'], position: '技术专家', roleId: '3', email: 'li@example.com', phone: '13700006666', status: '正常', hasAccount: true, username: '13700006666', enterprises: demoEnterprises },
-      { id: '3-2', name: '周工', depts: ['技术部'], position: '高级工程师', roleId: '3', email: 'zhou@example.com', phone: '13700003333', status: '正常', hasAccount: true, username: '13700003333', enterprises: demoEnterprises },
-      { id: '3-3', name: '吴工', depts: ['技术部'], position: '研发工程师', roleId: '3', email: 'wu@example.com', phone: '13700004444', status: '正常', hasAccount: true, username: '13700004444', enterprises: demoEnterprises },
-      { id: '4', name: '张美玲', depts: ['财务部'], position: '财务主管', roleId: '4', email: 'zhang@example.com', phone: '13600005555', status: '正常', hasAccount: true, username: '13600005555', enterprises: demoEnterprises },
-      { id: '4-2', name: '孙会计', depts: ['财务部'], position: '出纳', roleId: '3', email: 'sun@example.com', phone: '13600006666', status: '正常', hasAccount: true, username: '13600006666', enterprises: demoEnterprises },
-      { id: '5', name: '郑律师', depts: ['法务部'], position: '法务顾问', roleId: '3', email: 'zheng@example.com', phone: '13500009999', status: '正常', hasAccount: true, username: '13500009999', enterprises: demoEnterprises },
+      { id: '1', name: '陈经理', depts: ['总经办'], position: '项目总监', roleId: '1', email: 'chen@example.com', phone: '13800008888', status: '正常', hasAccount: true, username: '13800138000', enterprises: ['中建八局第三建设有限公司', '中铁建工集团有限公司', '陈经理'] },
+      { id: '1-2', name: '李助理', depts: ['总经办'], position: '行政助理', roleId: '3', email: 'li_asst@example.com', phone: '13800001111', status: '正常', hasAccount: true, username: '13800001111', enterprises: ['中建八局第三建设有限公司', '陈经理'] },
+      { id: '2', name: '王志强', depts: ['市场部'], position: '市场经理', roleId: '2', email: 'wang@example.com', phone: '13900007777', status: '正常', hasAccount: true, username: '13900007777', enterprises: ['中铁建工集团有限公司', '陈经理'] },
+      { id: '2-2', name: '赵敏', depts: ['市场部'], position: '商务专员', roleId: '3', email: 'zhao@example.com', phone: '13900002222', status: '正常', hasAccount: true, username: '13900002222', enterprises: ['中建八局第三建设有限公司'] },
+      { id: '3', name: '李晓明', depts: ['技术部'], position: '技术专家', roleId: '3', email: 'li@example.com', phone: '13700006666', status: '正常', hasAccount: true, username: '13700006666', enterprises: ['中铁建工集团有限公司'] },
+      { id: '3-2', name: '周工', depts: ['技术部'], position: '高级工程师', roleId: '3', email: 'zhou@example.com', phone: '13700003333', status: '正常', hasAccount: true, username: '13700003333', enterprises: ['中建八局第三建设有限公司', '陈经理'] },
+      { id: '3-3', name: '吴工', depts: ['技术部'], position: '研发工程师', roleId: '3', email: 'wu@example.com', phone: '13700004444', status: '正常', hasAccount: true, username: '13700004444', enterprises: ['中铁建工集团有限公司'] },
+      { id: '4', name: '张美玲', depts: ['财务部'], position: '财务主管', roleId: '4', email: 'zhang@example.com', phone: '13600005555', status: '正常', hasAccount: true, username: '13600005555', enterprises: ['中建八局第三建设有限公司'] },
+      { id: '4-2', name: '孙会计', depts: ['财务部'], position: '出纳', roleId: '3', email: 'sun@example.com', phone: '13600006666', status: '正常', hasAccount: true, username: '13600006666', enterprises: ['中铁建工集团有限公司', '陈经理'] },
+      { id: '5', name: '郑律师', depts: ['法务部'], position: '法务顾问', roleId: '3', email: 'zheng@example.com', phone: '13500009999', status: '正常', hasAccount: true, username: '13500009999', enterprises: ['中建八局第三建设有限公司'] },
     ];
     if (!saved) return initialUsers;
     const parsed = JSON.parse(saved);
@@ -148,11 +148,10 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
       }
     });
 
-    // 迁移数据：转换部门格式并确保演示企业存在
+    // 迁移数据：转换部门格式
     return mergedUsers.map((u: any) => {
       const depts = u.depts || (u.dept ? [u.dept] : []);
-      const isInitialUser = /^[1-5](-.*)?$/.test(u.id);
-      const enterprises = isInitialUser ? Array.from(new Set([...(u.enterprises || []), ...demoEnterprises])) : (u.enterprises || []);
+      const enterprises = u.enterprises || [];
       return { ...u, depts, enterprises };
     });
   });

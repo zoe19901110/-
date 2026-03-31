@@ -158,6 +158,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, currentEnter
                       <div key={item.id} className="space-y-1">
                         <button
                           onClick={() => {
+                            if (item.id === 'inspection') {
+                              window.open('https://biaoshujiancha.graybruce.cn', '_blank');
+                              return;
+                            }
                             if (item.children) {
                               toggleSubItem(item.id);
                             } else {

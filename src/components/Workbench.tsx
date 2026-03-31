@@ -29,6 +29,7 @@ import {
   ChevronRight,
   ChevronLeft,
   ChevronDown,
+  Layers,
   Trophy,
   Receipt,
   Users,
@@ -340,7 +341,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
 
       <div className="flex gap-6 relative">
         {/* Main Content Area */}
-        <div className="flex-1">
+        <div className="flex-1 space-y-6">
 
       {/* Project Header */}
       <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-100 space-y-6">
@@ -630,9 +631,9 @@ const Workbench: React.FC<WorkbenchProps> = ({
       <AnimatePresence mode="wait">
         <motion.div
           key={`${currentPhase}-${subView}`}
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -10 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           className="space-y-6"
         >
           {subView === 'main' ? (
@@ -3384,8 +3385,10 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
 
   if (showResultPage) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 h-[calc(100vh-300px)] overflow-y-auto">
-        <h2 className="text-2xl font-black text-slate-900 mb-6">解析报告</h2>
+      <div className="flex flex-col gap-6">
+        <div className="h-2"></div>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 h-[calc(100vh-300px)] overflow-y-auto">
+          <h2 className="text-2xl font-black text-slate-900 mb-6">解析报告</h2>
         <div className="space-y-4">
           <div className="p-4 bg-blue-50 rounded-lg text-blue-700 font-bold">解析完成，已提取项目基本信息。</div>
           <button 
@@ -3396,12 +3399,14 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
           </button>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   if (isAnalyzing) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-300px)] bg-white rounded-xl border border-slate-200 shadow-sm p-12">
+        <div className="h-2"></div>
         <h2 className="text-3xl font-black text-slate-900 mb-4">正在解析招标文件，请稍候</h2>
         <p className="text-slate-400 mb-8">预计需要5-10分钟，解析过程中可关闭此页面</p>
         <div className="w-full max-w-2xl bg-slate-100 rounded-full h-4 mb-4">
@@ -3425,9 +3430,11 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
 
   if (!isParsed) {
     return (
-      <div className="flex gap-6 h-[calc(100vh-450px)] min-h-[600px]">
-        {/* Left: Upload & History */}
-        <div className="flex-1 flex flex-col gap-6">
+      <div className="flex flex-col gap-6 h-[calc(100vh-450px)] min-h-[600px]">
+        <div className="h-2"></div>
+        <div className="flex gap-6 flex-1">
+          {/* Left: Upload & History */}
+          <div className="flex-1 flex flex-col gap-6">
           {/* Upload Area */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 flex flex-col items-center justify-center flex-1 relative overflow-hidden group">
             <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
@@ -3551,17 +3558,19 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   if (showParsingPage) {
     return <BidParsing autoImported={isTenderUploaded} uploadedFiles={uploadedFiles} onBack={() => setShowParsingPage(false)} isPaused={isPaused} />;
   }
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-300px)] min-h-[700px] relative">
-      {/* Left: Project Info & Uploads */}
-      <div className="flex-1 bg-white rounded-xl border border-slate-200 overflow-y-auto p-8 shadow-sm space-y-8 custom-scrollbar">
+    <div className="flex flex-col gap-6 min-h-[600px] relative">
+      <div className="flex gap-6 flex-1 overflow-hidden">
+        {/* Left: Project Info & Uploads */}
+        <div className="flex-1 bg-white rounded-xl border border-slate-200 overflow-y-auto p-8 shadow-sm space-y-8 custom-scrollbar">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
             <Info size={20} className="text-primary" />
@@ -4053,32 +4062,26 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 const ProductionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () => void, onSelect: (id: string | null) => void, isPaused: boolean }) => {
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
-          <span className="w-1.5 h-6 bg-primary rounded-full"></span>
-          当前阶段：制作阶段
-        </h3>
-      </div>
-
+    <div className="space-y-8 min-h-[600px]">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
       <div 
         onMouseEnter={() => onSelect('file-production')}
         onMouseLeave={() => onSelect(null)}
         onClick={onNavigate}
-        className="bg-primary rounded-xl p-8 text-white shadow-xl shadow-primary/20 group hover:-translate-y-1 transition-all duration-300 cursor-pointer relative overflow-hidden"
+        className="bg-white border border-slate-200 rounded-xl p-8 text-slate-900 hover:bg-primary hover:text-white shadow-sm hover:shadow-xl hover:shadow-primary/20 group hover:-translate-y-1 transition-all duration-300 cursor-pointer relative overflow-hidden"
       >
         <div className="relative z-10">
-          <div className="bg-white/10 p-3 rounded-lg backdrop-blur-sm w-fit mb-6">
+          <div className="bg-blue-50 text-blue-600 p-3 rounded-lg group-hover:bg-white/10 group-hover:text-white backdrop-blur-sm w-fit mb-6 transition-colors">
             <FileText size={24} />
           </div>
           <h4 className="text-xl font-bold mb-3">文件制作</h4>
-          <p className="text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem]">跳转至在线编辑器，进行投标文件正文编写，支持多人协同实时编辑。</p>
+          <p className="text-slate-400 group-hover:text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem] transition-colors">跳转至在线编辑器，进行投标文件正文编写，支持多人协同实时编辑。</p>
           <button 
             onClick={() => {
               if (isPaused) {
@@ -4087,7 +4090,7 @@ const ProductionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () =>
               }
               onNavigate();
             }}
-            className={`w-full py-3.5 bg-white text-primary font-bold rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full py-3.5 bg-white border border-slate-200 text-slate-700 group-hover:border-transparent group-hover:text-primary font-bold rounded-lg hover:bg-blue-50 transition-all flex items-center justify-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             立即开始 <ArrowRight size={16} />
           </button>
@@ -4102,13 +4105,13 @@ const ProductionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () =>
           key={i} 
           onMouseEnter={() => card.id !== 'bid-check' && onSelect(card.id)}
           onMouseLeave={() => onSelect(null)}
-          className="bg-white border border-slate-200 rounded-xl p-8 hover:shadow-lg transition-all group cursor-pointer flex flex-col"
+          className="bg-white border border-slate-200 rounded-xl p-8 hover:bg-primary hover:text-white hover:shadow-xl hover:shadow-primary/20 transition-all group cursor-pointer flex flex-col hover:-translate-y-1 duration-300"
         >
-          <div className={`p-3 rounded-lg w-fit mb-6 ${card.color}`}>
+          <div className={`p-3 rounded-lg w-fit mb-6 ${card.color} group-hover:bg-white/10 group-hover:text-white transition-colors`}>
             <card.icon size={24} />
           </div>
           <h4 className="text-xl font-bold mb-3">{card.title}</h4>
-          <p className="text-slate-400 text-sm mb-10 leading-relaxed min-h-[4.5rem]">{card.desc}</p>
+          <p className="text-slate-400 group-hover:text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem] transition-colors">{card.desc}</p>
           <button 
             onClick={() => {
               if (isPaused) {
@@ -4117,7 +4120,7 @@ const ProductionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () =>
               }
               onNavigate();
             }}
-            className={`mt-auto w-full py-3.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-primary hover:text-primary transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`mt-auto w-full py-3.5 bg-white border border-slate-200 text-slate-700 group-hover:border-transparent group-hover:text-primary font-bold rounded-lg hover:bg-blue-50 transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {card.btn}
           </button>
@@ -4129,20 +4132,14 @@ const ProductionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () =>
 };
 
 const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: (view: SubView) => void, onSelect: (id: string | null) => void, isPaused: boolean }) => (
-  <div className="space-y-8">
-    <div className="flex items-center justify-between mb-4">
-      <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
-        <span className="w-1.5 h-6 bg-primary rounded-full"></span>
-        当前阶段：检查阶段
-      </h3>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-      <div className="bg-white border border-slate-200 rounded-xl p-8 hover:shadow-lg transition-all group cursor-pointer flex flex-col">
-        <div className="p-3 rounded-lg w-fit mb-6 bg-emerald-50 text-emerald-600">
+  <div className="space-y-8 min-h-[600px]">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+      <div className="bg-white border border-slate-200 rounded-xl p-8 hover:bg-primary hover:text-white hover:shadow-xl hover:shadow-primary/20 transition-all group cursor-pointer flex flex-col hover:-translate-y-1 duration-300">
+        <div className="p-3 rounded-lg w-fit mb-6 bg-emerald-50 text-emerald-600 group-hover:bg-white/10 group-hover:text-white transition-colors">
           <Receipt size={24} />
         </div>
         <h4 className="text-xl font-bold mb-3">保证金回执上传</h4>
-        <p className="text-slate-400 text-sm mb-10 leading-relaxed min-h-[4.5rem]">上传保证金缴纳回执，确保投标资格有效性。</p>
+        <p className="text-slate-400 group-hover:text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem] transition-colors">上传保证金缴纳回执，确保投标资格有效性。</p>
         <button 
           onClick={() => {
             if (isPaused) {
@@ -4151,7 +4148,7 @@ const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: (view
             }
             onNavigate('margin-receipt');
           }}
-          className={`mt-auto w-full py-3.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-primary hover:text-primary transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`mt-auto w-full py-3.5 bg-white border border-slate-200 text-slate-700 group-hover:border-transparent group-hover:text-primary font-bold rounded-lg hover:bg-blue-50 transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           立即上传
         </button>
@@ -4162,18 +4159,18 @@ const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: (view
         onMouseLeave={() => onSelect(null)}
         onClick={() => {
           if (!isPaused) {
-            onNavigate('inspection-detail');
+            window.open('https://biaoshujiancha.graybruce.cn', '_blank');
           }
         }}
-        className="bg-primary rounded-xl p-8 text-white shadow-xl shadow-primary/20 group hover:-translate-y-1 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col"
+        className="bg-white border border-slate-200 rounded-xl p-8 text-slate-900 hover:bg-primary hover:text-white hover:shadow-xl hover:shadow-primary/20 group hover:-translate-y-1 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col"
       >
         <div className="flex justify-between items-start mb-6">
-          <div className="bg-white/10 p-3 rounded-lg backdrop-blur-sm">
+          <div className="bg-blue-50 text-blue-600 p-3 rounded-lg group-hover:bg-white/10 group-hover:text-white backdrop-blur-sm transition-colors">
             <FileText size={24} />
           </div>
         </div>
         <h4 className="text-xl font-bold mb-3">标书检查</h4>
-        <p className="text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem]">系统将自动扫描标书完整性、雷同性及格式规范，确保投标文件的有效性，降低废标风险。</p>
+        <p className="text-slate-400 group-hover:text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem] transition-colors">系统将自动扫描标书完整性、雷同性及格式规范，确保投标文件的有效性，降低废标风险。</p>
           <button 
             onClick={(e) => {
               e.stopPropagation();
@@ -4181,20 +4178,48 @@ const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: (view
                 alert('此项目已暂停');
                 return;
               }
-              onNavigate('inspection-detail');
+              window.open('https://biaoshujiancha.graybruce.cn', '_blank');
             }}
-            className={`mt-auto w-full py-3.5 bg-white text-primary font-bold rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`mt-auto w-full py-3.5 bg-white border border-slate-200 text-slate-700 group-hover:border-transparent group-hover:text-primary font-bold rounded-lg hover:bg-blue-50 transition-all flex items-center justify-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             开始检查 <ArrowRight size={16} />
           </button>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-8 hover:shadow-lg transition-all group cursor-pointer flex flex-col">
-        <div className="p-3 rounded-lg w-fit mb-6 bg-slate-50 text-slate-600">
+      <div 
+        onClick={() => {
+          if (!isPaused) {
+            window.open('https://newbidui.graybruce.cn/', '_blank');
+          }
+        }}
+        className="bg-white border border-slate-200 rounded-xl p-8 hover:bg-primary hover:text-white hover:shadow-xl hover:shadow-primary/20 transition-all group cursor-pointer flex flex-col hover:-translate-y-1 duration-300"
+      >
+        <div className="p-3 rounded-lg w-fit mb-6 bg-indigo-50 text-indigo-600 group-hover:bg-white/10 group-hover:text-white transition-colors">
+          <Layers size={24} />
+        </div>
+        <h4 className="text-xl font-bold mb-3">多版本比对</h4>
+        <p className="text-slate-400 group-hover:text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem] transition-colors">支持对不同版本的标书进行快速比对，自动识别差异内容，提高审核效率。</p>
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isPaused) {
+              alert('此项目已暂停');
+              return;
+            }
+            window.open('https://newbidui.graybruce.cn/', '_blank');
+          }}
+          className={`mt-auto w-full py-3.5 bg-white border border-slate-200 text-slate-700 group-hover:border-transparent group-hover:text-primary font-bold rounded-lg hover:bg-blue-50 transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          开始比对
+        </button>
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-xl p-8 hover:bg-primary hover:text-white hover:shadow-xl hover:shadow-primary/20 transition-all group cursor-pointer flex flex-col hover:-translate-y-1 duration-300">
+        <div className="p-3 rounded-lg w-fit mb-6 bg-slate-50 text-slate-600 group-hover:bg-white/10 group-hover:text-white transition-colors">
           <Copy size={24} />
         </div>
         <h4 className="text-xl font-bold mb-3">标书查重</h4>
-        <p className="text-slate-400 text-sm mb-10 leading-relaxed min-h-[4.5rem]">对标书内容进行深度查重分析，自动识别重复段落，有效降低废标风险。</p>
+        <p className="text-slate-400 group-hover:text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem] transition-colors">对标书内容进行深度查重分析，自动识别重复段落，有效降低废标风险。</p>
         <button 
           onClick={() => {
             if (isPaused) {
@@ -4202,18 +4227,18 @@ const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: (view
               return;
             }
           }}
-          className={`mt-auto w-full py-3.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-primary hover:text-primary transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`mt-auto w-full py-3.5 bg-white border border-slate-200 text-slate-700 group-hover:border-transparent group-hover:text-primary font-bold rounded-lg hover:bg-blue-50 transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           开始检测
         </button>
       </div>
       
-      <div className="bg-white border border-slate-200 rounded-xl p-8 hover:shadow-lg transition-all group cursor-pointer flex flex-col">
-        <div className="p-3 rounded-lg w-fit mb-6 bg-slate-50 text-slate-600">
+      <div className="bg-white border border-slate-200 rounded-xl p-8 hover:bg-primary hover:text-white hover:shadow-xl hover:shadow-primary/20 transition-all group cursor-pointer flex flex-col hover:-translate-y-1 duration-300">
+        <div className="p-3 rounded-lg w-fit mb-6 bg-slate-50 text-slate-600 group-hover:bg-white/10 group-hover:text-white transition-colors">
           <Users size={24} />
         </div>
         <h4 className="text-xl font-bold mb-3">模拟开标</h4>
-        <p className="text-slate-400 text-sm mb-10 leading-relaxed min-h-[4.5rem]">模拟线上开标流程，提前熟悉系统操作，进行数字证书（CA）验证及加解密测试，确保正式开标顺利进行。</p>
+        <p className="text-slate-400 group-hover:text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem] transition-colors">模拟线上开标流程，提前熟悉系统操作，进行数字证书（CA）验证及加解密测试，确保正式开标顺利进行。</p>
         <button 
           onClick={() => {
             if (isPaused) {
@@ -4221,7 +4246,7 @@ const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: (view
               return;
             }
           }}
-          className={`mt-auto w-full py-3.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-primary hover:text-primary transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`mt-auto w-full py-3.5 bg-white border border-slate-200 text-slate-700 group-hover:border-transparent group-hover:text-primary font-bold rounded-lg hover:bg-blue-50 transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           进入模拟
         </button>
@@ -4378,12 +4403,10 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
   };
 
   return (
-    <div className="space-y-10 pb-10">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
-          <span className="w-1.5 h-6 bg-primary rounded-full"></span>
-          标后归档管理
-        </h3>
+    <div className="space-y-8 min-h-[600px]">
+      <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm">
+        <div className="space-y-10 pb-10">
+          <div className="flex items-center justify-end">
         <div className="flex gap-3">
           <button 
             onClick={() => {
@@ -5283,6 +5306,8 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
           </div>
         )}
       </AnimatePresence>
+        </div>
+      </div>
     </div>
   );
 };

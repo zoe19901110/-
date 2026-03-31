@@ -6,6 +6,29 @@ interface CertificatesProps {
 }
 
 const Certificates: React.FC<CertificatesProps> = ({ currentEnterprise }) => {
+  const enterpriseId = currentEnterprise?.id || 'ent-1';
+  const enterpriseName = currentEnterprise?.name || '杭州某某科技有限公司';
+
+  const getCertData = () => {
+    const baseCerts = [
+      { name: `营业执照`, code: '91110000100001234X', org: '市场监督管理局', date: '长期', status: '正常' },
+      { name: `建筑业企业资质证书`, code: 'D211060800', org: '住房和城乡建设部', date: '2028-05-20', status: '正常' },
+      { name: `安全生产许可证`, code: '(京)JZ安许证字[2021]000123', org: '住房和城乡建设委员会', date: '2024-04-15', status: 'warning' },
+      { name: `质量管理体系认证`, code: '00121Q31000123', org: '中国质量认证中心', date: '2024-03-01', status: 'expired' },
+    ];
+
+    if (enterpriseId === 'personal') {
+      return [
+        { name: '一级建造师执业资格证书', code: '京111060800001', org: '住房和城乡建设部', date: '2025-12-31', status: '正常' },
+        { name: '高级工程师职称证书', code: 'GC20230001', org: '某省人力资源和社会保障厅', date: '长期', status: '正常' },
+      ];
+    }
+
+    return baseCerts.map(c => ({ ...c, name: `${enterpriseName}-${c.name}` }));
+  };
+
+  const certs = getCertData();
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
@@ -47,15 +70,15 @@ const Certificates: React.FC<CertificatesProps> = ({ currentEnterprise }) => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">总证照数</p>
-          <p className="text-2xl font-bold text-slate-900">42</p>
+          <p className="text-2xl font-bold text-slate-900">{certs.length}</p>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">即将到期 (30天内)</p>
-          <p className="text-2xl font-bold text-amber-500">3</p>
+          <p className="text-2xl font-bold text-amber-500">{certs.filter(c => c.status === 'warning').length}</p>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">已过期</p>
-          <p className="text-2xl font-bold text-rose-500">1</p>
+          <p className="text-2xl font-bold text-rose-500">{certs.filter(c => c.status === 'expired').length}</p>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
           <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">待年检</p>
@@ -77,12 +100,7 @@ const Certificates: React.FC<CertificatesProps> = ({ currentEnterprise }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                { name: `营业执照`, code: '91110000100001234X', org: '市场监督管理局', date: '长期', status: '正常' },
-                { name: `建筑业企业资质证书`, code: 'D211060800', org: '住房和城乡建设部', date: '2028-05-20', status: '正常' },
-                { name: `安全生产许可证`, code: '(京)JZ安许证字[2021]000123', org: '住房和城乡建设委员会', date: '2024-04-15', status: 'warning' },
-                { name: `质量管理体系认证`, code: '00121Q31000123', org: '中国质量认证中心', date: '2024-03-01', status: 'expired' },
-              ].map((item, idx) => (
+              {certs.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">

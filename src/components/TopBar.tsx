@@ -113,9 +113,10 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnter
                         {currentEnterprise.id === 'personal' ? <User size={14} /> : <Building2 size={14} />}
                         <span className="truncate">{currentEnterprise.name}</span>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                        <ChevronDown size={14} className={`transition-transform ${showEntSelect ? 'rotate-180' : ''}`} />
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs px-2 py-1 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
+                          切换
+                        </span>
                       </div>
                     </button>
 

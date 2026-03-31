@@ -130,21 +130,21 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
   const alerts = [
     {
       id: '1',
-      title: '城市基础设施项目 招标文件解析 需在今天 18:00 前完成',
+      title: `${currentEnterprise.name} - 城市基础设施项目 招标文件解析 需在今天 18:00 前完成`,
       priority: '高优先级',
       time: '今天 18:00',
       type: 'urgent'
     },
     {
       id: '2',
-      title: '项目经理 王志强 发起了政务云项目的价格审核流程',
+      title: `${currentEnterprise.name} - 项目经理 王志强 发起了政务云项目的价格审核流程`,
       priority: '中优先级',
       time: '明天 09:00',
       type: 'info'
     },
     {
       id: '3',
-      title: '完成 年度业绩台账 的季度数据校验',
+      title: `${currentEnterprise.name} - 完成 年度业绩台账 的季度数据校验`,
       priority: '低优先级',
       time: '11-27 15:00',
       type: 'success'
