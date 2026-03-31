@@ -4118,7 +4118,11 @@ const ProductionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () =>
                 alert('此项目已暂停');
                 return;
               }
-              onNavigate();
+              if (card.id === 'ai-bid') {
+                window.open('https://bqpoint.com/AIbianbiao/dist/index.html', '_blank');
+              } else {
+                onNavigate();
+              }
             }}
             className={`mt-auto w-full py-3.5 bg-white border border-slate-200 text-slate-700 group-hover:border-transparent group-hover:text-primary font-bold rounded-lg hover:bg-blue-50 transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
           >

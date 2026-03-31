@@ -1359,7 +1359,7 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                         }
 
                         // Validate winning records
-                        if (winningRecords.length > 0 && winningRecords.some(r => r.isSelf === null)) {
+                        if (winningRecords.length > 0 && winningRecords.some(r => r.isSelf === null || r.isSelf === undefined || r.isSelf === '')) {
                           alert('中标详情：请选择中标单位是否为本单位');
                           return;
                         }

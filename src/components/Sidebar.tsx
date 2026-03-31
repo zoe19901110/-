@@ -131,82 +131,70 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, currentEnter
         <div className="flex-1 px-4 py-2 min-h-0 space-y-2">
           {/* Business Management Menu */}
           <div>
-            <button
-              onClick={() => setIsBusinessOpen(!isBusinessOpen)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all ${
-                isBusinessOpen ? 'text-primary bg-primary/5' : 'text-slate-600 hover:bg-slate-50'
-              }`}
+            <div
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-primary bg-primary/5"
             >
               <div className="flex items-center gap-3">
                 <Layers size={18} />
                 <span className="text-sm font-bold">业务管理</span>
               </div>
-              {isBusinessOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-            </button>
+            </div>
 
-            <AnimatePresence>
-              {isBusinessOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="mt-1 ml-4 pl-2 border-l border-slate-100 space-y-1 py-1">
-                    {businessItems.map((item) => (
-                      <div key={item.id} className="space-y-1">
+            <div className="mt-1 ml-4 pl-2 border-l border-slate-100 space-y-1 py-1">
+              {businessItems.map((item) => (
+                <div key={item.id} className="space-y-1">
+                  <button
+                    onClick={() => {
+                      if (item.id === 'inspection') {
+                        window.open('https://biaoshujiancha.graybruce.cn', '_blank');
+                        return;
+                      }
+                      if (item.id === 'ai-prep') {
+                        window.open('https://bqpoint.com/AIbianbiao/dist/index.html', '_blank');
+                        return;
+                      }
+                      if (item.children) {
+                        toggleSubItem(item.id);
+                      } else {
+                        setActiveTab(item.id);
+                      }
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${
+                      activeTab === item.id || item.children?.some(c => c.id === activeTab)
+                        ? 'text-primary bg-primary/5 font-bold' 
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                    }`}
+                  >
+                    <span className="text-[12px] font-medium whitespace-nowrap">
+                      {item.label}
+                    </span>
+                    {item.children && (
+                      expandedSubItems.includes(item.id) ? <ChevronDown size={12} /> : <ChevronRight size={12} />
+                    )}
+                  </button>
+
+                  {item.children && expandedSubItems.includes(item.id) && (
+                    <div className="ml-3 pl-3 border-l border-slate-100 space-y-1 py-1 max-h-40 overflow-y-auto custom-scrollbar">
+                      {item.children.map((child) => (
                         <button
-                          onClick={() => {
-                            if (item.id === 'inspection') {
-                              window.open('https://biaoshujiancha.graybruce.cn', '_blank');
-                              return;
-                            }
-                            if (item.children) {
-                              toggleSubItem(item.id);
-                            } else {
-                              setActiveTab(item.id);
-                            }
-                          }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${
-                            activeTab === item.id || item.children?.some(c => c.id === activeTab)
+                          key={child.id}
+                          onClick={() => setActiveTab(child.id)}
+                          className={`w-full flex items-center px-3 py-1.5 rounded-lg transition-all ${
+                            activeTab === child.id 
                               ? 'text-primary bg-primary/5 font-bold' 
-                              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                              : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'
                           }`}
                         >
-                          <span className="text-[12px] font-medium whitespace-nowrap">
-                            {item.label}
+                          <span className="text-[11px] font-medium whitespace-nowrap">
+                            {child.label}
                           </span>
-                          {item.children && (
-                            expandedSubItems.includes(item.id) ? <ChevronDown size={12} /> : <ChevronRight size={12} />
-                          )}
                         </button>
-
-                        {item.children && expandedSubItems.includes(item.id) && (
-                          <div className="ml-3 pl-3 border-l border-slate-100 space-y-1 py-1 max-h-40 overflow-y-auto custom-scrollbar">
-                            {item.children.map((child) => (
-                              <button
-                                key={child.id}
-                                onClick={() => setActiveTab(child.id)}
-                                className={`w-full flex items-center px-3 py-1.5 rounded-lg transition-all ${
-                                  activeTab === child.id 
-                                    ? 'text-primary bg-primary/5 font-bold' 
-                                    : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'
-                                }`}
-                              >
-                                <span className="text-[11px] font-medium whitespace-nowrap">
-                                  {child.label}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </nav>

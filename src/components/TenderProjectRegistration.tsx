@@ -147,7 +147,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
   };
 
   const handleGiveUpProject = (id: string) => {
-    if (window.confirm('确定要放弃该项目的投标吗？')) {
+    if (window.confirm('请再次确认是否作废？')) {
       setProjects(projects.map(p => p.id === id ? { ...p, status: '放弃投标' } : p));
     }
   };
@@ -159,6 +159,11 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
   };
 
   const handleSaveProject = () => {
+    if (!analyzedData.projectName.trim()) {
+      alert('请填写必填项：项目名称');
+      return;
+    }
+    
     const newProjectData = {
       id: isEditing ? editingId! : Date.now().toString(),
       name: analyzedData.projectName,
