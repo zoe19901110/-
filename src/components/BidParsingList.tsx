@@ -38,20 +38,20 @@ const BidParsingList: React.FC<BidParsingListProps> = ({ onEnterDetail, currentE
   const [projects, setProjects] = useState<Project[]>([
     {
       id: '1',
-      name: `2024年智慧交通管理平台建设项目`,
-      code: 'ZB-2024-001',
+      name: `2026年智慧交通管理平台建设项目`,
+      code: 'ZB-2026-001',
       tenderer: 'XX市交通运输局',
-      updateTime: '2023-11-20 14:30',
+      updateTime: '2025-11-20 14:30',
       status: '已解析',
-      latestFile: '2024年智慧交通管理平台建设项目招标文件.pdf',
+      latestFile: '2026年智慧交通管理平台建设项目招标文件.pdf',
       uploadedFiles: { 'tender-doc': true }
     },
     {
       id: '2',
       name: `政务云扩容采购项目`,
-      code: 'ZB-2024-005',
+      code: 'ZB-2026-005',
       tenderer: 'XX市大数据局',
-      updateTime: '2023-11-19 10:15',
+      updateTime: '2025-11-19 10:15',
       status: '未解析',
       latestFile: '政务云扩容采购项目招标文件.pdf',
       uploadedFiles: { 'tender-doc': true, 'clar-doc-0': true }
@@ -59,9 +59,9 @@ const BidParsingList: React.FC<BidParsingListProps> = ({ onEnterDetail, currentE
     {
       id: '3',
       name: `城市绿化带自动灌溉系统`,
-      code: 'ZB-2024-008',
+      code: 'ZB-2026-008',
       tenderer: 'XX市园林局',
-      updateTime: '2023-11-18 09:00',
+      updateTime: '2025-11-18 09:00',
       status: '未解析',
       uploadedFiles: {}
     }

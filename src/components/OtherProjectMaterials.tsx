@@ -16,7 +16,8 @@ import {
   User,
   Edit3,
   Trash2,
-  MoreHorizontal
+  MoreHorizontal,
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -35,6 +36,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
   const [materialName, setMaterialName] = useState('');
   const [uploadType, setUploadType] = useState('技术材料');
   const [uploadRemarks, setUploadRemarks] = useState('');
+  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
 
   const [projects, setProjects] = useState<any[]>([]);
 
@@ -45,6 +47,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
       alert('此项目已暂停');
       return;
     }
+    setHasAttemptedSave(false);
     setShowAddModal(true);
   };
 
@@ -52,28 +55,28 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
     setProjects([
       {
         id: '1',
-        name: `2024年智慧交通管理平台建设项目`,
-        code: 'ZB-2024-001',
+        name: `2026年智慧交通管理平台建设项目`,
+        code: 'ZB-2026-001',
         tenderer: 'XX市交通运输局',
         manager: '张伟',
         materialCount: 5,
-        lastUpdate: '2024-03-15',
+        lastUpdate: '2026-03-15',
         hasMaterials: true
       },
       {
         id: '2',
         name: `政务云扩容采购项目`,
-        code: 'ZB-2024-005',
+        code: 'ZB-2026-005',
         tenderer: 'XX市大数据局',
         manager: '李芳',
         materialCount: 3,
-        lastUpdate: '2024-03-12',
+        lastUpdate: '2026-03-12',
         hasMaterials: true
       },
       {
         id: '3',
         name: `城市绿化带自动灌溉系统`,
-        code: 'ZB-2024-008',
+        code: 'ZB-2026-008',
         tenderer: 'XX市园林局',
         manager: '王强',
         materialCount: 0,
@@ -88,7 +91,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
       id: 'm1',
       fileName: '技术方案初稿.pdf',
       type: '技术材料',
-      uploadDate: '2024-03-15',
+      uploadDate: '2026-03-15',
       size: '4.2 MB',
       uploader: '张伟'
     },
@@ -96,7 +99,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
       id: 'm2',
       fileName: '商务资质证明.zip',
       type: '商务材料',
-      uploadDate: '2024-03-12',
+      uploadDate: '2026-03-12',
       size: '12.8 MB',
       uploader: '李芳'
     }
@@ -129,6 +132,11 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
   };
 
   const handleUpload = () => {
+    setHasAttemptedSave(true);
+    if (!materialName.trim()) {
+      alert('请填写所有必填项');
+      return;
+    }
     // Mock upload logic
     setShowAddModal(false);
     setUploadFiles([]);
@@ -447,13 +455,20 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
 
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 ml-1 uppercase">材料名称 <span className="text-red-500">*</span></label>
-                        <input 
-                          type="text" 
-                          value={materialName}
-                          onChange={(e) => setMaterialName(e.target.value)}
-                          placeholder="请输入材料名称..."
-                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
-                        />
+                        <div className="relative flex items-center">
+                          <input 
+                            type="text" 
+                            value={materialName}
+                            onChange={(e) => setMaterialName(e.target.value)}
+                            placeholder="请输入材料名称..."
+                            className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !materialName.trim() ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'}`}
+                          />
+                          {hasAttemptedSave && !materialName.trim() && (
+                            <div className="absolute right-4 text-red-500">
+                              <AlertCircle size={16} className="fill-red-500 text-white" />
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <div className="space-y-1.5">

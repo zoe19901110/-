@@ -55,19 +55,19 @@ const Materials: React.FC<MaterialsProps> = ({ currentEnterprise }) => {
 
   const getMockFiles = () => {
     const baseFiles = [
-      { id: 'f1', name: `2024版介绍PPT.pptx`, type: 'ppt', size: '12.5MB', date: '2024-03-18' },
-      { id: 'f2', name: `施工现场标准化图集.pdf`, type: 'pdf', size: '8.2MB', date: '2024-03-15' },
-      { id: 'f3', name: `项目经理部组织架构图.png`, type: 'image', size: '2.1MB', date: '2024-03-12' },
-      { id: 'f4', name: `某省体育馆项目业绩证明.zip`, type: 'zip', size: '156MB', date: '2024-03-10' },
-      { id: 'f5', name: `技术标通用模板-房建类.docx`, type: 'word', size: '1.4MB', date: '2024-03-05' },
-      { id: 'f6', name: `安全生产许可证.pdf`, type: 'pdf', size: '3.2MB', date: '2024-02-28' },
-      { id: 'f7', name: `质量管理体系认证.pdf`, type: 'pdf', size: '2.8MB', date: '2024-02-25' },
+      { id: 'f1', name: `2026版介绍PPT.pptx`, type: 'ppt', size: '12.5MB', date: '2026-03-18' },
+      { id: 'f2', name: `施工现场标准化图集.pdf`, type: 'pdf', size: '8.2MB', date: '2026-03-15' },
+      { id: 'f3', name: `项目经理部组织架构图.png`, type: 'image', size: '2.1MB', date: '2026-03-12' },
+      { id: 'f4', name: `某省体育馆项目业绩证明.zip`, type: 'zip', size: '156MB', date: '2026-03-10' },
+      { id: 'f5', name: `技术标通用模板-房建类.docx`, type: 'word', size: '1.4MB', date: '2026-03-05' },
+      { id: 'f6', name: `安全生产许可证.pdf`, type: 'pdf', size: '3.2MB', date: '2026-02-28' },
+      { id: 'f7', name: `质量管理体系认证.pdf`, type: 'pdf', size: '2.8MB', date: '2026-02-25' },
     ];
 
     if (enterpriseId === 'personal') {
       return [
-        { id: 'p1', name: '个人简历.pdf', type: 'pdf', size: '1.2MB', date: '2024-01-10' },
-        { id: 'p2', name: '作品集.zip', type: 'zip', size: '45MB', date: '2024-02-15' },
+        { id: 'p1', name: '个人简历.pdf', type: 'pdf', size: '1.2MB', date: '2026-01-10' },
+        { id: 'p2', name: '作品集.zip', type: 'zip', size: '45MB', date: '2026-02-15' },
       ];
     }
 

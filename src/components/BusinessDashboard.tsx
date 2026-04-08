@@ -24,7 +24,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
   const [trendViewType, setTrendViewType] = useState<'month' | 'year'>('month');
   const [trendSelectedYear, setTrendSelectedYear] = useState<string>('全部');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const yearOptions = ['全部', '2026', '2025', '2024'];
+  const yearOptions = ['全部', '2028', '2027', '2026'];
 
   // 1. Calculate Stats
   const stats = useMemo(() => {
@@ -86,13 +86,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
   // 3. Trend Data
   const trendData = useMemo(() => {
     if (trendViewType === 'year') {
-      const years = ['2023', '2024', '2025', '2026'];
+      const years = ['2025', '2026', '2027', '2028'];
       return years.map(y => ({
         name: y,
-        count: projects.filter(p => p.bidOpeningTime.startsWith(y)).length + (y === '2023' ? 5 : 0) // Mock 2023
+        count: projects.filter(p => p.bidOpeningTime.startsWith(y)).length + (y === '2025' ? 5 : 0) // Mock 2025
       }));
     } else {
-      const year = trendSelectedYear === '全部' ? '2024' : trendSelectedYear;
+      const year = trendSelectedYear === '全部' ? '2026' : trendSelectedYear;
       const months = Array.from({ length: 12 }, (_, i) => `${year}-${(i + 1).toString().padStart(2, '0')}`);
       return months.map(m => ({
         name: m,

@@ -28,7 +28,8 @@ import {
   Upload,
   Eye,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -56,13 +57,14 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [tenderPersonnel, setTenderPersonnel] = useState<string[]>(['陈经理', '王志强']);
   const [tenderFiles, setTenderFiles] = useState<Attachment[]>([
-    { id: 'tf-1', name: '技术标书-最终版.pdf', size: '15.5MB', type: 'pdf', date: '2024-03-19' },
-    { id: 'tf-2', name: '商务标书-最终版.pdf', size: '8.2MB', type: 'pdf', date: '2024-03-19' }
+    { id: 'tf-1', name: '技术标书-最终版.pdf', size: '15.5MB', type: 'pdf', date: '2026-03-19' },
+    { id: 'tf-2', name: '商务标书-最终版.pdf', size: '8.2MB', type: 'pdf', date: '2026-03-19' }
   ]);
   const [personnelInput, setPersonnelInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
   const [showPersonnelDropdown, setShowPersonnelDropdown] = useState(false);
+  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
 
   const departments = React.useMemo(() => {
     const depts = new Set<string>();
@@ -89,6 +91,7 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
   }, []);
 
   const handleOpenModal = (record?: any) => {
+    setHasAttemptedSave(false);
     // Check if the project is paused
     const project = projects.find(p => p.code === record?.projectCode || p.name === record?.projectName);
     if (project?.status === '放弃投标') {
@@ -115,23 +118,23 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
   const [isEditing, setIsEditing] = useState(true);
   const [isNewRecord, setIsNewRecord] = useState(false);
   const [openingRecords, setOpeningRecords] = useState([
-    { units: '某某建设集团有限公司', price: 12105000, rank: '1', isWinner: true },
-    { units: '中建某局有限公司', price: 12500000, rank: '2', isWinner: false },
-    { units: '省建工集团', price: 12800000, rank: '3', isWinner: false },
+    { units: '某某建设集团有限公司', price: 12105000, rank: '1', isWinner: true, isSelf: true },
+    { units: '中建某局有限公司', price: 12500000, rank: '2', isWinner: false, isSelf: false },
+    { units: '省建工集团', price: 12800000, rank: '3', isWinner: false, isSelf: false },
   ]);
   const [winningRecords, setWinningRecords] = useState([
-    { unit: '某某建设集团有限公司', amount: 12105000, date: '2024-03-25', url: 'http://ggzy.example.com/...', isSelf: null },
+    { unit: '某某建设集团有限公司', amount: 12105000, date: '2026-03-25', url: 'http://ggzy.example.com/...' },
   ]);
   const [contractRecords, setContractRecords] = useState([
-    { id: 'HT-2024-001', name: '城市基础设施施工合同', date: '2024-04-05', amount: 11800000, owner: '陈经理', status: '履行中', fulfillmentDate: '2024-04-10' },
+    { id: 'HT-2026-001', name: '城市基础设施施工合同', date: '2026-04-05', amount: 11800000, owner: '陈经理', duration: '30', status: '履行中', fulfillmentDate: '2026-04-10', expectedCompletionDate: '2026-05-10' },
   ]);
   const [unsuccessfulReason, setUnsuccessfulReason] = useState('由于竞争对手报价更具优势，且在同类项目中有更丰富的实施经验，本次未能中标。后续需加强成本控制和案例积累。');
   const [contractAttachments, setContractAttachments] = useState<Attachment[]>([
-    { id: '1', name: '中标通知书.pdf', size: '1.2MB', type: 'pdf', date: '2024-03-25', category: '中标通知书' },
-    { id: '2', name: '施工合同扫描件.jpg', size: '2.4MB', type: 'image', date: '2024-04-05', category: '合同' },
+    { id: '1', name: '中标通知书.pdf', size: '1.2MB', type: 'pdf', date: '2026-03-25', category: '中标通知书' },
+    { id: '2', name: '施工合同扫描件.jpg', size: '2.4MB', type: 'image', date: '2026-04-05', category: '合同' },
   ]);
   const [openingRecordFiles, setOpeningRecordFiles] = useState<Attachment[]>([
-    { id: 'orf-1', name: '开标记录表-20240320.pdf', size: '1.5MB', type: 'pdf', date: '2024-03-20', category: '开标记录' }
+    { id: 'orf-1', name: '开标记录表-20260320.pdf', size: '1.5MB', type: 'pdf', date: '2026-03-20', category: '开标记录' }
   ]);
 
   const updateOpening = (index: number, field: string, value: any) => {
@@ -148,12 +151,16 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
         unit: newRecords[index].units,
         amount: newRecords[index].price,
         date: winningRecords[0]?.date || '',
-        url: winningRecords[0]?.url || '',
-        isSelf: winningRecords[0]?.isSelf ?? null
+        url: winningRecords[0]?.url || ''
       }]);
     } else if (field === 'isWinner' && value === false) {
       // If unmarking the winner, clear winning records
       setWinningRecords([]);
+    } else if (field === 'isSelf' && value === true) {
+      // If marking as self, unmark others
+      newRecords.forEach((r, i) => {
+        if (i !== index) r.isSelf = false;
+      });
     } else if (newRecords[index].isWinner && (field === 'units' || field === 'price')) {
       // If updating the name or price of the current winner, sync to winning records
       setWinningRecords([{
@@ -176,6 +183,28 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
   const updateContract = (index: number, field: string, value: any) => {
     const newRecords = [...contractRecords];
     (newRecords[index] as any)[field] = value;
+    
+    if (field === 'fulfillmentDate' || field === 'duration') {
+      const record = newRecords[index];
+      const durationVal = parseInt(record.duration as any);
+      if (record.fulfillmentDate && !isNaN(durationVal)) {
+        const start = new Date(record.fulfillmentDate);
+        const end = new Date(start);
+        end.setDate(start.getDate() + durationVal);
+        record.expectedCompletionDate = end.toISOString().split('T')[0];
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (today < start) {
+          record.status = '未开始';
+        } else if (today > end) {
+          record.status = '已完成';
+        } else {
+          record.status = '履行中';
+        }
+      }
+    }
+    
     setContractRecords(newRecords);
   };
 
@@ -205,24 +234,24 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
     const rawRecords = [
       {
         id: '1',
-        projectCode: 'ZB-2024-001',
-        projectName: `2024年智慧交通管理平台建设项目`,
-        openingDate: '2024-03-20',
+        projectCode: 'ZB-2026-001',
+        projectName: `2026年智慧交通管理平台建设项目`,
+        openingDate: '2026-03-20',
         result: '中标',
         bidPrice: 4450000.00,
         competitors: 5,
         ranking: 1,
         remarks: '技术分第一，商务分第二',
         fulfillmentStatus: '履行中',
-        fulfillmentStartDate: '2024-04-01',
+        fulfillmentStartDate: '2026-04-01',
         refundStatus: '待退还',
         hasOpeningInfo: true
       },
       {
         id: '2',
-        projectCode: 'ZB-2024-005',
+        projectCode: 'ZB-2026-005',
         projectName: `政务云扩容采购项目`,
-        openingDate: '2024-02-28',
+        openingDate: '2026-02-28',
         result: '未中标',
         bidPrice: 2750000.00,
         competitors: 8,
@@ -234,9 +263,9 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
       },
       {
         id: '3',
-        projectCode: 'ZB-2024-008',
+        projectCode: 'ZB-2026-008',
         projectName: `XX市智慧医疗信息系统`,
-        openingDate: '2024-03-15',
+        openingDate: '2026-03-15',
         result: '中标',
         bidPrice: 8200000.00,
         competitors: 4,
@@ -248,9 +277,9 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
       },
       {
         id: '4',
-        projectCode: 'ZB-2024-012',
+        projectCode: 'ZB-2026-012',
         projectName: `工业园区污水处理自动化改造`,
-        openingDate: '2024-03-05',
+        openingDate: '2026-03-05',
         result: '未中标',
         bidPrice: 1500000.00,
         competitors: 12,
@@ -262,9 +291,9 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
       },
       {
         id: '5',
-        projectCode: 'ZB-2024-015',
+        projectCode: 'ZB-2026-015',
         projectName: `省图书馆数字化二期工程`,
-        openingDate: '2024-01-25',
+        openingDate: '2026-01-25',
         result: '中标',
         bidPrice: 3100000.00,
         competitors: 3,
@@ -276,9 +305,9 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
       },
       {
         id: '6',
-        projectCode: 'ZB-2024-020',
+        projectCode: 'ZB-2026-020',
         projectName: `智慧园区二期弱电工程`,
-        openingDate: '2024-04-10',
+        openingDate: '2026-04-10',
         result: '',
         bidPrice: 0,
         competitors: 0,
@@ -501,7 +530,7 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-white rounded-3xl shadow-2xl w-full max-w-[1000px] max-h-[90vh] flex flex-col overflow-hidden"
+                className="bg-white rounded-3xl shadow-2xl w-full max-w-[1300px] max-h-[90vh] flex flex-col overflow-hidden"
               >
                 <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
                   <div className="flex items-center gap-3">
@@ -534,11 +563,11 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                       <div className="grid grid-cols-2 gap-8">
                         <div className="space-y-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">关联项目 <span className="text-red-500">*</span></p>
-                          <p className="text-sm font-bold text-slate-900">2024年智慧交通管理平台建设项目</p>
+                          <p className="text-sm font-bold text-slate-900">2026年智慧交通管理平台建设项目</p>
                         </div>
                         <div className="space-y-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">开标日期 <span className="text-red-500">*</span></p>
-                          <p className="text-sm font-bold text-slate-900">2024-03-20</p>
+                          <p className="text-sm font-bold text-slate-900">2026-03-20</p>
                         </div>
                       </div>
                     </div>
@@ -821,14 +850,15 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                             </button>
                           )}
                         </div>
-                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                          <table className="w-full text-left border-collapse">
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+                          <table className="w-full text-left border-collapse min-w-[800px]">
                             <thead>
                               <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
                                 <th className="px-6 py-4">参标单位 <span className="text-red-500">*</span></th>
                                 <th className="px-6 py-4">投标报价（元） <span className="text-red-500">*</span></th>
                                 <th className="px-6 py-4">排名 <span className="text-red-500">*</span></th>
                                 <th className="px-6 py-4 text-center">是否中标 <span className="text-red-500">*</span></th>
+                                <th className="px-6 py-4 text-center">是否本单位 <span className="text-red-500">*</span></th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -836,40 +866,60 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                 <tr key={i} className={`hover:bg-slate-50/50 transition-colors ${row.isWinner ? 'bg-emerald-50/30' : ''}`}>
                                   <td className="px-6 py-4">
                                     {isEditing ? (
-                                      <input 
-                                        value={row.units} 
-                                        onChange={(e) => updateOpening(i, 'units', e.target.value)}
-                                        className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
-                                        placeholder="请输入参标单位"
-                                      />
+                                      <div className="relative flex items-center">
+                                        <input 
+                                          value={row.units} 
+                                          onChange={(e) => updateOpening(i, 'units', e.target.value)}
+                                          className={`w-full border rounded px-2 py-1 text-sm focus:border-primary outline-none transition-all ${hasAttemptedSave && !row.units ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'}`}
+                                          placeholder="请输入参标单位"
+                                        />
+                                        {hasAttemptedSave && !row.units && (
+                                          <div className="absolute -right-6 text-red-500">
+                                            <AlertCircle size={16} className="fill-red-500 text-white" />
+                                          </div>
+                                        )}
+                                      </div>
                                     ) : (
                                       <span className={`text-sm font-bold ${row.isWinner ? 'text-emerald-700' : 'text-slate-600'}`}>
                                         {row.units || '--'}
-                                        {row.isSelf && <span className="ml-2 px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded text-[10px]">本单位</span>}
                                       </span>
                                     )}
                                   </td>
                                   <td className="px-6 py-4">
                                     {isEditing ? (
-                                      <input 
-                                        type="number"
-                                        value={row.price} 
-                                        onChange={(e) => updateOpening(i, 'price', parseFloat(e.target.value) || 0)}
-                                        className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono"
-                                        placeholder="0.00"
-                                      />
+                                      <div className="relative flex items-center">
+                                        <input 
+                                          type="number"
+                                          value={row.price} 
+                                          onChange={(e) => updateOpening(i, 'price', parseFloat(e.target.value) || 0)}
+                                          className={`w-full border rounded px-2 py-1 text-sm font-mono focus:border-primary outline-none transition-all ${hasAttemptedSave && (!row.price && row.price !== 0) ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'}`}
+                                          placeholder="0.00"
+                                        />
+                                        {hasAttemptedSave && (!row.price && row.price !== 0) && (
+                                          <div className="absolute -right-6 text-red-500">
+                                            <AlertCircle size={16} className="fill-red-500 text-white" />
+                                          </div>
+                                        )}
+                                      </div>
                                     ) : (
                                       <span className="font-mono text-sm text-primary font-bold">{formatCurrency(row.price)}</span>
                                     )}
                                   </td>
                                   <td className="px-6 py-4">
                                     {isEditing ? (
-                                      <input 
-                                        value={row.rank} 
-                                        onChange={(e) => updateOpening(i, 'rank', e.target.value)}
-                                        className="w-16 border border-slate-200 rounded px-2 py-1 text-sm"
-                                        placeholder="排名"
-                                      />
+                                      <div className="relative flex items-center">
+                                        <input 
+                                          value={row.rank} 
+                                          onChange={(e) => updateOpening(i, 'rank', e.target.value)}
+                                          className={`w-16 border rounded px-2 py-1 text-sm focus:border-primary outline-none transition-all ${hasAttemptedSave && !row.rank ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'}`}
+                                          placeholder="排名"
+                                        />
+                                        {hasAttemptedSave && !row.rank && (
+                                          <div className="absolute -right-6 text-red-500">
+                                            <AlertCircle size={16} className="fill-red-500 text-white" />
+                                          </div>
+                                        )}
+                                      </div>
                                     ) : (
                                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.rank === '1' ? 'bg-yellow-50 text-yellow-600' : 'bg-slate-100 text-slate-500'}`}>
                                         {row.rank ? `第${row.rank}名` : '--'}
@@ -887,6 +937,21 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                       />
                                     ) : (
                                       row.isWinner && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-bold">中标单位</span>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 text-center">
+                                    {isEditing ? (
+                                      <div className="relative flex items-center justify-center">
+                                        <input 
+                                          type="radio"
+                                          name="isSelf"
+                                          checked={row.isSelf || false}
+                                          onChange={() => updateOpening(i, 'isSelf', true)}
+                                          className={`size-4 rounded-full border-slate-300 text-primary focus:ring-primary ${hasAttemptedSave && !openingRecords.some(r => r.isSelf) ? 'ring-2 ring-red-500 ring-offset-1' : ''}`}
+                                        />
+                                      </div>
+                                    ) : (
+                                      row.isSelf && <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-[10px] font-bold">本单位</span>
                                     )}
                                   </td>
                                 </tr>
@@ -977,12 +1042,11 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                             中标详情
                           </h5>
                         </div>
-                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                          <table className="w-full text-left border-collapse">
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+                          <table className="w-full text-left border-collapse min-w-[800px]">
                             <thead>
                               <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
                                 <th className="px-6 py-4">中标单位</th>
-                                <th className="px-6 py-4">是否本单位 <span className="text-red-500">*</span></th>
                                 <th className="px-6 py-4">中标金额（元）</th>
                                 <th className="px-6 py-4">通知书日期</th>
                                 <th className="px-6 py-4">公示链接</th>
@@ -1002,25 +1066,7 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                     ) : (
                                       <div className="flex items-center gap-2">
                                         <span className="font-bold text-slate-900 text-sm">{row.unit || '--'}</span>
-                                        {row.isSelf && <span className="px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded text-[10px] font-bold">本单位</span>}
                                       </div>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    {isEditing ? (
-                                      <select 
-                                        value={row.isSelf === null ? '' : row.isSelf.toString()} 
-                                        onChange={(e) => updateWinning(i, 'isSelf', e.target.value === 'true')}
-                                        className="w-full border border-slate-200 rounded px-2 py-1 text-sm focus:border-primary outline-none transition-all"
-                                      >
-                                        <option value="" disabled>请选择</option>
-                                        <option value="true">是</option>
-                                        <option value="false">否</option>
-                                      </select>
-                                    ) : (
-                                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.isSelf ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>
-                                        {row.isSelf === true ? '是' : row.isSelf === false ? '否' : '--'}
-                                      </span>
                                     )}
                                   </td>
                                   <td className="px-6 py-4">
@@ -1071,7 +1117,7 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                     </section>
 
                     {/* Unsuccessful Bid Reason Analysis - Conditional */}
-                    {winningRecords.length > 0 && winningRecords[0].isSelf === false && (
+                    {winningRecords.length > 0 && !openingRecords.find(r => r.isSelf)?.isWinner && (
                       <section className="space-y-4">
                         <div className="flex items-center gap-2 text-slate-900 font-bold border-b border-slate-100 pb-4">
                           <Frown size={20} className="text-primary" />
@@ -1108,29 +1154,31 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                         </div>
                         {isEditing && (
                           <button 
-                            onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: '', owner: '', status: '履行中', fulfillmentDate: '' }])}
+                            onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: '', owner: '', duration: '', status: '待定', fulfillmentDate: '', expectedCompletionDate: '' }])}
                             className="text-sm font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-1"
                           >
                             <Plus size={18} /> 添加合同
                           </button>
                         )}
                       </div>
-                      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                        <table className="w-full text-left border-collapse">
+                      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[900px]">
                           <thead>
                             <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
-                              <th className="px-6 py-4">合同编号/名称</th>
-                              <th className="px-6 py-4">签署日期</th>
-                              <th className="px-6 py-4">合同金额（元）</th>
-                              <th className="px-6 py-4">负责人</th>
-                              <th className="px-6 py-4">履行时间</th>
-                              <th className="px-6 py-4">履行状态</th>
+                              <th className="px-3 py-3 min-w-[100px] whitespace-nowrap">合同编号/名称</th>
+                              <th className="px-3 py-3 whitespace-nowrap">签署日期</th>
+                              <th className="px-3 py-3 whitespace-nowrap w-[80px]">合同金额（元）</th>
+                              <th className="px-3 py-3 whitespace-nowrap w-[60px]">负责人</th>
+                              <th className="px-3 py-3 whitespace-nowrap w-[50px]">工期（天）</th>
+                              <th className="px-3 py-3 whitespace-nowrap">履行时间</th>
+                              <th className="px-3 py-3 whitespace-nowrap">应当完成时间</th>
+                              <th className="px-3 py-3 whitespace-nowrap">履行状态</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
                             {contractRecords.map((row, i) => (
                               <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="px-6 py-4">
+                                <td className="px-3 py-3">
                                   {isEditing ? (
                                     <div className="space-y-1">
                                       <input 
@@ -1143,7 +1191,7 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                         value={row.id} 
                                         onChange={(e) => updateContract(i, 'id', e.target.value)}
                                         placeholder="合同编号"
-                                        className="w-full border border-slate-200 rounded px-2 py-1 text-[10px]"
+                                        className="w-24 border border-slate-200 rounded px-2 py-1 text-[10px]"
                                       />
                                     </div>
                                   ) : (
@@ -1153,7 +1201,7 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                     </>
                                   )}
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-3 py-3 whitespace-nowrap">
                                   {isEditing ? (
                                     <input 
                                       type="date"
@@ -1165,32 +1213,45 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                     <span className="text-sm text-slate-600">{row.date || '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-3 py-3 whitespace-nowrap">
                                   {isEditing ? (
                                     <input 
                                       type="number"
                                       value={row.amount} 
                                       onChange={(e) => updateContract(i, 'amount', parseFloat(e.target.value) || 0)}
-                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold"
+                                      className="w-20 border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold"
                                       placeholder="0.00"
                                     />
                                   ) : (
                                     <span className="font-mono text-sm text-slate-900 font-bold">{formatCurrency(row.amount)}</span>
                                   )}
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-3 py-3 whitespace-nowrap">
                                   {isEditing ? (
                                     <input 
                                       value={row.owner} 
                                       onChange={(e) => updateContract(i, 'owner', e.target.value)}
-                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                                      className="w-16 border border-slate-200 rounded px-2 py-1 text-sm"
                                       placeholder="负责人"
                                     />
                                   ) : (
                                     <span className="text-sm text-slate-600">{row.owner || '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-3 py-3 whitespace-nowrap">
+                                  {isEditing ? (
+                                    <input 
+                                      type="number"
+                                      value={row.duration} 
+                                      onChange={(e) => updateContract(i, 'duration', e.target.value)}
+                                      className="w-12 border border-slate-200 rounded px-2 py-1 text-sm"
+                                      placeholder="天数"
+                                    />
+                                  ) : (
+                                    <span className="text-sm text-slate-600">{row.duration ? `${row.duration}天` : '--'}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3 whitespace-nowrap">
                                   {isEditing ? (
                                     <input 
                                       type="date"
@@ -1202,26 +1263,18 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                     <span className="text-sm text-slate-600">{row.fulfillmentDate || '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-6 py-4">
-                                  {isEditing ? (
-                                    <select 
-                                      value={row.status} 
-                                      onChange={(e) => updateContract(i, 'status', e.target.value)}
-                                      className="w-full border border-slate-200 rounded px-2 py-1 text-xs"
-                                    >
-                                      <option>履行中</option>
-                                      <option>已完成</option>
-                                      <option>已终止</option>
-                                    </select>
-                                  ) : (
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                      row.status === '已完成' ? 'bg-green-50 text-green-600' : 
-                                      row.status === '已终止' ? 'bg-red-50 text-red-600' : 
-                                      'bg-blue-50 text-blue-600'
-                                    }`}>
-                                      {row.status}
-                                    </span>
-                                  )}
+                                <td className="px-3 py-3 whitespace-nowrap">
+                                  <span className="text-sm text-slate-600">{row.expectedCompletionDate || '--'}</span>
+                                </td>
+                                <td className="px-3 py-3 whitespace-nowrap min-w-[100px]">
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${
+                                    row.status === '已完成' ? 'bg-green-50 text-green-600' : 
+                                    row.status === '已终止' ? 'bg-red-50 text-red-600' : 
+                                    row.status === '未开始' ? 'bg-slate-50 text-slate-500' :
+                                    'bg-blue-50 text-blue-600'
+                                  }`}>
+                                    {row.status}
+                                  </span>
                                 </td>
                               </tr>
                             ))}
@@ -1341,26 +1394,26 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                   <div className="flex gap-4 pt-8 shrink-0 bg-white">
                     <button 
                       onClick={() => {
+                        setHasAttemptedSave(true);
                         // Validate opening records
+                        let isValid = true;
+                        let hasSelf = false;
                         for (let i = 0; i < openingRecords.length; i++) {
                           const record = openingRecords[i];
-                          if (!record.units) {
-                            alert(`开标记录第 ${i + 1} 行：请填写参标单位`);
-                            return;
+                          if (!record.units || record.price === '' || record.price === null || record.price === undefined || !record.rank) {
+                            isValid = false;
                           }
-                          if (record.price === '' || record.price === null || record.price === undefined) {
-                            alert(`开标记录第 ${i + 1} 行：请填写投标报价`);
-                            return;
-                          }
-                          if (!record.rank) {
-                            alert(`开标记录第 ${i + 1} 行：请填写排名`);
-                            return;
+                          if (record.isSelf) {
+                            hasSelf = true;
                           }
                         }
 
-                        // Validate winning records
-                        if (winningRecords.length > 0 && winningRecords.some(r => r.isSelf === null || r.isSelf === undefined || r.isSelf === '')) {
-                          alert('中标详情：请选择中标单位是否为本单位');
+                        if (!hasSelf && openingRecords.length > 0) {
+                          isValid = false;
+                        }
+
+                        if (!isValid) {
+                          alert('请填写所有必填项，并选择本单位');
                           return;
                         }
 

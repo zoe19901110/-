@@ -13,13 +13,13 @@ const Certificates: React.FC<CertificatesProps> = ({ currentEnterprise }) => {
     const baseCerts = [
       { name: `营业执照`, code: '91110000100001234X', org: '市场监督管理局', date: '长期', status: '正常' },
       { name: `建筑业企业资质证书`, code: 'D211060800', org: '住房和城乡建设部', date: '2028-05-20', status: '正常' },
-      { name: `安全生产许可证`, code: '(京)JZ安许证字[2021]000123', org: '住房和城乡建设委员会', date: '2024-04-15', status: 'warning' },
-      { name: `质量管理体系认证`, code: '00121Q31000123', org: '中国质量认证中心', date: '2024-03-01', status: 'expired' },
+      { name: `安全生产许可证`, code: '(京)JZ安许证字[2021]000123', org: '住房和城乡建设委员会', date: '2026-04-15', status: 'warning' },
+      { name: `质量管理体系认证`, code: '00121Q31000123', org: '中国质量认证中心', date: '2026-03-01', status: 'expired' },
     ];
 
     if (enterpriseId === 'personal') {
       return [
-        { name: '一级建造师执业资格证书', code: '京111060800001', org: '住房和城乡建设部', date: '2025-12-31', status: '正常' },
+        { name: '一级建造师执业资格证书', code: '京111060800001', org: '住房和城乡建设部', date: '2027-12-31', status: '正常' },
         { name: '高级工程师职称证书', code: 'GC20230001', org: '某省人力资源和社会保障厅', date: '长期', status: '正常' },
       ];
     }

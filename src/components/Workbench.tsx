@@ -166,10 +166,10 @@ const Workbench: React.FC<WorkbenchProps> = ({
   const [insights, setInsights] = useState(() => {
     const saved = localStorage.getItem('workbench-insights');
     return saved ? JSON.parse(saved) : [
-      { id: '1', content: '本项目对大跨度钢结构有特殊要求，建议在技术标中重点突出我们在同类项目中的施工经验。', isPublic: false, author: '我', date: '2024-03-25', type: 'idea', deadline: '', status: 'active' },
-      { id: '2', content: '注意甲方对环保要求的敏感度，材料选择上要优先考虑绿色建材。', isPublic: true, author: '我', date: '2024-03-26', type: 'task', deadline: '2024-04-10', status: 'active' },
-      { id: '3', content: '今天下午3点与设计院进行图纸会审，请各专业负责人准时参加。', isPublic: true, author: '李茂盛', date: '2024-03-27', type: 'meeting', deadline: '', status: 'active' },
-      { id: '4', content: '更新了BIM模型，解决了地下室管线碰撞问题，请大家查看最新版本。', isPublic: true, author: '王志远', date: '2024-03-28', type: 'task', deadline: '2024-03-30', status: 'active' },
+      { id: '1', content: '本项目对大跨度钢结构有特殊要求，建议在技术标中重点突出我们在同类项目中的施工经验。', isPublic: false, author: '我', date: '2026-03-25', type: 'idea', deadline: '', status: 'active' },
+      { id: '2', content: '注意甲方对环保要求的敏感度，材料选择上要优先考虑绿色建材。', isPublic: true, author: '我', date: '2026-03-26', type: 'task', deadline: '2026-04-10', status: 'active' },
+      { id: '3', content: '今天下午3点与设计院进行图纸会审，请各专业负责人准时参加。', isPublic: true, author: '李茂盛', date: '2026-03-27', type: 'meeting', deadline: '', status: 'active' },
+      { id: '4', content: '更新了BIM模型，解决了地下室管线碰撞问题，请大家查看最新版本。', isPublic: true, author: '王志远', date: '2026-03-28', type: 'task', deadline: '2026-03-30', status: 'active' },
     ];
   });
 
@@ -204,17 +204,17 @@ const Workbench: React.FC<WorkbenchProps> = ({
   const [refreshKey, setRefreshKey] = useState(0); // Dummy state for forcing re-render
   const [projectData, setProjectData] = useState(initialProjectData || {
     projectName: `城市基础设施二期项目 (${currentEnterprise.name})`,
-    projectNumber: 'BID-2023-00892',
+    projectNumber: 'BID-2025-00892',
     tenderer: 'XX市交通运输局',
     tendererContact: '张工 010-88888888',
     tenderAgent: 'XX招标代理有限公司',
     tenderAgentContact: '李经理 010-66666666',
-    openingTime: '2024-01-15 09:30',
-    depositDeadline: '2024-01-12 17:00',
+    openingTime: '2026-01-15 09:30',
+    depositDeadline: '2026-01-12 17:00',
     openingLocation: 'XX市公共资源交易中心 301 会议室',
     filingInfo: '已完成网上备案',
     depositAmount: '¥ 500,000.00',
-    collectionTime: '2023-12-25',
+    collectionTime: '2025-12-25',
     tenderRequirements: '1. 资质要求：具备市政公用工程施工总承包一级及以上资质；\n2. 业绩要求：近三年内具有类似智慧交通项目业绩；\n3. 技术要求：支持国产化适配。',
     otherRemarks: '',
     status: '进行中'
@@ -261,6 +261,32 @@ const Workbench: React.FC<WorkbenchProps> = ({
         title: '资格审查潜在废标项',
         original: '17.4.3 在第1.1.4.5目约定的缺陷责任期（工程质量保修期）满时，承包人没有完成缺陷责任的，发包人有权扣留与未履行责任剩余工作所需金额相应的质量保证金余额，并有权根据第19.3款约定要求延长缺陷责任期（工程质量保修期），直至完成剩余工作为止。',
         analysis: '合同条款及格式章节出现缺陷责任期/工程质量保修期，请注意检查。',
+        suggestion: '投标附录函中，质量缺陷责任期限响应被废标，其要求在合同条款中：https://ggzyjy.huzhou.gov.cn/art/2026/7/18/art_1229670649_65527.html'
+      },
+      {
+        title: '资格审查潜在废标项',
+        original: '（5）承包人在缺陷责任期（工程质量保修期）内，未能对工程接收证书所列的缺陷清单的内容或缺陷责任期（工程质量保修期）内发生的缺陷进行修复，而又拒绝按监理人指示再进行修复；',
+        analysis: '合同条款及格式章节出现缺陷责任期/工程质量保修期，请注意检查。',
+        suggestion: '投标附录函中，质量缺陷责任期限响应被废标，其要求在合同条款中：https://ggzyjy.huzhou.gov.cn/art/2026/7/18/art_1229670649_65527.html'
+      }
+    ],
+    coreContent: [
+      { label: '项目名称', value: '克东县 2021 年老旧小区改造建设项目' },
+      { label: '招标编号', value: 'T2300000001003033' },
+      { label: '预算金额', value: '¥1,250.0万' },
+      { label: '开标时间', value: '2026-12-20 09:30' },
+    ]
+  };
+
+  const baseNotifications = [
+  };��改造建设项目' },
+      { label: '招标编号', value: 'T2300000001003033' },
+      { label: '预算金额', value: '¥1,250.0万' },
+      { label: '开标时间', value: '2025-12-20 09:30' },
+    ]
+  };�/工程质量保修期，请注意检查。',
+��工作所需金额相应的质量保证金余额，并有权根据第19.3款约定要求延长缺陷责任期（工程质量保修期），直至完成剩余工作为止。',
+        analysis: '合同条款及格式章节出现缺陷责任期/工程质量保修期，请注意检查。',
         suggestion: '投标附录函中，质量缺陷责任期限响应被废标，其要求在合同条款中：https://ggzyjy.huzhou.gov.cn/art/2024/7/18/art_1229670649_65527.html'
       },
       {
@@ -278,10 +304,10 @@ const Workbench: React.FC<WorkbenchProps> = ({
     ]
   };
 
-  const baseNotifications = [
-    { id: 1, type: 'warning', text: '保证金缴纳截止时间提醒：2023-11-25 17:00', time: '2小时前', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50' },
-    { id: 2, type: 'info', text: '开标时间提醒：2023-12-20 09:30', time: '5小时前', icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-50' },
-    { id: 3, type: 'alert', text: '文件领取截止时间提醒：2024-04-15', time: '1天前', icon: Info, color: 'text-purple-500', bg: 'bg-purple-50' },
+
+    { id: 1, type: 'warning', text: '保证金缴纳截止时间提醒：2026-11-25 17:00', time: '2小时前', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50' },
+    { id: 2, type: 'info', text: '开标时间提醒：2026-12-20 09:30', time: '5小时前', icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-50' },
+    { id: 3, type: 'alert', text: '文件领取截止时间提醒：2026-04-15', time: '1天前', icon: Info, color: 'text-purple-500', bg: 'bg-purple-50' },
   ];
 
   const insightNotifications = insights
@@ -764,8 +790,8 @@ const Workbench: React.FC<WorkbenchProps> = ({
                             {viewingDoc === 'tender-doc' ? '招标文件' : `第${viewingDoc.split('-')[2]}次答疑文件`}
                           </h2>
                           <div className="mt-8 flex justify-center gap-8 text-sm text-slate-400 font-medium">
-                            <span>项目编号：BID-2023-00892</span>
-                            <span>发布日期：{viewingDoc === 'tender-doc' ? '2023-11-15' : '2023-12-05'}</span>
+                            <span>项目编号：BID-2025-00892</span>
+                            <span>发布日期：{viewingDoc === 'tender-doc' ? '2025-11-15' : '2025-12-05'}</span>
                           </div>
                         </div>
 
@@ -4261,16 +4287,17 @@ const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: (view
 
 const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPaused: boolean }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
   const [openingRecords, setOpeningRecords] = useState([
-    { units: '某某建设集团有限公司', price: 12105000, rank: '1', isWinner: true },
-    { units: '中建某局有限公司', price: 12500000, rank: '2', isWinner: false },
-    { units: '省建工集团', price: 12800000, rank: '3', isWinner: false },
+    { units: '某某建设集团有限公司', price: 12105000, rank: '1', isWinner: true, isSelf: true },
+    { units: '中建某局有限公司', price: 12500000, rank: '2', isWinner: false, isSelf: false },
+    { units: '省建工集团', price: 12800000, rank: '3', isWinner: false, isSelf: false },
   ]);
   const [winningRecords, setWinningRecords] = useState([
-    { unit: '某某建设集团有限公司', amount: 12105000, date: '2024-03-25', url: 'http://ggzy.example.com/...', isSelf: null },
+    { unit: '某某建设集团有限公司', amount: 12105000, date: '2024-03-25', url: 'http://ggzy.example.com/...' },
   ]);
   const [contractRecords, setContractRecords] = useState([
-    { id: 'HT-2024-001', name: '城市基础设施施工合同', date: '2024-04-05', amount: 11800000, owner: '陈经理', status: '履行中', fulfillmentDate: '2024-04-10' },
+    { id: 'HT-2024-001', name: '城市基础设施施工合同', date: '2024-04-05', amount: 11800000, owner: '陈经理', duration: '30', status: '履行中', fulfillmentDate: '2024-04-10', expectedCompletionDate: '2024-05-10' },
   ]);
   const [contractAttachments, setContractAttachments] = useState<Attachment[]>([
     { id: '1', name: '中标通知书.pdf', size: '1.2MB', type: 'pdf', date: '2024-03-25', category: '中标通知书' },
@@ -4315,30 +4342,27 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
   }, []);
 
   const handleSave = () => {
+    setHasAttemptedSave(true);
     // Validate opening records
+    let hasSelf = false;
     for (let i = 0; i < openingRecords.length; i++) {
       const record = openingRecords[i];
-      if (!record.units) {
-        alert(`开标记录第 ${i + 1} 行：请填写参标单位`);
+      if (!record.units || record.price === '' || record.price === null || record.price === undefined || !record.rank) {
+        alert('请填写所有必填项');
         return;
       }
-      if (record.price === '' || record.price === null || record.price === undefined) {
-        alert(`开标记录第 ${i + 1} 行：请填写投标报价`);
-        return;
-      }
-      if (!record.rank) {
-        alert(`开标记录第 ${i + 1} 行：请填写排名`);
-        return;
+      if (record.isSelf) {
+        hasSelf = true;
       }
     }
 
-    // Validate winning records
-    if (winningRecords.length > 0 && winningRecords.some(r => r.isSelf === null)) {
-      alert('中标详情：请选择中标单位是否为本单位');
+    if (!hasSelf && openingRecords.length > 0) {
+      alert('请选择本单位');
       return;
     }
 
     setIsEditing(false);
+    setHasAttemptedSave(false);
   };
 
   const formatCurrency = (value: number | string) => {
@@ -4363,20 +4387,23 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
         unit: newRecords[index].units,
         amount: newRecords[index].price,
         date: winningRecords[0]?.date || '',
-        url: winningRecords[0]?.url || '',
-        isSelf: winningRecords[0]?.isSelf ?? null
+        url: winningRecords[0]?.url || ''
       }]);
     } else if (field === 'isWinner' && value === false) {
       // If unmarking the winner, clear winning records
       setWinningRecords([]);
+    } else if (field === 'isSelf' && value === true) {
+      // If marking as self, unmark others
+      newRecords.forEach((r, i) => {
+        if (i !== index) r.isSelf = false;
+      });
     } else if (newRecords[index].isWinner && (field === 'units' || field === 'price')) {
       // If updating the name or price of the current winner, sync to winning records
       setWinningRecords([{
         unit: newRecords[index].units,
         amount: newRecords[index].price,
         date: winningRecords[0]?.date || '',
-        url: winningRecords[0]?.url || '',
-        isSelf: winningRecords[0]?.isSelf ?? null
+        url: winningRecords[0]?.url || ''
       }]);
     }
     
@@ -4392,6 +4419,28 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
   const updateContract = (index: number, field: string, value: any) => {
     const newRecords = [...contractRecords];
     (newRecords[index] as any)[field] = value;
+    
+    if (field === 'fulfillmentDate' || field === 'duration') {
+      const record = newRecords[index];
+      const durationVal = parseInt(record.duration as any);
+      if (record.fulfillmentDate && !isNaN(durationVal)) {
+        const start = new Date(record.fulfillmentDate);
+        const end = new Date(start);
+        end.setDate(start.getDate() + durationVal);
+        record.expectedCompletionDate = end.toISOString().split('T')[0];
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (today < start) {
+          record.status = '未开始';
+        } else if (today > end) {
+          record.status = '已完成';
+        } else {
+          record.status = '履行中';
+        }
+      }
+    }
+    
     setContractRecords(newRecords);
   };
 
@@ -4749,18 +4798,19 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                   <th className="px-6 py-4">投标报价（元） <span className="text-red-500">*</span></th>
                   <th className="px-6 py-4">排名 <span className="text-red-500">*</span></th>
                   <th className="px-6 py-4 text-center">是否中标 <span className="text-red-500">*</span></th>
+                  <th className="px-6 py-4 text-center">是否本单位 <span className="text-red-500">*</span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {openingRecords.map((row, i) => (
-                  <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={i} className={`hover:bg-slate-50/50 transition-colors ${row.isWinner ? 'bg-emerald-50/30' : ''}`}>
                     <td className="px-6 py-4">
                       {isEditing ? (
                         <input 
                           value={row.units} 
                           onChange={(e) => updateOpening(i, 'units', e.target.value)}
                           disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          className={`w-full border rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''} ${hasAttemptedSave && !row.units ? 'border-red-500 bg-red-50' : 'border-slate-200'}`}
                         />
                       ) : (
                         <span className={`text-sm font-bold ${row.isWinner ? 'text-emerald-700' : 'text-slate-600'}`}>
@@ -4775,7 +4825,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                           value={row.price} 
                           onChange={(e) => updateOpening(i, 'price', parseFloat(e.target.value) || 0)}
                           disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          className={`w-full border rounded px-2 py-1 text-sm font-mono ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''} ${hasAttemptedSave && (row.price === '' || row.price === null || row.price === undefined) ? 'border-red-500 bg-red-50' : 'border-slate-200'}`}
                         />
                       ) : (
                         <span className="font-mono text-sm text-primary font-bold">{formatCurrency(row.price)}</span>
@@ -4787,7 +4837,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                           value={row.rank} 
                           onChange={(e) => updateOpening(i, 'rank', e.target.value)}
                           disabled={isPaused}
-                          className={`w-16 border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          className={`w-16 border rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''} ${hasAttemptedSave && !row.rank ? 'border-red-500 bg-red-50' : 'border-slate-200'}`}
                         />
                       ) : (
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.rank === '1' ? 'bg-yellow-50 text-yellow-600' : 'bg-slate-100 text-slate-500'}`}>
@@ -4807,6 +4857,22 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                         />
                       ) : (
                         row.isWinner && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-bold">中标单位</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {isEditing ? (
+                        <div className={`relative flex items-center justify-center p-1 rounded ${hasAttemptedSave && !openingRecords.some(r => r.isSelf) ? 'bg-red-50 ring-1 ring-red-500' : ''}`}>
+                          <input 
+                            type="radio"
+                            name="isSelf"
+                            checked={row.isSelf || false}
+                            onChange={() => updateOpening(i, 'isSelf', true)}
+                            disabled={isPaused}
+                            className={`size-4 rounded-full border-slate-300 text-primary focus:ring-primary ${isPaused ? 'cursor-not-allowed' : ''}`}
+                          />
+                        </div>
+                      ) : (
+                        row.isSelf && <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-[10px] font-bold">本单位</span>
                       )}
                     </td>
                   </tr>
@@ -4911,7 +4977,6 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
               <thead>
                 <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
                   <th className="px-6 py-4">中标单位</th>
-                  <th className="px-6 py-4">是否本单位 <span className="text-red-500">*</span></th>
                   <th className="px-6 py-4">中标金额（元）</th>
                   <th className="px-6 py-4">通知书日期</th>
                   <th className="px-6 py-4">公示链接</th>
@@ -4933,26 +4998,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                       ) : (
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-slate-900 text-sm">{row.unit || '--'}</span>
-                          {row.isSelf && <span className="px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded text-[10px] font-bold">本单位</span>}
                         </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {isEditing ? (
-                        <select 
-                          value={row.isSelf === null ? '' : row.isSelf.toString()} 
-                          onChange={(e) => updateWinning(i, 'isSelf', e.target.value === 'true')}
-                          disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm focus:border-primary outline-none transition-all ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
-                        >
-                          <option value="" disabled>请选择</option>
-                          <option value="true">是</option>
-                          <option value="false">否</option>
-                        </select>
-                      ) : (
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.isSelf ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>
-                          {row.isSelf === true ? '是' : row.isSelf === false ? '否' : '--'}
-                        </span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -5004,7 +5050,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
         </section>
 
         {/* Unsuccessful Bid Reason Analysis - Conditional */}
-        {winningRecords.length > 0 && winningRecords[0].isSelf === false && (
+        {winningRecords.length > 0 && !openingRecords.find(r => r.isSelf)?.isWinner && (
           <section className="space-y-4">
             <div className="flex items-center gap-2 text-slate-900 font-bold border-b border-slate-100 pb-4">
               <Frown size={20} className="text-primary" />
@@ -5042,7 +5088,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
             </div>
             {isEditing && (
               <button 
-                onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: 0, owner: '', status: '履行中', fulfillmentDate: '' }])}
+                onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: 0, owner: '', duration: '', status: '待定', fulfillmentDate: '', expectedCompletionDate: '' }])}
                 disabled={isPaused}
                 className={`text-sm font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-1 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
@@ -5050,22 +5096,24 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
               </button>
             )}
           </div>
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <table className="w-full text-left border-collapse">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
                 <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
-                  <th className="px-6 py-4">合同编号/名称</th>
-                  <th className="px-6 py-4">签署日期</th>
-                  <th className="px-6 py-4">合同金额（元）</th>
-                  <th className="px-6 py-4">负责人</th>
-                  <th className="px-6 py-4">履行时间</th>
-                  <th className="px-6 py-4">履行状态</th>
+                  <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">合同编号/名称</th>
+                  <th className="px-3 py-3 whitespace-nowrap">签署日期</th>
+                  <th className="px-3 py-3 whitespace-nowrap w-[120px]">合同金额（元）</th>
+                  <th className="px-3 py-3 whitespace-nowrap w-[100px]">负责人</th>
+                  <th className="px-3 py-3 whitespace-nowrap w-[80px]">工期（天）</th>
+                  <th className="px-3 py-3 whitespace-nowrap">履行时间</th>
+                  <th className="px-3 py-3 whitespace-nowrap">应当完成时间</th>
+                  <th className="px-3 py-3 whitespace-nowrap">履行状态</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {contractRecords.map((row, i) => (
                   <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4">
+                    <td className="px-3 py-3">
                       {isEditing ? (
                         <div className="space-y-1">
                           <input 
@@ -5080,7 +5128,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                             onChange={(e) => updateContract(i, 'id', e.target.value)}
                             disabled={isPaused}
                             placeholder="合同编号"
-                            className={`w-full border border-slate-200 rounded px-2 py-1 text-[10px] ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                            className={`w-32 border border-slate-200 rounded px-2 py-1 text-[10px] ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                           />
                         </div>
                       ) : (
@@ -5090,7 +5138,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                         </>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 py-3 whitespace-nowrap">
                       {isEditing ? (
                         <input 
                           type="date"
@@ -5103,32 +5151,46 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                         <span className="text-sm text-slate-600">{row.date || '--'}</span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 py-3 whitespace-nowrap">
                       {isEditing ? (
                         <input 
                           type="number"
                           value={row.amount} 
                           onChange={(e) => updateContract(i, 'amount', parseFloat(e.target.value) || 0)}
                           disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          className={`w-28 border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="font-mono text-sm text-slate-900 font-bold">{formatCurrency(row.amount)}</span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 py-3 whitespace-nowrap">
                       {isEditing ? (
                         <input 
                           value={row.owner} 
                           onChange={(e) => updateContract(i, 'owner', e.target.value)}
                           disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          className={`w-24 border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="text-sm text-slate-600">{row.owner || '--'}</span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      {isEditing ? (
+                        <input 
+                          type="number"
+                          value={row.duration} 
+                          onChange={(e) => updateContract(i, 'duration', e.target.value)}
+                          disabled={isPaused}
+                          className={`w-16 border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          placeholder="天数"
+                        />
+                      ) : (
+                        <span className="text-sm text-slate-600">{row.duration ? `${row.duration}天` : '--'}</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap">
                       {isEditing ? (
                         <input 
                           type="date"
@@ -5141,27 +5203,18 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                         <span className="text-sm text-slate-600">{row.fulfillmentDate || '--'}</span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
-                      {isEditing ? (
-                        <select 
-                          value={row.status} 
-                          onChange={(e) => updateContract(i, 'status', e.target.value)}
-                          disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-xs ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
-                        >
-                          <option>履行中</option>
-                          <option>已完成</option>
-                          <option>已终止</option>
-                        </select>
-                      ) : (
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          row.status === '已完成' ? 'bg-green-50 text-green-600' : 
-                          row.status === '已终止' ? 'bg-red-50 text-red-600' : 
-                          'bg-blue-50 text-blue-600'
-                        }`}>
-                          {row.status}
-                        </span>
-                      )}
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      <span className="text-sm text-slate-600">{row.expectedCompletionDate || '--'}</span>
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap min-w-[100px]">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${
+                        row.status === '已完成' ? 'bg-green-50 text-green-600' : 
+                        row.status === '已终止' ? 'bg-red-50 text-red-600' : 
+                        row.status === '未开始' ? 'bg-slate-50 text-slate-500' :
+                        'bg-blue-50 text-blue-600'
+                      }`}>
+                        {row.status}
+                      </span>
                     </td>
                   </tr>
                 ))}

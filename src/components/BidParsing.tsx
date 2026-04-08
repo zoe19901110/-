@@ -14,12 +14,12 @@ interface BidParsingProps {
 const BidParsing: React.FC<BidParsingProps> = ({ onEnterWorkbench, currentEnterprise, isPaused = false, onBack }) => {
   const defaultProject = {
     id: '1',
-    name: `2024年智慧交通管理平台建设项目`,
-    code: 'ZB-2024-001',
+    name: `2026年智慧交通管理平台建设项目`,
+    code: 'ZB-2026-001',
     tenderer: 'XX市交通运输局',
-    updateTime: '2023-11-20 14:30',
+    updateTime: '2025-11-20 14:30',
     status: '已解析',
-    latestFile: '2024年智慧交通管理平台建设项目招标文件.pdf',
+    latestFile: '2026年智慧交通管理平台建设项目招标文件.pdf',
     uploadedFiles: { 'tender-doc': true }
   };
 

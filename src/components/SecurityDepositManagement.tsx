@@ -42,6 +42,7 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
   const [selectedDeposit, setSelectedDeposit] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
 
   const [deposits, setDeposits] = useState<any[]>([
     {
@@ -100,6 +101,56 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
     vouchers: [] as string[]
   });
 
+  const [showBankDropdown, setShowBankDropdown] = useState(false);
+  const [bankSearchTerm, setBankSearchTerm] = useState('');
+
+  const BANKS = [
+    '中国工商银行',
+    '中国农业银行',
+    '中国银行',
+    '中国建设银行',
+    '交通银行',
+    '招商银行',
+    '中国邮政储蓄银行',
+    '中信银行',
+    '中国光大银行',
+    '华夏银行',
+    '中国民生银行',
+    '广发银行',
+    '平安银行',
+    '兴业银行',
+    '上海浦东发展银行',
+    '北京银行',
+    '上海银行',
+    '南京银行',
+    '宁波银行',
+    '杭州银行',
+    '江苏银行',
+    '徽商银行',
+    '成都银行',
+    '重庆银行',
+    '哈尔滨银行',
+    '盛京银行',
+    '大连银行',
+    '天津银行',
+    '河北银行',
+    '龙江银行',
+    '吉林银行',
+    '中原银行',
+    '江西银行',
+    '青岛银行',
+    '齐鲁银行',
+    '广州银行',
+    '东莞银行',
+    '桂林银行',
+    '长安银行',
+    '昆仑银行',
+  ];
+
+  const filteredBanks = BANKS.filter(bank => 
+    bank.toLowerCase().includes(bankSearchTerm.toLowerCase())
+  );
+
   const handleOpenModal = (deposit?: any) => {
     // Check if the project is paused
     const project = projects.find(p => p.code === deposit?.projectCode || p.name === deposit?.projectName);
@@ -113,11 +164,11 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
       setFormData({
         projectName: deposit.projectName,
         amount: deposit.amount,
-        type: deposit.type,
+        type: deposit.type || '现金转账',
         bank: deposit.bank,
         date: deposit.date,
         remarks: deposit.remarks || '',
-        refundStatus: deposit.refundStatus,
+        refundStatus: deposit.refundStatus || '待退还',
         refundDate: deposit.refundDate || '',
         vouchers: deposit.vouchers || [deposit.voucher].filter(Boolean)
       });
@@ -137,10 +188,19 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
       });
       setIsEditing(false);
     }
+    setHasAttemptedSave(false);
+    setBankSearchTerm('');
+    setShowBankDropdown(false);
     setShowDepositModal(true);
   };
 
   const handleSave = () => {
+    setHasAttemptedSave(true);
+    if (!formData.amount || !formData.type || !formData.bank || !formData.date || !formData.refundStatus) {
+      alert('请填写所有必填项');
+      return;
+    }
+
     if (isEditing && selectedDeposit) {
       setDeposits(deposits.map(d => d.id === selectedDeposit.id ? { ...d, ...formData } : d));
     } else {
@@ -391,44 +451,129 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 ml-1">保证金金额 <span className="text-red-500">*</span></label>
-                        <input 
-                          type="text" 
-                          value={formData.amount}
-                          onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" 
-                          placeholder="¥ 0.00" 
-                        />
+                        <div className="relative flex items-center">
+                          <input 
+                            type="text" 
+                            value={formData.amount}
+                            onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                            className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !formData.amount ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'}`} 
+                            placeholder="¥ 0.00" 
+                          />
+                          {hasAttemptedSave && !formData.amount && (
+                            <div className="absolute right-4 text-red-500">
+                              <AlertCircle size={16} className="fill-red-500 text-white" />
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 ml-1">缴纳方式 <span className="text-red-500">*</span></label>
-                        <select 
-                          value={formData.type}
-                          onChange={(e) => setFormData({...formData, type: e.target.value})}
-                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
-                        >
-                          <option>现金转账</option>
-                          <option>银行保函</option>
-                          <option>保险保函</option>
-                        </select>
+                        <div className="relative flex items-center">
+                          <select 
+                            value={formData.type}
+                            onChange={(e) => setFormData({...formData, type: e.target.value})}
+                            className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !formData.type ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'}`}
+                          >
+                            <option value="">请选择</option>
+                            <option>现金转账</option>
+                            <option>银行保函</option>
+                            <option>保险保函</option>
+                          </select>
+                          {hasAttemptedSave && !formData.type && (
+                            <div className="absolute right-8 text-red-500">
+                              <AlertCircle size={16} className="fill-red-500 text-white" />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 relative">
                         <label className="text-xs font-bold text-slate-500 ml-1">缴纳银行 <span className="text-red-500">*</span></label>
-                        <input 
-                          type="text" 
-                          value={formData.bank}
-                          onChange={(e) => setFormData({...formData, bank: e.target.value})}
-                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" 
-                          placeholder="请输入银行名称" 
-                        />
+                        <div className="relative flex items-center">
+                          <input 
+                            type="text" 
+                            value={formData.bank}
+                            onFocus={() => setShowBankDropdown(true)}
+                            onChange={(e) => {
+                              setFormData({...formData, bank: e.target.value});
+                              setBankSearchTerm(e.target.value);
+                              setShowBankDropdown(true);
+                            }}
+                            className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !formData.bank ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'}`} 
+                            placeholder="请选择或搜索银行" 
+                          />
+                          <div className="absolute right-4 flex items-center gap-2">
+                            {hasAttemptedSave && !formData.bank && (
+                              <AlertCircle size={16} className="fill-red-500 text-white" />
+                            )}
+                            <ChevronDown 
+                              size={16} 
+                              className={`text-slate-400 transition-transform ${showBankDropdown ? 'rotate-180' : ''}`} 
+                            />
+                          </div>
+                        </div>
+
+                        {/* Bank Dropdown */}
+                        <AnimatePresence>
+                          {showBankDropdown && (
+                            <>
+                              <div 
+                                className="fixed inset-0 z-[60]" 
+                                onClick={() => setShowBankDropdown(false)} 
+                              />
+                              <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-[70] max-h-60 overflow-y-auto custom-scrollbar"
+                              >
+                                {filteredBanks.length > 0 ? (
+                                  filteredBanks.map((bank) => (
+                                    <button
+                                      key={bank}
+                                      type="button"
+                                      onClick={() => {
+                                        setFormData({...formData, bank});
+                                        setBankSearchTerm('');
+                                        setShowBankDropdown(false);
+                                      }}
+                                      className="w-full px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors border-b border-slate-50 last:border-0"
+                                    >
+                                      {bank}
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="px-4 py-8 text-center text-slate-400">
+                                    <Search size={24} className="mx-auto mb-2 opacity-20" />
+                                    <p className="text-xs">未找到匹配的银行</p>
+                                    <button 
+                                      type="button"
+                                      onClick={() => setShowBankDropdown(false)}
+                                      className="mt-2 text-primary font-bold text-xs hover:underline"
+                                    >
+                                      直接使用输入内容
+                                    </button>
+                                  </div>
+                                )}
+                              </motion.div>
+                            </>
+                          )}
+                        </AnimatePresence>
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 ml-1">缴纳时间 <span className="text-red-500">*</span></label>
-                        <input 
-                          type="date" 
-                          value={formData.date}
-                          onChange={(e) => setFormData({...formData, date: e.target.value})}
-                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" 
-                        />
+                        <div className="relative flex items-center">
+                          <input 
+                            type="date" 
+                            value={formData.date}
+                            onChange={(e) => setFormData({...formData, date: e.target.value})}
+                            className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !formData.date ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'}`} 
+                          />
+                          {hasAttemptedSave && !formData.date && (
+                            <div className="absolute right-10 text-red-500">
+                              <AlertCircle size={16} className="fill-red-500 text-white" />
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <div className="col-span-2 space-y-1.5">

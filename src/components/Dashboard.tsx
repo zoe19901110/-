@@ -79,17 +79,17 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
     // Simulate AI Analysis
     setTimeout(() => {
       setAnalyzedData({
-        projectName: '2024年XX市智慧交通管理平台建设项目',
-        projectNumber: 'T2024-ZHJT-001',
+        projectName: '2026年XX市智慧交通管理平台建设项目',
+        projectNumber: 'T2026-ZHJT-001',
         tenderer: 'XX市交通运输局',
         tendererContact: '张工 010-88888888',
         tenderAgent: 'XX招标代理有限公司',
         tenderAgentContact: '李经理 010-66666666',
-        openingTime: '2024-01-15T09:30',
-        depositDeadline: '2024-01-12T17:00',
+        openingTime: '2026-01-15T09:30',
+        depositDeadline: '2026-01-12T17:00',
         openingLocation: 'XX市公共资源交易中心 301 会育室',
         depositAmount: '¥ 500,000.00',
-        collectionTime: '2023-12-25',
+        collectionTime: '2025-12-25',
         tenderRequirements: '1. 资质要求：具备市政公用工程施工总承包一级及以上资质；\n2. 业绩要求：近三年内具有类似智慧交通项目业绩；\n3. 技术要求：支持国产化适配。',
         otherRemarks: ''
       });
@@ -269,7 +269,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
                           tenderer: 'XX市城市建设投资集团有限公司',
                           tenderAgent: 'XX国际招标有限公司',
                           openingTime: project.deadline,
-                          depositDeadline: '2024-05-19 17:00'
+                          depositDeadline: '2026-05-19 17:00'
                         });
                       }}
                       className={`bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 ${project.isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -289,7 +289,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-lg font-bold">投标日历</h3>
-              <p className="text-sm font-medium text-primary">2023年11月</p>
+              <p className="text-sm font-medium text-primary">2026年04月</p>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-7 gap-1 text-center mb-4">

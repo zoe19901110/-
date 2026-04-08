@@ -46,6 +46,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [isTenderUploaded, setIsTenderUploaded] = useState(false);
+  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
   const [analyzedData, setAnalyzedData] = useState({
     projectName: '',
     projectNumber: '',
@@ -72,17 +73,17 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
     // Simulate AI Analysis
     setTimeout(() => {
       setAnalyzedData({
-        projectName: '2024年XX市智慧交通管理平台建设项目',
-        projectNumber: 'T2024-ZHJT-001',
+        projectName: '2026年智慧交通管理平台建设项目',
+        projectNumber: 'T2026-ZHJT-001',
         tenderer: 'XX市交通运输局',
         tendererContact: '010-88888888',
         tenderAgent: 'XX招标代理有限公司',
         tenderAgentContact: '010-66666666',
-        openingTime: '2024-01-15T09:30',
-        depositDeadline: '2024-01-12T17:00',
+        openingTime: '2026-01-15T09:30',
+        depositDeadline: '2026-01-12T17:00',
         openingLocation: 'XX市公共资源交易中心 301 会议室',
         depositAmount: '¥ 500,000.00',
-        collectionTime: '2023-12-25',
+        collectionTime: '2025-12-25',
         tenderRequirements: '1. 资质要求：具备市政公用工程施工总承包一级及以上资质；\n2. 业绩要求：近三年内具有类似智慧交通项目业绩；\n3. 技术要求：支持国产化适配。',
         otherRemarks: ''
       });
@@ -104,6 +105,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
       setIsTenderUploaded(false);
       setIsEditing(false);
       setEditingId(null);
+      setHasAttemptedSave(false);
       setAnalyzedData({
         projectName: '',
         projectNumber: '',
@@ -127,6 +129,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
   const handleEditProject = (project: any) => {
     setIsEditing(true);
     setEditingId(project.id);
+    setHasAttemptedSave(false);
     setAnalyzedData({
       projectName: project.name,
       projectNumber: project.code,
@@ -154,13 +157,14 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
 
   const handleRestartProject = (id: string) => {
     if (window.confirm('确定要重启该项目的投标吗？')) {
-      setProjects(projects.map(p => p.id === id ? { ...p, status: '进行中' } : p));
+      setProjects(projects.map(p => p.id === id ? { ...p, status: '投标中' } : p));
     }
   };
 
   const handleSaveProject = () => {
+    setHasAttemptedSave(true);
     if (!analyzedData.projectName.trim()) {
-      alert('请填写必填项：项目名称');
+      alert('请填写所有必填项');
       return;
     }
     
@@ -173,7 +177,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
       agent: analyzedData.tenderAgent,
       agentContact: analyzedData.tenderAgentContact,
       bidOpeningTime: analyzedData.openingTime.replace('T', ' '),
-      status: isEditing ? projects.find(p => p.id === editingId)?.status || '进行中' : '进行中',
+      status: isEditing ? projects.find(p => p.id === editingId)?.status || '投标中' : '投标中',
       deposit: analyzedData.depositAmount,
       depositDeadline: analyzedData.openingTime.replace('T', ' '),
       openingLocation: analyzedData.openingLocation,
@@ -215,7 +219,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
               <Clock size={20} />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900">{projects.filter(p => p.status === '进行中').length} 个</h3>
+          <h3 className="text-2xl font-bold text-slate-900">{projects.filter(p => p.status === '投标中').length} 个</h3>
           <div className="mt-3 space-y-1.5">
             <div className="flex items-center justify-between text-[10px]">
               <span className="text-slate-400">7天内开标</span>
@@ -264,20 +268,6 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
           </div>
           
           <div className="w-40 relative group">
-            <select 
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full pl-4 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all appearance-none cursor-pointer text-slate-600 font-medium"
-            >
-              <option value="全部">全部状态</option>
-              <option value="进行中">进行中</option>
-              <option value="已完成">已完成</option>
-              <option value="放弃投标">放弃投标</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-primary transition-colors" size={16} />
-          </div>
-
-          <div className="w-40 relative group">
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
             <input 
               type="date"
@@ -285,6 +275,20 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
               onChange={(e) => setDateFilter(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all text-slate-600 font-medium"
             />
+          </div>
+
+          <div className="w-40 relative group">
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full pl-4 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all appearance-none cursor-pointer text-slate-600 font-medium"
+            >
+              <option value="全部">全部状态</option>
+              <option value="投标中">投标中</option>
+              <option value="已完成">已完成</option>
+              <option value="放弃投标">放弃投标</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-primary transition-colors" size={16} />
           </div>
         </div>
 
@@ -344,7 +348,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
                 </td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
-                    project.status === '进行中' 
+                    project.status === '投标中' 
                       ? 'bg-blue-50 text-blue-600' 
                       : project.status === '已完成' 
                         ? 'bg-emerald-50 text-emerald-600' 
@@ -352,7 +356,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
                           ? 'bg-red-50 text-red-600'
                           : 'bg-slate-50 text-slate-600'
                   }`}>
-                    {project.status === '进行中' ? '投标中' : (project.status === '已完成' ? '已开标' : project.status)}
+                    {project.status === '投标中' ? '投标中' : (project.status === '已完成' ? '已开标' : project.status)}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
@@ -536,13 +540,20 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
                       <label className="text-xs font-bold text-slate-500 ml-1 flex items-center gap-1">
                         项目名称 <span className="text-red-500">*</span>
                       </label>
-                      <input 
-                        type="text" 
-                        value={analyzedData.projectName || ''}
-                        onChange={(e) => handleDataChange('projectName', e.target.value)}
-                        placeholder="请输入项目名称"
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
-                      />
+                      <div className="relative flex items-center">
+                        <input 
+                          type="text" 
+                          value={analyzedData.projectName || ''}
+                          onChange={(e) => handleDataChange('projectName', e.target.value)}
+                          placeholder="请输入项目名称"
+                          className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !analyzedData.projectName.trim() ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'}`}
+                        />
+                        {hasAttemptedSave && !analyzedData.projectName.trim() && (
+                          <div className="absolute right-4 text-red-500">
+                            <AlertCircle size={16} className="fill-red-500 text-white" />
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-slate-500 ml-1">项目编号</label>

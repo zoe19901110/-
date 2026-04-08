@@ -73,14 +73,14 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
     { units: '省建工集团', price: 12800000, rank: '3', isWinner: false, isSelf: false },
   ]);
   const [winningRecords, setWinningRecords] = useState([
-    { unit: '某某建设集团有限公司', amount: 12105000, date: '2024-03-25', url: 'http://ggzy.example.com/...' },
+    { unit: '某某建设集团有限公司', amount: 12105000, date: '2026-03-25', url: 'http://ggzy.example.com/...' },
   ]);
   const [contractRecords, setContractRecords] = useState([
-    { id: 'HT-2024-001', name: '城市基础设施施工合同', date: '2024-04-05', amount: 11800000, owner: '陈经理', status: '履行中', fulfillmentDate: '2024-04-10' },
+    { id: 'HT-2026-001', name: '城市基础设施施工合同', date: '2026-04-05', amount: 11800000, owner: '陈经理', status: '履行中', fulfillmentDate: '2026-04-10' },
   ]);
   const [contractAttachments, setContractAttachments] = useState<Attachment[]>([
-    { id: '1', name: '中标通知书.pdf', size: '1.2MB', type: 'pdf', date: '2024-03-25' },
-    { id: '2', name: '施工合同扫描件.jpg', size: '2.4MB', type: 'image', date: '2024-04-05' },
+    { id: '1', name: '中标通知书.pdf', size: '1.2MB', type: 'pdf', date: '2026-03-25' },
+    { id: '2', name: '施工合同扫描件.jpg', size: '2.4MB', type: 'image', date: '2026-04-05' },
   ]);
 
   const updateOpening = (index: number, field: string, value: any) => {
@@ -158,23 +158,23 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
     const rawRecords = [
       {
         id: '1',
-        projectCode: 'ZB-2024-001',
-        projectName: `2024年智慧交通管理平台建设项目`,
-        openingDate: '2024-03-20',
+        projectCode: 'ZB-2026-001',
+        projectName: `2026年智慧交通管理平台建设项目`,
+        openingDate: '2026-03-20',
         result: '中标',
         bidPrice: 4450000.00,
         competitors: 5,
         ranking: 1,
         remarks: '技术分第一，商务分第二',
         fulfillmentStatus: '履行中',
-        fulfillmentStartDate: '2024-04-01',
+        fulfillmentStartDate: '2026-04-01',
         hasOpeningInfo: true
       },
       {
         id: '2',
-        projectCode: 'ZB-2024-005',
+        projectCode: 'ZB-2026-005',
         projectName: `政务云扩容采购项目`,
-        openingDate: '2024-02-28',
+        openingDate: '2026-02-28',
         result: '未中标',
         bidPrice: 2750000.00,
         competitors: 8,
@@ -185,9 +185,9 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
       },
       {
         id: '3',
-        projectCode: 'ZB-2024-008',
+        projectCode: 'ZB-2026-008',
         projectName: `XX市智慧医疗信息系统`,
-        openingDate: '2024-03-15',
+        openingDate: '2026-03-15',
         result: '中标',
         bidPrice: 8200000.00,
         competitors: 4,
@@ -198,9 +198,9 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
       },
       {
         id: '4',
-        projectCode: 'ZB-2024-012',
+        projectCode: 'ZB-2026-012',
         projectName: `工业园区污水处理自动化改造`,
-        openingDate: '2024-03-05',
+        openingDate: '2026-03-05',
         result: '未中标',
         bidPrice: 1500000.00,
         competitors: 12,
@@ -211,9 +211,9 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
       },
       {
         id: '5',
-        projectCode: 'ZB-2024-015',
+        projectCode: 'ZB-2026-015',
         projectName: `省图书馆数字化二期工程`,
-        openingDate: '2024-01-25',
+        openingDate: '2026-01-25',
         result: '中标',
         bidPrice: 3100000.00,
         competitors: 3,
@@ -224,9 +224,9 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
       },
       {
         id: '6',
-        projectCode: 'ZB-2024-020',
+        projectCode: 'ZB-2026-020',
         projectName: `智慧园区二期弱电工程`,
-        openingDate: '2024-04-10',
+        openingDate: '2026-04-10',
         result: '',
         bidPrice: 0,
         competitors: 0,
@@ -477,11 +477,11 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                       <div className="grid grid-cols-2 gap-8">
                         <div className="space-y-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">关联项目 <span className="text-red-500">*</span></p>
-                          <p className="text-sm font-bold text-slate-900">2024年智慧交通管理平台建设项目</p>
+                          <p className="text-sm font-bold text-slate-900">2026年智慧交通管理平台建设项目</p>
                         </div>
                         <div className="space-y-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">开标日期 <span className="text-red-500">*</span></p>
-                          <p className="text-sm font-bold text-slate-900">2024-03-20</p>
+                          <p className="text-sm font-bold text-slate-900">2026-03-20</p>
                         </div>
                       </div>
                     </div>

@@ -24,8 +24,8 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
   
   // Initialize files based on project
   const [files, setFiles] = useState([
-    { name: project.latestFile || `2023年${enterpriseName}智慧校园建设项目招标文件.pdf`, time: project.updateTime || '2023-11-20 14:30', type: 'pdf', status: '进行中' },
-    { name: `${enterpriseName}配套网络设备采购需求清单.docx`, time: '2023-11-19 10:15', type: 'doc', status: '已完成' }
+    { name: project.latestFile || `2026年${enterpriseName}智慧校园建设项目招标文件.pdf`, time: project.updateTime || '2025-11-20 14:30', type: 'pdf', status: '进行中' },
+    { name: `${enterpriseName}配套网络设备采购需求清单.docx`, time: '2025-11-19 10:15', type: 'doc', status: '已完成' }
   ]);
 
   const [isImported, setIsImported] = useState(!!project.latestFile);
@@ -44,7 +44,7 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
   }, [isImported, isParsed, project.uploadedFiles, useClarification]);
 
   // Determine which file is "latest"
-  const latestFileDisplay = useClarification ? `最新答疑文件_${project.name}.pdf` : (project.latestFile || `2024年${enterpriseName}智慧交通管理平台建设项目招标文件.pdf`);
+  const latestFileDisplay = useClarification ? `最新答疑文件_${project.name}.pdf` : (project.latestFile || `2026年${enterpriseName}智慧交通管理平台建设项目招标文件.pdf`);
 
   return (
     <motion.div 

@@ -126,10 +126,10 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
           { label: '工作年限', value: '12年' },
         ],
         personnel: [
-          { name: '张三', title: '高级工程师', cert: '一级建造师', code: '京111060800001', date: '2025-12-31' },
+          { name: '张三', title: '高级工程师', cert: '一级建造师', code: '京111060800001', date: '2027-12-31' },
         ],
         qualification: [
-          { name: '一级建造师执业资格', code: '京111060800001', date: '2025-12-31', status: 'valid' },
+          { name: '一级建造师执业资格', code: '京111060800001', date: '2027-12-31', status: 'valid' },
         ],
         performance: [
           { name: '个人参与：某市中心医院项目', amount: '4.2 亿元', date: '2023-08-15', manager: '张三', location: '江苏省南京市' },
@@ -147,8 +147,8 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
           { label: '经营范围', value: '各类房屋建筑工程施工总承包；市政公用工程施工总承包等。' },
         ],
         personnel: [
-          { name: '张建国', title: '高级工程师', cert: '一级建造师', code: '京111060800001', date: '2025-12-31' },
-          { name: '李晓明', title: '工程师', cert: '二级建造师', code: '京211060800002', date: '2024-06-15' },
+          { name: '张建国', title: '高级工程师', cert: '一级建造师', code: '京111060800001', date: '2027-12-31' },
+          { name: '李晓明', title: '工程师', cert: '二级建造师', code: '京211060800002', date: '2026-06-15' },
         ],
         qualification: [
           { name: '建筑工程施工总承包特级', code: 'A1011011000101', date: '2028-12-31', status: 'valid' },
@@ -171,8 +171,8 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
           { label: '经营范围', value: '市政公用工程施工总承包；公路工程施工总承包等。' },
         ],
         personnel: [
-          { name: '李市政', title: '高级工程师', cert: '一级建造师', code: '沪111060800003', date: '2026-05-18' },
-          { name: '王路桥', title: '高级工程师', cert: '一级建造师', code: '沪111060800004', date: '2025-09-12' },
+          { name: '李市政', title: '高级工程师', cert: '一级建造师', code: '沪111060800003', date: '2028-05-18' },
+          { name: '王路桥', title: '高级工程师', cert: '一级建造师', code: '沪111060800004', date: '2027-09-12' },
         ],
         qualification: [
           { name: '市政公用工程施工总承包特级', code: 'S1011011000101', date: '2029-01-10', status: 'valid' },
@@ -328,7 +328,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
 
   const renderRewards = () => {
     const rewardsData = [
-      { type: '奖励', title: '2023年度建筑业纳税百强企业', org: '某市人民政府', date: '2024-01-10', status: 'active' },
+      { type: '奖励', title: '2025年度建筑业纳税百强企业', org: '某市人民政府', date: '2026-01-10', status: 'active' },
       { type: '奖励', title: '抗洪救灾突出贡献奖', org: '某省应急管理厅', date: '2023-08-20', status: 'active' },
       { type: '处罚', title: '某工地扬尘治理不力通报批评', org: '某市住建局', date: '2023-03-15', status: 'expired' },
     ].map(r => ({ ...r, title: `${enterpriseName} - ${r.title}` }));
@@ -677,8 +677,8 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
 
   const renderDisclosure = () => {
     const disclosureData = [
-      { title: '关于公司 2023 年度利润分配预案的公告', date: '2024-03-20', type: '定期报告' },
-      { title: '关于中标重大工程项目的公告', date: '2024-02-15', type: '临时公告' },
+      { title: '关于公司 2025 年度利润分配预案的公告', date: '2026-03-20', type: '定期报告' },
+      { title: '关于中标重大工程项目的公告', date: '2026-02-15', type: '临时公告' },
       { title: '关于公司法定代表人变更的公告', date: '2023-12-10', type: '临时公告' },
     ].map(d => ({ ...d, title: `${enterpriseName} - ${d.title}` }));
 
