@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Plus, FolderPlus, FileText, Image as ImageIcon, File, MoreVertical, Download, Trash2, Filter, Edit2, ChevronRight, ChevronDown, Folder, FolderOpen, Upload } from 'lucide-react';
+import Pagination from './Pagination';
 
 interface FolderNode {
   id: string;
@@ -80,6 +81,8 @@ const Materials: React.FC<MaterialsProps> = ({ currentEnterprise }) => {
   const [expandedFolders, setExpandedFolders] = useState<string[]>(['1', '1-2', '1-2-3']);
   const [selectedFolder, setSelectedFolder] = useState<string>('1-1');
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const renderFolder = (folder: FolderNode, level: number = 0) => {
     const isExpanded = expandedFolders.includes(folder.id);
@@ -237,7 +240,9 @@ const Materials: React.FC<MaterialsProps> = ({ currentEnterprise }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {mockFiles.map((file) => (
+                {mockFiles
+                  .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                  .map((file) => (
                   <tr key={file.id} className="hover:bg-slate-50/80 transition-colors group">
                     <td className="px-6 py-3">
                       <input 
@@ -281,6 +286,14 @@ const Materials: React.FC<MaterialsProps> = ({ currentEnterprise }) => {
               </tbody>
             </table>
           </div>
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={Math.ceil(mockFiles.length / pageSize)}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            totalItems={mockFiles.length}
+          />
         </div>
       </div>
     </div>

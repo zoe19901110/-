@@ -109,8 +109,8 @@ const Pagination: React.FC<PaginationProps> = ({
       </button>
 
       {totalItems !== undefined && (
-        <div className="ml-auto text-xs text-slate-400">
-          共 <span className="font-bold text-slate-600">{totalItems}</span> 条记录
+        <div className="ml-auto text-xs text-slate-500 font-medium">
+          每页 <span className="text-slate-900">{pageSize}</span> 条, 共 <span className="text-slate-900">{totalItems}</span> 条
         </div>
       )}
     </div>

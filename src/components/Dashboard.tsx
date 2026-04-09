@@ -215,7 +215,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
               </button>
             </div>
             <div className="divide-y divide-slate-100 flex-1">
-              {displayProjects.map((project) => (
+              {displayProjects
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((project) => (
                 <div 
                   key={project.id} 
                   onClick={() => {
@@ -286,6 +288,14 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
                 </div>
               ))}
             </div>
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={Math.ceil(displayProjects.length / pageSize)}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              totalItems={displayProjects.length}
+            />
           </div>
         </div>
 

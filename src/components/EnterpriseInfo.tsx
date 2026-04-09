@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
   FileText, 
@@ -37,6 +37,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 
 import Certificates from './Certificates';
+import Pagination from './Pagination';
 
 interface EnterpriseInfoProps {
   initialTab?: string;
@@ -45,6 +46,8 @@ interface EnterpriseInfoProps {
 
 const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnterprise }) => {
   const [activeTab, setActiveTab] = useState(initialTab && !['certificates'].includes(initialTab) ? initialTab : 'basic');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [sidePanel, setSidePanel] = useState<'certificates' | null>(
     initialTab === 'certificates' ? initialTab : null
   );
@@ -317,7 +320,9 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {personnelData.map((item: any, idx: number) => (
+            {personnelData
+              .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+              .map((item: any, idx: number) => (
               <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                 <td className="px-6 py-4 font-bold text-slate-700">{item.name}</td>
                 <td className="px-6 py-4 text-sm text-slate-500">{item.title}</td>
@@ -410,6 +415,14 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
           </tbody>
         </table>
       </div>
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={Math.ceil(personnelData.length / pageSize)}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        totalItems={personnelData.length}
+      />
     </div>
     </div>
   );
@@ -438,7 +451,9 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {financeData.map((item, idx) => (
+              {financeData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -472,6 +487,14 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
             </tbody>
           </table>
         </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(financeData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={financeData.length}
+        />
       </div>
     </div>
   );
@@ -500,7 +523,9 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {rewardsData.map((item, idx) => (
+              {rewardsData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
@@ -533,6 +558,14 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
             </tbody>
           </table>
         </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(rewardsData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={rewardsData.length}
+        />
       </div>
     </div>
   );
@@ -564,7 +597,9 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {materialsData.map((item, idx) => (
+              {materialsData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -594,6 +629,14 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
             </tbody>
           </table>
         </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(materialsData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={materialsData.length}
+        />
       </div>
     </div>
   );
@@ -647,7 +690,9 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {qualificationData.map((item: any, idx: number) => (
+              {qualificationData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item: any, idx: number) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -695,6 +740,14 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
             </tbody>
           </table>
         </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(qualificationData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={qualificationData.length}
+        />
       </div>
     </div>
   );
@@ -719,7 +772,9 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {performanceData.map((item: any, idx: number) => (
+              {performanceData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item: any, idx: number) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -760,6 +815,14 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
             </tbody>
           </table>
         </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(performanceData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={performanceData.length}
+        />
       </div>
     </div>
   );
@@ -789,7 +852,9 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {honorsData.map((item, idx) => (
+              {honorsData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -821,6 +886,14 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
             </tbody>
           </table>
         </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(honorsData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={honorsData.length}
+        />
       </div>
     </div>
   );
@@ -847,7 +920,9 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {disclosureData.map((item, idx) => (
+              {disclosureData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -879,6 +954,14 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
             </tbody>
           </table>
         </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(disclosureData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={disclosureData.length}
+        />
       </div>
     </div>
   );
@@ -905,7 +988,9 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {creditData.map((item, idx) => (
+              {creditData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -935,6 +1020,14 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
             </tbody>
           </table>
         </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(creditData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={creditData.length}
+        />
       </div>
     </div>
   );

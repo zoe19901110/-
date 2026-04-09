@@ -22,6 +22,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
+import Pagination from './Pagination';
 
 interface Department {
   id: string;
@@ -65,6 +66,8 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
   const [activeSubTab, setActiveSubTab] = useState('dept');
   const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Modals
   const [showDeptModal, setShowDeptModal] = useState(false);
@@ -689,7 +692,9 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredUsers.length > 0 ? filteredUsers.map((user) => (
+                    {filteredUsers.length > 0 ? filteredUsers
+                      .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                      .map((user) => (
                       <tr key={user.id} className={`${user.id === highlightedUserId ? 'bg-primary/20' : 'hover:bg-slate-50/50'} transition-colors group`}>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
@@ -783,6 +788,14 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                     </tbody>
                   </table>
                 </div>
+                <Pagination 
+                  currentPage={currentPage}
+                  totalPages={Math.ceil(filteredUsers.length / pageSize)}
+                  pageSize={pageSize}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={setPageSize}
+                  totalItems={filteredUsers.length}
+                />
               </div>
             </div>
           </>

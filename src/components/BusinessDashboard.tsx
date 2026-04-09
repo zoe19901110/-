@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { BarChart3, TrendingUp, Plus, FileText, Clock, Briefcase, Search, Filter, Download, Wallet, Tag, Eye } from 'lucide-react';
+import { BarChart3, TrendingUp, Plus, FileText, Clock, Briefcase, Search, Filter, Download, Wallet, Tag, Eye, RotateCw } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, Legend } from 'recharts';
+import Pagination from './Pagination';
 
 interface Project {
   id: string;
@@ -24,6 +25,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
   const [trendViewType, setTrendViewType] = useState<'month' | 'year'>('month');
   const [trendSelectedYear, setTrendSelectedYear] = useState<string>('全部');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const yearOptions = ['全部', '2028', '2027', '2026'];
 
   // 1. Calculate Stats
@@ -333,7 +336,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filteredProjects.length > 0 ? filteredProjects.map((project, i) => {
+              {filteredProjects.length > 0 ? filteredProjects
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((project, i) => {
                 const progress = project.status === '已完成' ? 100 : (project.progress || 45 + (i * 7) % 40);
                 return (
                   <tr key={project.id} className="hover:bg-slate-50/50 transition-colors group">
@@ -391,6 +396,14 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
             </tbody>
           </table>
         </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(filteredProjects.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={filteredProjects.length}
+        />
       </div>
     </motion.div>
   );
