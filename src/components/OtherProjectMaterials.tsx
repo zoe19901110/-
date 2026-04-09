@@ -27,6 +27,12 @@ interface OtherProjectMaterialsProps {
   projects?: any[];
 }
 
+interface CategoryNode {
+  id: string;
+  name: string;
+  children: CategoryNode[];
+}
+
 const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEnterprise, projects: allProjects = [] }) => {
   const [view, setView] = useState<'projects' | 'detail'>('projects');
   const [selectedProject, setSelectedProject] = useState<any>(null);
@@ -46,6 +52,13 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
   const [detailPageSize, setDetailPageSize] = useState(10);
 
   const [projects, setProjects] = useState<any[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string>('全部文档');
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<CategoryNode[]>([
+    { id: 'cat-1', name: '技术材料', children: [] },
+    { id: 'cat-2', name: '商务材料', children: [] },
+    { id: 'cat-3', name: '新分类', children: [{ id: 'sub-1', name: '新子分类', children: [] }] }
+  ]);
 
   const isPaused = allProjects.find(p => p.code === selectedProject?.code || p.name === selectedProject?.name)?.status === '放弃投标';
 
@@ -93,7 +106,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
     ]);
   }, [currentEnterprise]);
 
-  const projectMaterials = [
+  const [projectMaterials, setProjectMaterials] = useState([
     {
       id: 'm1',
       fileName: '技术方案初稿.pdf',
@@ -109,8 +122,36 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
       uploadDate: '2026-03-12',
       size: '12.8 MB',
       uploader: '李芳'
+    },
+    {
+      id: 'm3',
+      fileName: '施工组织设计.docx',
+      type: '技术材料',
+      uploadDate: '2026-03-16',
+      size: '2.5 MB',
+      uploader: '张伟'
+    },
+    {
+      id: 'm4',
+      fileName: '营业执照副本.jpg',
+      type: '商务材料',
+      uploadDate: '2026-03-10',
+      size: '1.2 MB',
+      uploader: '李芳'
+    },
+    {
+      id: 'm5',
+      fileName: '项目人员社保证明.pdf',
+      type: '新分类',
+      uploadDate: '2026-03-18',
+      size: '3.8 MB',
+      uploader: '王强'
     }
-  ];
+  ]);
+
+  const filteredMaterials = activeCategory === '全部文档' 
+    ? projectMaterials 
+    : projectMaterials.filter(m => m.type === activeCategory);
 
   const handleEnterDetail = (project: any) => {
     setSelectedProject(project);
@@ -288,20 +329,110 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
     </div>
   );
 
-  const [activeCategory, setActiveCategory] = useState<string>('全部文档');
-  const [categories, setCategories] = useState<{name: string, sub: string[]}[]>([
-    { name: '技术材料', sub: [] },
-    { name: '商务材料', sub: [] }
-  ]);
-
   const addCategory = (name: string) => {
-    setCategories([...categories, { name, sub: [] }]);
+    setCategories([...categories, { id: `cat-${Date.now()}`, name, children: [] }]);
   };
 
-  const addSubCategory = (catIndex: number, name: string) => {
-    const newCategories = [...categories];
-    newCategories[catIndex].sub.push(name);
+  const addSubCategory = (parentId: string, name: string) => {
+    const updateNodes = (nodes: CategoryNode[]): CategoryNode[] => {
+      return nodes.map(node => {
+        if (node.id === parentId) {
+          return {
+            ...node,
+            children: [...node.children, { id: `sub-${Date.now()}`, name, children: [] }]
+          };
+        }
+        if (node.children.length > 0) {
+          return { ...node, children: updateNodes(node.children) };
+        }
+        return node;
+      });
+    };
+    setCategories(updateNodes(categories));
+  };
+
+  const updateCategoryName = (id: string, newName: string) => {
+    let oldName = '';
+    const findAndReplace = (nodes: CategoryNode[]): CategoryNode[] => {
+      return nodes.map(node => {
+        if (node.id === id) {
+          oldName = node.name;
+          return { ...node, name: newName };
+        }
+        if (node.children.length > 0) {
+          return { ...node, children: findAndReplace(node.children) };
+        }
+        return node;
+      });
+    };
+    
+    const newCategories = findAndReplace(categories);
     setCategories(newCategories);
+    
+    if (oldName) {
+      setProjectMaterials(prev => prev.map(m => m.type === oldName ? { ...m, type: newName } : m));
+      if (activeCategory === oldName) {
+        setActiveCategory(newName);
+      }
+    }
+    setEditingCatId(null);
+  };
+
+  const renderCategoryNode = (node: CategoryNode, level: number = 0) => {
+    const isActive = activeCategory === node.name;
+    const isEditing = editingCatId === node.id;
+
+    return (
+      <div key={node.id} className="space-y-1">
+        <div 
+          className={`group flex items-center justify-between px-3 py-2 rounded-xl transition-all cursor-pointer ${
+            isActive ? 'bg-primary/5 text-primary font-bold' : 'text-slate-600 hover:bg-slate-50'
+          }`}
+          style={{ paddingLeft: `${level * 12 + 12}px` }}
+          onClick={() => setActiveCategory(node.name)}
+        >
+          {isEditing ? (
+            <input 
+              autoFocus
+              className="bg-white border border-primary/30 rounded px-1 w-full outline-none text-sm"
+              defaultValue={node.name}
+              onBlur={(e) => updateCategoryName(node.id, e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && updateCategoryName(node.id, (e.target as HTMLInputElement).value)}
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <div className="flex items-center gap-2 flex-1 overflow-hidden">
+              <span className={`truncate ${level === 0 ? 'text-sm' : 'text-xs'}`}>{node.name}</span>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingCatId(node.id);
+                }}
+                className="opacity-0 group-hover:opacity-100 p-1 hover:text-primary transition-all"
+              >
+                <Edit3 size={level === 0 ? 12 : 10} />
+              </button>
+            </div>
+          )}
+          {level < 2 && (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                addSubCategory(node.id, '新子分类');
+              }} 
+              className="text-slate-400 hover:text-primary p-1"
+            >
+              <Plus size={level === 0 ? 14 : 12}/>
+            </button>
+          )}
+        </div>
+        {node.children.length > 0 && (
+          <div className="space-y-1">
+            {node.children.map(child => renderCategoryNode(child, level + 1))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderDetailView = () => (
@@ -350,19 +481,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
         </div>
 
         <div className="space-y-1">
-          {categories.map((cat, catIdx) => (
-            <div key={catIdx} className="space-y-1">
-              <div className="flex items-center justify-between px-3 py-2 text-slate-600 hover:text-primary cursor-pointer text-sm">
-                {cat.name}
-                <button onClick={() => addSubCategory(catIdx, '新子分类')} className="text-slate-400 hover:text-primary"><Plus size={14}/></button>
-              </div>
-              {cat.sub.map((sub, subIdx) => (
-                <div key={subIdx} className="pl-8 py-1 text-slate-500 hover:text-primary cursor-pointer text-xs">
-                  {sub}
-                </div>
-              ))}
-            </div>
-          ))}
+          {categories.map((node) => renderCategoryNode(node))}
         </div>
       </div>
 
@@ -400,7 +519,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {projectMaterials
+              {filteredMaterials
                 .slice((detailCurrentPage - 1) * detailPageSize, detailCurrentPage * detailPageSize)
                 .map((item) => (
                 <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
@@ -448,11 +567,11 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
         </div>
         <Pagination 
           currentPage={detailCurrentPage}
-          totalPages={Math.ceil(projectMaterials.length / detailPageSize)}
+          totalPages={Math.ceil(filteredMaterials.length / detailPageSize)}
           pageSize={detailPageSize}
           onPageChange={setDetailCurrentPage}
           onPageSizeChange={setDetailPageSize}
-          totalItems={projectMaterials.length}
+          totalItems={filteredMaterials.length}
         />
       </div>
     </div>
