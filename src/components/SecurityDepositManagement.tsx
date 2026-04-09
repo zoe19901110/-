@@ -28,6 +28,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import Pagination from './Pagination';
 
 interface SecurityDepositManagementProps {
   currentEnterprise?: { id: string; name: string };
@@ -43,6 +44,10 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
   const [isEditing, setIsEditing] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [deposits, setDeposits] = useState<any[]>([
     {
@@ -334,7 +339,9 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
               const matchesDate = !dateFilter || d.date.includes(dateFilter);
               const matchesRefundStatus = refundStatusFilter === '全部' || d.refundStatus === refundStatusFilter;
               return matchesSearch && matchesDate && matchesRefundStatus;
-            }).map((deposit) => {
+            })
+            .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+            .map((deposit) => {
               const project = projects.find(p => p.code === deposit.projectCode || p.name === deposit.projectName);
               const isPaused = project?.status === '放弃投标';
 
@@ -413,6 +420,24 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
           </tbody>
         </table>
       </div>
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={Math.ceil(deposits.filter(d => {
+          const matchesSearch = d.projectName.includes(searchTerm) || d.projectCode.includes(searchTerm) || d.bank.includes(searchTerm);
+          const matchesDate = !dateFilter || d.date.includes(dateFilter);
+          const matchesRefundStatus = refundStatusFilter === '全部' || d.refundStatus === refundStatusFilter;
+          return matchesSearch && matchesDate && matchesRefundStatus;
+        }).length / pageSize)}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        totalItems={deposits.filter(d => {
+          const matchesSearch = d.projectName.includes(searchTerm) || d.projectCode.includes(searchTerm) || d.bank.includes(searchTerm);
+          const matchesDate = !dateFilter || d.date.includes(dateFilter);
+          const matchesRefundStatus = refundStatusFilter === '全部' || d.refundStatus === refundStatusFilter;
+          return matchesSearch && matchesDate && matchesRefundStatus;
+        }).length}
+      />
 
       {/* Deposit Modal */}
       <AnimatePresence>

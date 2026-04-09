@@ -33,6 +33,7 @@ import {
   Ban
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import Pagination from './Pagination';
 
 interface DashboardProps {
   setActiveTab: (tab: string) => void;
@@ -46,6 +47,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [isTenderUploaded, setIsTenderUploaded] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   const [analyzedData, setAnalyzedData] = useState({
     projectName: '',
     projectNumber: '',

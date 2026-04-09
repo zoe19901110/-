@@ -32,6 +32,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import Pagination from './Pagination';
 
 interface TenderOpeningStatusManagementProps {
   currentEnterprise?: { id: string; name: string };
@@ -65,6 +66,10 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
   const [showPersonnelDropdown, setShowPersonnelDropdown] = useState(false);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const departments = React.useMemo(() => {
     const depts = new Set<string>();
@@ -449,7 +454,9 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
               const matchesStatus = statusFilter === '全部' || r.result === statusFilter;
               const matchesFulfillment = fulfillmentFilter === '全部' || r.fulfillmentStatus === fulfillmentFilter;
               return matchesSearch && matchesDate && matchesStatus && matchesFulfillment;
-            }).map((record) => (
+            })
+            .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+            .map((record) => (
               <tr 
                 key={record.id} 
                 className="hover:bg-slate-50/50 transition-colors group"
@@ -520,6 +527,26 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
           </tbody>
         </table>
       </div>
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={Math.ceil(records.filter(r => {
+          const matchesSearch = r.projectName.includes(searchTerm) || r.projectCode.includes(searchTerm);
+          const matchesDate = !dateFilter || r.openingDate.includes(dateFilter);
+          const matchesStatus = statusFilter === '全部' || r.result === statusFilter;
+          const matchesFulfillment = fulfillmentFilter === '全部' || r.fulfillmentStatus === fulfillmentFilter;
+          return matchesSearch && matchesDate && matchesStatus && matchesFulfillment;
+        }).length / pageSize)}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        totalItems={records.filter(r => {
+          const matchesSearch = r.projectName.includes(searchTerm) || r.projectCode.includes(searchTerm);
+          const matchesDate = !dateFilter || r.openingDate.includes(dateFilter);
+          const matchesStatus = statusFilter === '全部' || r.result === statusFilter;
+          const matchesFulfillment = fulfillmentFilter === '全部' || r.fulfillmentStatus === fulfillmentFilter;
+          return matchesSearch && matchesDate && matchesStatus && matchesFulfillment;
+        }).length}
+      />
 
       {/* Add Modal */}
       <AnimatePresence>

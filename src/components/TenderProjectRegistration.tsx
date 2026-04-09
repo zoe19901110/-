@@ -25,6 +25,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import Pagination from './Pagination';
 
 interface TenderProjectRegistrationProps {
   onEnterWorkbench?: (stage: string, data?: any) => void;
@@ -47,6 +48,11 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [isTenderUploaded, setIsTenderUploaded] = useState(false);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   const [analyzedData, setAnalyzedData] = useState({
     projectName: '',
     projectNumber: '',
@@ -329,7 +335,9 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
               const matchesStatus = statusFilter === '全部' || p.status === statusFilter;
               const matchesDate = !dateFilter || p.bidOpeningTime.includes(dateFilter);
               return matchesSearch && matchesStatus && matchesDate;
-            }).map((project) => (
+            })
+            .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+            .map((project) => (
               <tr key={project.id} className="hover:bg-slate-50/50 transition-colors group">
                 <td className="px-6 py-4">
                   <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{project.name}</p>
@@ -428,6 +436,24 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
             ))}
           </tbody>
         </table>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(projects.filter(p => {
+            const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
+            const matchesStatus = statusFilter === '全部' || p.status === statusFilter;
+            const matchesDate = !dateFilter || p.bidOpeningTime.includes(dateFilter);
+            return matchesSearch && matchesStatus && matchesDate;
+          }).length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={projects.filter(p => {
+            const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
+            const matchesStatus = statusFilter === '全部' || p.status === statusFilter;
+            const matchesDate = !dateFilter || p.bidOpeningTime.includes(dateFilter);
+            return matchesSearch && matchesStatus && matchesDate;
+          }).length}
+        />
       </div>
 
       {/* Add Modal */}

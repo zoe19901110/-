@@ -20,6 +20,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import Pagination from './Pagination';
 
 interface OtherProjectMaterialsProps {
   currentEnterprise?: { id: string; name: string };
@@ -37,6 +38,12 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
   const [uploadType, setUploadType] = useState('技术材料');
   const [uploadRemarks, setUploadRemarks] = useState('');
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [detailCurrentPage, setDetailCurrentPage] = useState(1);
+  const [detailPageSize, setDetailPageSize] = useState(10);
 
   const [projects, setProjects] = useState<any[]>([]);
 
@@ -191,72 +198,92 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
       </div>
 
       {/* Project Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目名称</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目编号</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">招标人</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">材料数量</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">最后更新</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {projects.filter(p => {
-              const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
-              const matchesDate = !dateFilter || p.bidOpeningTime.includes(dateFilter);
-              return matchesSearch && matchesDate;
-            }).map((project) => {
-              const globalProject = allProjects.find(p => p.code === project.code || p.name === project.name);
-              const isProjectPaused = globalProject?.status === '放弃投标';
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目名称</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目编号</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">招标人</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">材料数量</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">最后更新</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {projects.filter(p => {
+                const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
+                const matchesDate = !dateFilter || p.bidOpeningTime?.includes(dateFilter);
+                return matchesSearch && matchesDate;
+              })
+              .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+              .map((project) => {
+                const globalProject = allProjects.find(p => p.code === project.code || p.name === project.name);
+                const isProjectPaused = globalProject?.status === '放弃投标';
 
-              return (
-                <tr key={project.id} className={`hover:bg-slate-50/50 transition-colors group ${isProjectPaused ? 'opacity-60' : ''}`}>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="size-8 bg-blue-50 text-primary rounded-lg flex items-center justify-center shrink-0">
-                        <Briefcase size={16} />
+                return (
+                  <tr key={project.id} className={`hover:bg-slate-50/50 transition-colors group ${isProjectPaused ? 'opacity-60' : ''}`}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="size-8 bg-blue-50 text-primary rounded-lg flex items-center justify-center shrink-0">
+                          <Briefcase size={16} />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{project.name}</p>
+                          {isProjectPaused && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 w-fit">
+                              已暂停
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-1">
-                        <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{project.name}</p>
-                        {isProjectPaused && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 w-fit">
-                            已暂停
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{project.code}</td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{project.tenderer}</td>
-                  <td className="px-6 py-4 text-center">
-                    <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">
-                      {project.materialCount}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{project.lastUpdate}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => handleEnterDetail(project)}
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                        isProjectPaused
-                          ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                          : project.hasMaterials 
-                            ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
-                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      {project.hasMaterials ? <Edit3 size={14} /> : <Plus size={14} />}
-                      {project.hasMaterials ? '修改记录' : '新增记录'}
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{project.code}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{project.tenderer}</td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">
+                        {project.materialCount}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{project.lastUpdate}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button 
+                        onClick={() => handleEnterDetail(project)}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                          isProjectPaused
+                            ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                            : project.hasMaterials 
+                              ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
+                              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        {project.hasMaterials ? <Edit3 size={14} /> : <Plus size={14} />}
+                        {project.hasMaterials ? '修改记录' : '新增记录'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(projects.filter(p => {
+            const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
+            const matchesDate = !dateFilter || p.bidOpeningTime?.includes(dateFilter);
+            return matchesSearch && matchesDate;
+          }).length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={projects.filter(p => {
+            const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
+            const matchesDate = !dateFilter || p.bidOpeningTime?.includes(dateFilter);
+            return matchesSearch && matchesDate;
+          }).length}
+        />
       </div>
     </div>
   );
@@ -278,20 +305,51 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
   };
 
   const renderDetailView = () => (
-    <div className="flex gap-6 h-[calc(100vh-120px)]">
-      {/* Left Tree Structure */}
-      <div className="w-64 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 overflow-y-auto">
-        <div className="flex items-center justify-between mb-4 px-2">
-          <h3 className="font-bold text-slate-900">项目目录</h3>
-          <button onClick={() => addCategory('新分类')} className="text-primary hover:text-primary/80"><Plus size={16}/></button>
-        </div>
-        <div className="space-y-1">
-          <div 
-            className={`px-3 py-2 rounded-lg font-bold text-sm cursor-pointer ${activeCategory === '全部文档' ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'}`}
-            onClick={() => setActiveCategory('全部文档')}
+    <div className="flex flex-col gap-4 h-[calc(100vh-120px)]">
+      {/* Global Back Button & Breadcrumb */}
+      <div className="flex items-center justify-between bg-white px-6 py-3 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setView('projects')}
+            className="p-2 hover:bg-slate-100 text-slate-400 hover:text-primary rounded-full transition-all"
+            title="返回项目列表"
           >
-            全部文档
+            <ChevronLeft size={20} />
+          </button>
+          <div className="h-4 w-px bg-slate-200 mx-1"></div>
+          <div className="flex items-center gap-2 text-sm">
+            <Briefcase size={16} className="text-primary" />
+            <span className="font-bold text-slate-900">{selectedProject?.name}</span>
+            <span className="text-slate-400 mx-1">/</span>
+            <span className="text-slate-500 font-medium">{activeCategory}</span>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">项目编号:</span>
+          <span className="text-xs font-mono font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">{selectedProject?.code}</span>
+        </div>
+      </div>
+
+      <div className="flex gap-6 flex-1 overflow-hidden">
+        {/* Left Tree Structure */}
+      <div className="w-64 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 overflow-y-auto">
+        <div 
+          className="px-2 mb-4 cursor-pointer hover:text-primary transition-colors"
+          onClick={() => setActiveCategory('全部文档')}
+        >
+          <h3 className="font-bold text-slate-900 text-lg">文档素材</h3>
+        </div>
+        
+        <div className="px-2 mb-6">
+          <button 
+            onClick={() => addCategory('新分类')}
+            className="w-full py-3 border-2 border-dashed border-slate-100 rounded-xl text-slate-400 text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-primary/30 hover:text-primary transition-all"
+          >
+            <Plus size={18} /> 新增目录
+          </button>
+        </div>
+
+        <div className="space-y-1">
           {categories.map((cat, catIdx) => (
             <div key={catIdx} className="space-y-1">
               <div className="flex items-center justify-between px-3 py-2 text-slate-600 hover:text-primary cursor-pointer text-sm">
@@ -342,7 +400,9 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {projectMaterials.map((item) => (
+              {projectMaterials
+                .slice((detailCurrentPage - 1) * detailPageSize, detailCurrentPage * detailPageSize)
+                .map((item) => (
                 <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -386,9 +446,18 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
             </tbody>
           </table>
         </div>
+        <Pagination 
+          currentPage={detailCurrentPage}
+          totalPages={Math.ceil(projectMaterials.length / detailPageSize)}
+          pageSize={detailPageSize}
+          onPageChange={setDetailCurrentPage}
+          onPageSizeChange={setDetailPageSize}
+          totalItems={projectMaterials.length}
+        />
       </div>
     </div>
-  );
+  </div>
+);
 
   return (
     <motion.div 

@@ -279,32 +279,6 @@ const Workbench: React.FC<WorkbenchProps> = ({
   };
 
   const baseNotifications = [
-  };��改造建设项目' },
-      { label: '招标编号', value: 'T2300000001003033' },
-      { label: '预算金额', value: '¥1,250.0万' },
-      { label: '开标时间', value: '2025-12-20 09:30' },
-    ]
-  };�/工程质量保修期，请注意检查。',
-��工作所需金额相应的质量保证金余额，并有权根据第19.3款约定要求延长缺陷责任期（工程质量保修期），直至完成剩余工作为止。',
-        analysis: '合同条款及格式章节出现缺陷责任期/工程质量保修期，请注意检查。',
-        suggestion: '投标附录函中，质量缺陷责任期限响应被废标，其要求在合同条款中：https://ggzyjy.huzhou.gov.cn/art/2024/7/18/art_1229670649_65527.html'
-      },
-      {
-        title: '资格审查潜在废标项',
-        original: '（5）承包人在缺陷责任期（工程质量保修期）内，未能对工程接收证书所列的缺陷清单的内容或缺陷责任期（工程质量保修期）内发生的缺陷进行修复，而又拒绝按监理人指示再进行修复；',
-        analysis: '合同条款及格式章节出现缺陷责任期/工程质量保修期，请注意检查。',
-        suggestion: '投标附录函中，质量缺陷责任期限响应被废标，其要求在合同条款中：https://ggzyjy.huzhou.gov.cn/art/2024/7/18/art_1229670649_65527.html'
-      }
-    ],
-    coreContent: [
-      { label: '项目名称', value: '克东县 2021 年老旧小区改造建设项目' },
-      { label: '招标编号', value: 'T2300000001003033' },
-      { label: '预算金额', value: '¥1,250.0万' },
-      { label: '开标时间', value: '2023-12-20 09:30' },
-    ]
-  };
-
-
     { id: 1, type: 'warning', text: '保证金缴纳截止时间提醒：2026-11-25 17:00', time: '2小时前', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50' },
     { id: 2, type: 'info', text: '开标时间提醒：2026-12-20 09:30', time: '5小时前', icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-50' },
     { id: 3, type: 'alert', text: '文件领取截止时间提醒：2026-04-15', time: '1天前', icon: Info, color: 'text-purple-500', bg: 'bg-purple-50' },

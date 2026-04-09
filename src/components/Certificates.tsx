@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Plus, Download, FileText, ShieldCheck, Calendar, Filter, Edit2, Trash2, ChevronDown } from 'lucide-react';
+import Pagination from './Pagination';
 
 interface CertificatesProps {
   currentEnterprise?: { id: string; name: string };
@@ -8,6 +9,9 @@ interface CertificatesProps {
 const Certificates: React.FC<CertificatesProps> = ({ currentEnterprise }) => {
   const enterpriseId = currentEnterprise?.id || 'ent-1';
   const enterpriseName = currentEnterprise?.name || '杭州某某科技有限公司';
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const getCertData = () => {
     const baseCerts = [
@@ -100,7 +104,9 @@ const Certificates: React.FC<CertificatesProps> = ({ currentEnterprise }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {certs.map((item, idx) => (
+              {certs
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -135,6 +141,14 @@ const Certificates: React.FC<CertificatesProps> = ({ currentEnterprise }) => {
             </tbody>
           </table>
         </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(certs.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={certs.length}
+        />
       </div>
     </div>
   );
