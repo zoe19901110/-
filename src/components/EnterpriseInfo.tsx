@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
+  ArrowLeft,
   Building2, 
   FileText, 
   Award, 
@@ -156,48 +157,46 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
   ];
 
   const renderSearchAndFilter = (placeholder: string) => (
-    <div className="bg-white border-b border-slate-200 px-6 py-3">
-      <div className="flex flex-wrap items-center gap-8">
-        {/* Text Input */}
-        <div className="w-56 relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
-          <input 
-            type="text" 
-            placeholder={placeholder}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
-          />
-        </div>
+    <div className="flex flex-wrap items-center gap-8 justify-start">
+      {/* Text Input */}
+      <div className="w-56 relative group">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+        <input 
+          type="text" 
+          placeholder={placeholder}
+          className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+        />
+      </div>
 
-        {/* Dropdown for Certificate */}
-        <div className="w-40 relative group">
-          <select className="w-full pl-4 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all appearance-none cursor-pointer text-slate-600 font-medium">
-            <option value="">所有证书/类型</option>
-            <option value="1">一级建造师</option>
-            <option value="2">二级建造师</option>
-            <option value="3">高级工程师</option>
-            <option value="4">注册会计师</option>
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-primary transition-colors" size={16} />
-        </div>
+      {/* Dropdown for Certificate */}
+      <div className="w-40 relative group">
+        <select className="w-full pl-4 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all appearance-none cursor-pointer text-slate-600 font-medium">
+          <option value="">所有证书/类型</option>
+          <option value="1">一级建造师</option>
+          <option value="2">二级建造师</option>
+          <option value="3">高级工程师</option>
+          <option value="4">注册会计师</option>
+        </select>
+        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-primary transition-colors" size={16} />
+      </div>
 
-        {/* Date Picker */}
-        <div className="w-40 relative group">
-          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
-          <input 
-            type="date" 
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all text-slate-600 font-medium"
-          />
-        </div>
+      {/* Date Picker */}
+      <div className="w-40 relative group">
+        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+        <input 
+          type="date" 
+          className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all text-slate-600 font-medium"
+        />
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2">
-          <button className="px-8 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all">
-            查询
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
-            <Filter size={16} /> 重置
-          </button>
-        </div>
+      {/* Action Buttons */}
+      <div className="flex gap-2 ml-auto">
+        <button className="px-8 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all">
+          查询
+        </button>
+        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+          <Filter size={16} /> 重置
+        </button>
       </div>
     </div>
   );
@@ -301,936 +300,42 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
 
   const currentData = getEnterpriseData();
 
-  const renderPersonnel = () => {
-    const personnelData = currentData.personnel.map((p: any) => ({ ...p, name: `${p.name} (${enterpriseName})` }));
-
-    return (
-    <div className="flex flex-col">
-      <div className="bg-white overflow-hidden">
-        <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-              <th className="px-6 py-4">姓名</th>
-              <th className="px-6 py-4">职位/职称</th>
-              <th className="px-6 py-4">持有证书</th>
-              <th className="px-6 py-4">证书编号</th>
-              <th className="px-6 py-4">有效期</th>
-              <th className="px-6 py-4 text-right">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {personnelData
-              .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-              .map((item: any, idx: number) => (
-              <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                <td className="px-6 py-4 font-bold text-slate-700">{item.name}</td>
-                <td className="px-6 py-4 text-sm text-slate-500">{item.title}</td>
-                <td className="px-6 py-4">
-                  <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold border border-blue-100">
-                    {item.cert}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-xs font-mono text-slate-400">{item.code}</td>
-                <td className="px-6 py-4 text-sm text-slate-500">{item.date}</td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-3">
-                    <button 
-                      onClick={() => {
-                        setPersonnelMode('edit');
-                        const personName = item.name.split(' (')[0];
-                        setPersonnelFormData({
-                          ...personnelFormData,
-                          name: personName,
-                          position: item.title,
-                          techTitle: item.title.includes('工程师') ? item.title : '高级工程师',
-                          certificates: [{ name: item.cert, code: item.code, expiryDate: item.date, attachments: [] }],
-                          // Mocking other data for edit mode
-                          isForeigner: '否',
-                          gender: '男',
-                          birthDate: '1985-06-15',
-                          idCard: '44010619850615XXXX',
-                          region: '广州市',
-                          phone: '13800138000',
-                          education: '硕士',
-                          isEmployed: '是',
-                          performance: [
-                            { packageName: 'XX市中心医院建设项目', client: 'XX市卫生局', winningDate: '2023-05-20', winningAmount: '1500.00', amountUnit: '万元', projectLeader: personName, isEditing: false }
-                          ],
-                          qualifications: [
-                            { personName: personName, qualificationName: item.cert, startDate: '2021-01-01', endDate: item.date, certificateNumber: item.code, isEditing: false }
-                          ],
-                        });
-                        setPerformanceSearch('');
-                        setQualificationSearch('');
-                        setPersonnelTab('basic');
-                        setShowAddPersonnelModal(true);
-                      }}
-                      className="text-primary hover:text-blue-700 transition-colors" 
-                      title="编辑"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setPersonnelMode('edit');
-                        const personName = item.name.split(' (')[0];
-                        setPersonnelFormData({
-                          ...personnelFormData,
-                          name: personName,
-                          position: item.title,
-                          techTitle: item.title.includes('工程师') ? item.title : '高级工程师',
-                          certificates: [{ name: item.cert, code: item.code, expiryDate: item.date, attachments: [] }],
-                          isForeigner: '否',
-                          gender: '男',
-                          birthDate: '1985-06-15',
-                          idCard: '44010619850615XXXX',
-                          region: '广州市',
-                          phone: '13800138000',
-                          education: '硕士',
-                          isEmployed: '是',
-                          performance: [
-                            { packageName: 'XX市中心医院建设项目', client: 'XX市卫生局', winningDate: '2023-05-20', winningAmount: '1500.00', amountUnit: '万元', projectLeader: personName, isEditing: false }
-                          ],
-                          qualifications: [
-                            { personName: personName, qualificationName: item.cert, startDate: '2021-01-01', endDate: item.date, certificateNumber: item.code, isEditing: false }
-                          ],
-                        });
-                        setPerformanceSearch('');
-                        setQualificationSearch('');
-                        setPersonnelTab('performance');
-                        setShowAddPersonnelModal(true);
-                      }}
-                      className="text-blue-600 text-xs font-bold hover:underline"
-                    >
-                      维护业绩
-                    </button>
-                    <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <Pagination 
-        currentPage={currentPage}
-        totalPages={Math.ceil(personnelData.length / pageSize)}
-        pageSize={pageSize}
-        onPageChange={setCurrentPage}
-        onPageSizeChange={setPageSize}
-        totalItems={personnelData.length}
-      />
-    </div>
-    </div>
-  );
-};
-
-  const renderFinance = () => {
-    const financeData = [
-      { name: '2023年度财务审计报告', year: '2023', revenue: '12.8 亿元', profit: '8,500 万元', status: '已审计' },
-      { name: '2022年度财务审计报告', year: '2022', revenue: '11.1 亿元', profit: '7,800 万元', status: '已审计' },
-      { name: '2021年度财务审计报告', year: '2021', revenue: '9.5 亿元', profit: '6,200 万元', status: '已审计' },
-    ].map(f => ({ ...f, name: `${enterpriseName} - ${f.name}` }));
-
-    return (
-    <div className="flex flex-col">
-      <div className="bg-white overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">报表名称</th>
-                <th className="px-6 py-4">年度</th>
-                <th className="px-6 py-4">营收金额</th>
-                <th className="px-6 py-4">净利润</th>
-                <th className="px-6 py-4">审计状态</th>
-                <th className="px-6 py-4 text-right">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {financeData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="size-8 bg-red-50 text-red-500 rounded-lg flex items-center justify-center">
-                        <FileText size={16} />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">{item.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{item.year}</td>
-                  <td className="px-6 py-4 text-sm font-bold text-slate-700">{item.revenue}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{item.profit}</td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold border border-emerald-100">
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
-                        <Edit2 size={16} />
-                      </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">下载报告</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={Math.ceil(financeData.length / pageSize)}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-          totalItems={financeData.length}
-        />
-      </div>
-    </div>
-  );
-};
-
-  const renderRewards = () => {
-    const rewardsData = [
-      { type: '奖励', title: '2023年度建筑业纳税百强企业', org: '某市人民政府', date: '2024-01-10', status: 'active' },
-      { type: '奖励', title: '抗洪救灾突出贡献奖', org: '某省应急管理厅', date: '2023-08-20', status: 'active' },
-      { type: '处罚', title: '某工地扬尘治理不力通报批评', org: '某市住建局', date: '2023-03-15', status: 'expired' },
-    ].map(r => ({ ...r, title: `${enterpriseName} - ${r.title}` }));
-
-    return (
-    <div className="flex flex-col">
-      <div className="bg-white overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">类别</th>
-                <th className="px-6 py-4">事由</th>
-                <th className="px-6 py-4">决定机关</th>
-                <th className="px-6 py-4">日期</th>
-                <th className="px-6 py-4">状态</th>
-                <th className="px-6 py-4 text-right">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {rewardsData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                      item.type === '奖励' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'
-                    }`}>
-                      {item.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-bold text-slate-700">{item.title}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{item.org}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{item.date}</td>
-                  <td className="px-6 py-4">
-                    <span className={`text-[10px] font-bold ${item.status === 'active' ? 'text-emerald-500' : 'text-slate-400'}`}>
-                      {item.status === 'active' ? '生效中' : '已失效'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
-                        <Edit2 size={16} />
-                      </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">查看详情</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={Math.ceil(rewardsData.length / pageSize)}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-          totalItems={rewardsData.length}
-        />
-      </div>
-    </div>
-  );
-};
-
-  const renderMaterials = () => {
-    const materialsData = [
-      { name: '营业执照副本', type: '证照类', count: 1 },
-      { name: '开户许可证', type: '证照类', count: 1 },
-      { name: '安全生产许可证', type: '证照类', count: 1 },
-      { name: '法人身份证复印件', type: '人员类', count: 2 },
-      { name: '近三年财务审计报告', type: '财务类', count: 3 },
-      { name: '社保缴纳证明', type: '人员类', count: 12 },
-      { name: '纳税证明', type: '财务类', count: 6 },
-      { name: '诚信承诺书', type: '通用类', count: 1 },
-    ].map(m => ({ ...m, name: `${enterpriseName} - ${m.name}` }));
-
-    return (
-    <div className="flex flex-col">
-      <div className="bg-white overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">材料名称</th>
-                <th className="px-6 py-4">材料类别</th>
-                <th className="px-6 py-4">文件数量</th>
-                <th className="px-6 py-4 text-right">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {materialsData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="size-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                        <Archive size={14} />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">{item.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">{item.type}</span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500">共 {item.count} 份文件</td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
-                        <Edit2 size={16} />
-                      </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">查看文件</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={Math.ceil(materialsData.length / pageSize)}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-          totalItems={materialsData.length}
-        />
-      </div>
-    </div>
-  );
-};
-
-  const renderBasicInfo = () => {
-    const basicInfoData = currentData.basicInfo;
-
-    return (
-    <div className="flex flex-col">
-      <div className="p-8 border-b border-slate-100 bg-slate-50/30">
-        <div className="flex items-center gap-6">
-          <div className="size-16 bg-primary/5 rounded-2xl flex items-center justify-center text-primary border border-primary/10">
-            <Building2 size={32} />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-slate-900">{enterpriseName}</h3>
-            <p className="text-sm text-slate-500 mt-1">统一社会信用代码：91110000100001234X</p>
-          </div>
-        </div>
-      </div>
-      <div className="p-0">
-        <div className="grid grid-cols-1 divide-y divide-slate-100">
-          {basicInfoData.map((item: any, idx: number) => (
-            <div key={idx} className="flex px-8 py-4 hover:bg-slate-50/50 transition-colors">
-              <div className="w-40 shrink-0 text-xs font-bold text-slate-400 uppercase tracking-wider">{item.label}</div>
-              <div className="text-sm text-slate-700 font-medium">{item.value}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-  };
-
-  const renderQualification = () => {
-    const qualificationData = currentData.qualification.map((q: any) => ({ ...q, name: `${enterpriseName} - ${q.name}` }));
-
-    return (
-    <div className="flex flex-col">
-      <div className="bg-white overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">资质名称</th>
-                <th className="px-6 py-4">资质编号</th>
-                <th className="px-6 py-4">有效期至</th>
-                <th className="px-6 py-4">状态</th>
-                <th className="px-6 py-4 text-right">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {qualificationData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item: any, idx: number) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`size-8 rounded-lg flex items-center justify-center ${
-                        item.status === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-primary/5 text-primary'
-                      }`}>
-                        <FileText size={16} />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">{item.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-xs font-mono text-slate-400">{item.code}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Clock size={14} className={item.status === 'warning' ? 'text-amber-500' : 'text-slate-400'} />
-                      <span className={`text-xs font-bold ${item.status === 'warning' ? 'text-amber-600' : 'text-slate-500'}`}>
-                        {item.date}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {item.status === 'warning' ? (
-                      <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold border border-amber-100">
-                        即将到期
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold border border-emerald-100">
-                        正常
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
-                        <Edit2 size={16} />
-                      </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">查看详情</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={Math.ceil(qualificationData.length / pageSize)}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-          totalItems={qualificationData.length}
-        />
-      </div>
-    </div>
-  );
-};
-
-  const renderPerformance = () => {
-    const performanceData = currentData.performance.map((p: any) => ({ ...p, name: `${enterpriseName} - ${p.name}` }));
-
-    return (
-    <div className="flex flex-col">
-      <div className="bg-white overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">项目名称</th>
-                <th className="px-6 py-4">合同金额</th>
-                <th className="px-6 py-4">竣工日期</th>
-                <th className="px-6 py-4">项目负责人</th>
-                <th className="px-6 py-4">项目所在地</th>
-                <th className="px-6 py-4 text-right">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {performanceData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item: any, idx: number) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="size-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                        <Briefcase size={14} />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">{item.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-bold text-primary">{item.amount}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-slate-500 font-medium">{item.date}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-slate-600 font-medium">{item.manager}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 text-slate-500">
-                      <MapPin size={12} />
-                      <span className="text-xs">{item.location}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
-                        <Edit2 size={16} />
-                      </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">查看详情</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={Math.ceil(performanceData.length / pageSize)}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-          totalItems={performanceData.length}
-        />
-      </div>
-    </div>
-  );
-};
-
-  const renderHonors = () => {
-    const honorsData = [
-      { name: '中国建筑工程鲁班奖', year: '2023', level: '国家级', icon: Award, color: 'text-amber-500 bg-amber-50' },
-      { name: '全国优秀施工企业', year: '2022', level: '国家级', icon: ShieldCheck, color: 'text-blue-500 bg-blue-50' },
-      { name: '省优质工程“扬子杯”', year: '2023', level: '省级', icon: Award, color: 'text-emerald-500 bg-emerald-50' },
-      { name: '市建筑业先进单位', year: '2022', level: '市级', icon: Award, color: 'text-purple-500 bg-purple-50' },
-      { name: 'AAA 级信用企业', year: '2023', level: '国家级', icon: ShieldCheck, color: 'text-rose-500 bg-rose-50' },
-      { name: '安全生产文明工地', year: '2021', level: '省级', icon: CheckCircle2, color: 'text-cyan-500 bg-cyan-50' },
-    ].map(h => ({ ...h, name: `${enterpriseName} - ${h.name}` }));
-
-    return (
-    <div className="flex flex-col">
-      <div className="bg-white overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">荣誉奖项名称</th>
-                <th className="px-6 py-4">级别</th>
-                <th className="px-6 py-4">年度</th>
-                <th className="px-6 py-4 text-right">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {honorsData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`size-8 rounded-lg flex items-center justify-center ${item.color}`}>
-                        <item.icon size={16} />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">{item.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-0.5 bg-slate-50 text-slate-500 rounded-full text-[10px] font-bold border border-slate-100">
-                      {item.level}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{item.year}年度</td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
-                        <Edit2 size={16} />
-                      </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">查看证书</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={Math.ceil(honorsData.length / pageSize)}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-          totalItems={honorsData.length}
-        />
-      </div>
-    </div>
-  );
-};
-
-  const renderDisclosure = () => {
-    const disclosureData = [
-      { title: '关于公司 2023 年度利润分配预案的公告', date: '2024-03-20', type: '定期报告' },
-      { title: '关于中标重大工程项目的公告', date: '2024-02-15', type: '临时公告' },
-      { title: '关于公司法定代表人变更的公告', date: '2023-12-10', type: '临时公告' },
-    ].map(d => ({ ...d, title: `${enterpriseName} - ${d.title}` }));
-
-    return (
-    <div className="flex flex-col">
-      <div className="bg-white overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">公告标题</th>
-                <th className="px-6 py-4">类型</th>
-                <th className="px-6 py-4">发布日期</th>
-                <th className="px-6 py-4 text-right">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {disclosureData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="size-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                        <FileText size={16} />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">{item.title}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-0.5 bg-slate-50 text-slate-500 rounded-full text-[10px] font-bold border border-slate-100">
-                      {item.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{item.date}</td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
-                        <Edit2 size={16} />
-                      </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <ChevronRight size={16} className="text-slate-300 group-hover:text-primary" />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={Math.ceil(disclosureData.length / pageSize)}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-          totalItems={disclosureData.length}
-        />
-      </div>
-    </div>
-  );
-};
-
-  const renderCredit = () => {
-    const creditData = [
-      { name: '企业信用等级', value: 'AAA', org: '中国建筑业协会', icon: ShieldCheck, color: 'bg-emerald-50 text-emerald-500' },
-      { name: '荣誉称号', value: '守合同重信用', org: '国家工商行政管理总局', icon: CheckCircle2, color: 'bg-blue-50 text-blue-500' },
-      { name: '售后服务评价', value: '五星级', org: 'GB/T 27922-2011', icon: Award, color: 'bg-purple-50 text-purple-500' },
-    ].map(c => ({ ...c, name: `${enterpriseName} - ${c.name}` }));
-
-    return (
-    <div className="flex flex-col">
-      <div className="bg-white overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">评价项</th>
-                <th className="px-6 py-4">等级/称号</th>
-                <th className="px-6 py-4">颁发/评级机构</th>
-                <th className="px-6 py-4 text-right">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {creditData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`size-8 rounded-lg flex items-center justify-center ${item.color}`}>
-                        <item.icon size={16} />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">{item.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-bold text-slate-900">{item.value}</span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{item.org}</td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
-                        <Edit2 size={16} />
-                      </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">查看详情</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={Math.ceil(creditData.length / pageSize)}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-          totalItems={creditData.length}
-        />
-      </div>
-    </div>
-  );
-};
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Top Header with Actions */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => {
-              if (activeTab === 'personnel') {
-                setPersonnelMode('add');
-                setPersonnelFormData({
-                  name: '',
-                  isForeigner: '否',
-                  gender: '男',
-                  birthDate: '',
-                  idCard: '',
-                  region: '',
-                  phone: '',
-                  workPhone: '',
-                  postalCode: '',
-                  techTitle: '高级工程师',
-                  position: '',
-                  isEmployed: '是',
-                  careerStartDate: '',
-                  careerYears: '',
-                  education: '博士',
-                  major: '',
-                  address: '',
-                  experience: '',
-                  unitCode: '91999779974015331P',
-                  unitName: '上线运维测试有限公司',
-                  graduationDate: '',
-                  graduationSchool: '',
-                  unitPosition: '',
-                  email: '',
-                  dept: '',
-                  entryDate: '',
-                  titleNumber: '',
-                  titleMajor: '',
-                  titleAuthority: '',
-                  titleLevel: '高级',
-                  titleIssueDate: '',
-                  attachments: {
-                    socialSecurity: [],
-                    contract: [],
-                    photo: [],
-                    titleCert: [],
-                    others: []
-                  },
-                  performance: [],
-                  qualifications: []
-                });
-                setPerformanceSearch('');
-                setQualificationSearch('');
-                setPersonnelTab('basic');
-                setShowAddPersonnelModal(true);
-              }
-            }}
-            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-md hover:shadow-lg transition-all"
-          >
-            <Plus size={18} /> 
-            {sidePanel === 'certificates' ? '上传证照' : 
-             activeTab === 'personnel' ? '新增人员' :
-             activeTab === 'qualification' ? '新增资质' :
-             activeTab === 'performance' ? '新增业绩' :
-             activeTab === 'finance' ? '新增财务数据' :
-             activeTab === 'rewards' ? '新增奖惩' :
-             activeTab === 'honors' ? '新增荣誉' :
-             activeTab === 'materials-list' ? '上传材料' :
-             activeTab === 'disclosure' ? '新增披露' :
-             activeTab === 'credit' ? '新增评价' : '编辑信息'}
-          </button>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setSidePanel('certificates')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
-                sidePanel === 'certificates' 
-                  ? 'bg-amber-500 text-white border-amber-500 shadow-md' 
-                  : 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100'
-              }`}
-            >
-              <Archive size={16} /> 电子证照库
-            </button>
-          </div>
-          
-          <div className="h-6 w-px bg-slate-200 mx-1"></div>
-          
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
-            <Download size={18} /> 导出企业档案
-          </button>
-        </div>
-      </div>
-
-      {/* Tabs and Search Integrated Container */}
-      <div className="flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
-        {/* Tabs */}
-        <div className="flex bg-slate-100/50 border-b border-slate-200 overflow-x-auto no-scrollbar p-1.5 gap-1.5">
-          {tabs.map((tab) => (
+  const renderPersonnelForm = () => (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden min-h-[600px]">
+      {/* Modal Tabs */}
+      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-8">
+        <div className="flex">
+          {[
+            { id: 'basic', label: '基本信息', icon: User },
+            { id: 'performance', label: '人员业绩', icon: Briefcase },
+            { id: 'qualifications', label: '职业资格', icon: ShieldCheck },
+          ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setSidePanel(null);
-              }}
-              className={`flex items-center gap-2 px-6 py-3 text-sm font-bold transition-all whitespace-nowrap rounded-xl ${
-                activeTab === tab.id && !sidePanel
-                  ? 'bg-white text-primary shadow-sm ring-1 ring-slate-200' 
-                  : 'text-slate-500 hover:bg-white/50 hover:text-slate-700'
+              onClick={() => setPersonnelTab(tab.id)}
+              className={`px-6 py-4 text-sm font-bold transition-all relative flex items-center gap-2 ${
+                personnelTab === tab.id ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'
               }`}
             >
-              <tab.icon size={18} />
+              <tab.icon size={16} />
               {tab.label}
+              {personnelTab === tab.id && (
+                <motion.div 
+                  layoutId="personnelTabUnderline"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
+                />
+              )}
             </button>
           ))}
         </div>
-
-        {/* Search Bar - Integrated */}
-        {!sidePanel && activeTab !== 'basic' && renderSearchAndFilter(`搜索${tabs.find(t => t.id === activeTab)?.label}...`)}
-
-        {/* Content Area */}
-        <div className="flex-1 min-h-0">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {activeTab === 'basic' && renderBasicInfo()}
-              {activeTab === 'personnel' && renderPersonnel()}
-              {activeTab === 'qualification' && renderQualification()}
-              {activeTab === 'performance' && renderPerformance()}
-              {activeTab === 'finance' && renderFinance()}
-              {activeTab === 'rewards' && renderRewards()}
-              {activeTab === 'honors' && renderHonors()}
-              {activeTab === 'materials-list' && renderMaterials()}
-              {activeTab === 'disclosure' && renderDisclosure()}
-              {activeTab === 'credit' && renderCredit()}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+        <button 
+          onClick={() => setShowAddPersonnelModal(false)}
+          className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600"
+          title="返回列表"
+        >
+          <X size={20} />
+        </button>
       </div>
-
-      {/* Add Personnel Modal */}
-      <AnimatePresence>
-        {showAddPersonnelModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm">
-            <div className="min-h-screen px-4 py-8 flex items-center justify-center">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-white rounded-3xl shadow-2xl w-full max-w-[1000px] h-[80vh] flex flex-col overflow-hidden"
-              >
-                {/* Modal Header */}
-                <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                  <div className="flex items-center gap-3">
-                    <div className="size-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
-                      <Users size={24} />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900">{personnelMode === 'add' ? '新增人员资料' : '修改人员资料'}</h3>
-                  </div>
-                  <button 
-                    onClick={() => setShowAddPersonnelModal(false)}
-                    className="p-2 hover:bg-slate-200 rounded-full transition-colors"
-                  >
-                    <X size={20} className="text-slate-400" />
-                  </button>
-                </div>
-
-                {/* Modal Tabs */}
-                <div className="flex border-b border-slate-100 bg-white px-8">
-                  {[
-                    { id: 'basic', label: '基本信息', icon: User },
-                    { id: 'performance', label: '人员业绩', icon: Briefcase },
-                    { id: 'qualifications', label: '职业资格', icon: ShieldCheck },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setPersonnelTab(tab.id)}
-                      className={`px-6 py-4 text-sm font-bold transition-all relative flex items-center gap-2 ${
-                        personnelTab === tab.id ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'
-                      }`}
-                    >
-                      <tab.icon size={16} />
-                      {tab.label}
-                      {personnelTab === tab.id && (
-                        <motion.div 
-                          layoutId="personnelTabUnderline"
-                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
 
                 {/* Modal Content */}
                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
@@ -2132,7 +1237,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                 </div>
 
                 {/* Modal Footer */}
-                <div className="px-8 py-6 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-4">
+                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-4">
                   <button 
                     onClick={() => setShowAddPersonnelModal(false)}
                     className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all"
@@ -2150,11 +1255,870 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                     确认保存
                   </button>
                 </div>
-              </motion.div>
+              
+    </div>
+  );
+
+  const renderPersonnel = () => {
+    if (showAddPersonnelModal) {
+      return renderPersonnelForm();
+    }
+
+    const personnelData = currentData.personnel.map((p: any) => ({ ...p, name: `${p.name} (${enterpriseName})` }));
+
+    return (
+    <div className="flex flex-col">
+      <div className="bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+              <th className="px-6 py-4 w-10">
+                <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              </th>
+              <th className="px-6 py-4">姓名</th>
+              <th className="px-6 py-4">职位/职称</th>
+              <th className="px-6 py-4">持有证书</th>
+              <th className="px-6 py-4">证书编号</th>
+              <th className="px-6 py-4">有效期</th>
+              <th className="px-6 py-4 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {personnelData
+              .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+              .map((item: any, idx: number) => (
+              <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                <td className="px-6 py-4">
+                  <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                </td>
+                <td className="px-6 py-4 font-bold text-slate-700">{item.name}</td>
+                <td className="px-6 py-4 text-sm text-slate-500">{item.title}</td>
+                <td className="px-6 py-4">
+                  <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold border border-blue-100">
+                    {item.cert}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-xs font-mono text-slate-400">{item.code}</td>
+                <td className="px-6 py-4 text-sm text-slate-500">{item.date}</td>
+                <td className="px-6 py-4 text-right">
+                  <div className="flex items-center justify-end gap-3">
+                    <button 
+                      onClick={() => {
+                        setPersonnelMode('edit');
+                        const personName = item.name.split(' (')[0];
+                        setPersonnelFormData({
+                          ...personnelFormData,
+                          name: personName,
+                          position: item.title,
+                          techTitle: item.title.includes('工程师') ? item.title : '高级工程师',
+                          certificates: [{ name: item.cert, code: item.code, expiryDate: item.date, attachments: [] }],
+                          // Mocking other data for edit mode
+                          isForeigner: '否',
+                          gender: '男',
+                          birthDate: '1985-06-15',
+                          idCard: '44010619850615XXXX',
+                          region: '广州市',
+                          phone: '13800138000',
+                          education: '硕士',
+                          isEmployed: '是',
+                          performance: [
+                            { packageName: 'XX市中心医院建设项目', client: 'XX市卫生局', winningDate: '2023-05-20', winningAmount: '1500.00', amountUnit: '万元', projectLeader: personName, isEditing: false }
+                          ],
+                          qualifications: [
+                            { personName: personName, qualificationName: item.cert, startDate: '2021-01-01', endDate: item.date, certificateNumber: item.code, isEditing: false }
+                          ],
+                        });
+                        setPerformanceSearch('');
+                        setQualificationSearch('');
+                        setPersonnelTab('basic');
+                        setShowAddPersonnelModal(true);
+                      }}
+                      className="text-primary hover:text-blue-700 transition-colors" 
+                      title="编辑"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={Math.ceil(personnelData.length / pageSize)}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        totalItems={personnelData.length}
+      />
+    </div>
+    </div>
+  );
+};
+
+  const renderFinance = () => {
+    const financeData = [
+      { name: '2023年度财务审计报告', year: '2023', revenue: '12.8 亿元', profit: '8,500 万元', status: '已审计' },
+      { name: '2022年度财务审计报告', year: '2022', revenue: '11.1 亿元', profit: '7,800 万元', status: '已审计' },
+      { name: '2021年度财务审计报告', year: '2021', revenue: '9.5 亿元', profit: '6,200 万元', status: '已审计' },
+    ].map(f => ({ ...f, name: `${enterpriseName} - ${f.name}` }));
+
+    return (
+    <div className="flex flex-col">
+      <div className="bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">报表名称</th>
+                <th className="px-6 py-4">年度</th>
+                <th className="px-6 py-4">营收金额</th>
+                <th className="px-6 py-4">净利润</th>
+                <th className="px-6 py-4">审计状态</th>
+                <th className="px-6 py-4 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {financeData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item, idx) => (
+                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 bg-red-50 text-red-500 rounded-lg flex items-center justify-center">
+                        <FileText size={16} />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">{item.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500">{item.year}</td>
+                  <td className="px-6 py-4 text-sm font-bold text-slate-700">{item.revenue}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500">{item.profit}</td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold border border-emerald-100">
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                        <Edit2 size={16} />
+                      </button>
+                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
+                        <Trash2 size={16} />
+                      </button>
+                      <button className="text-primary text-xs font-bold hover:underline">下载报告</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(financeData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={financeData.length}
+        />
+      </div>
+    </div>
+  );
+};
+
+  const renderRewards = () => {
+    const rewardsData = [
+      { type: '奖励', title: '2023年度建筑业纳税百强企业', org: '某市人民政府', date: '2024-01-10', status: 'active' },
+      { type: '奖励', title: '抗洪救灾突出贡献奖', org: '某省应急管理厅', date: '2023-08-20', status: 'active' },
+      { type: '处罚', title: '某工地扬尘治理不力通报批评', org: '某市住建局', date: '2023-03-15', status: 'expired' },
+    ].map(r => ({ ...r, title: `${enterpriseName} - ${r.title}` }));
+
+    return (
+    <div className="flex flex-col">
+      <div className="bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">类别</th>
+                <th className="px-6 py-4">事由</th>
+                <th className="px-6 py-4">决定机关</th>
+                <th className="px-6 py-4">日期</th>
+                <th className="px-6 py-4">状态</th>
+                <th className="px-6 py-4 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {rewardsData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item, idx) => (
+                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                      item.type === '奖励' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'
+                    }`}>
+                      {item.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-bold text-slate-700">{item.title}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500">{item.org}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500">{item.date}</td>
+                  <td className="px-6 py-4">
+                    <span className={`text-[10px] font-bold ${item.status === 'active' ? 'text-emerald-500' : 'text-slate-400'}`}>
+                      {item.status === 'active' ? '生效中' : '已失效'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                        <Edit2 size={16} />
+                      </button>
+                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
+                        <Trash2 size={16} />
+                      </button>
+                      <button className="text-primary text-xs font-bold hover:underline">查看详情</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(rewardsData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={rewardsData.length}
+        />
+      </div>
+    </div>
+  );
+};
+
+  const renderMaterials = () => {
+    const materialsData = [
+      { name: '营业执照副本', type: '证照类', count: 1 },
+      { name: '开户许可证', type: '证照类', count: 1 },
+      { name: '安全生产许可证', type: '证照类', count: 1 },
+      { name: '法人身份证复印件', type: '人员类', count: 2 },
+      { name: '近三年财务审计报告', type: '财务类', count: 3 },
+      { name: '社保缴纳证明', type: '人员类', count: 12 },
+      { name: '纳税证明', type: '财务类', count: 6 },
+      { name: '诚信承诺书', type: '通用类', count: 1 },
+    ].map(m => ({ ...m, name: `${enterpriseName} - ${m.name}` }));
+
+    return (
+    <div className="flex flex-col">
+      <div className="bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">材料名称</th>
+                <th className="px-6 py-4">材料类别</th>
+                <th className="px-6 py-4">文件数量</th>
+                <th className="px-6 py-4 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {materialsData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item, idx) => (
+                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                        <Archive size={14} />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">{item.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">{item.type}</span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500">共 {item.count} 份文件</td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                        <Edit2 size={16} />
+                      </button>
+                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
+                        <Trash2 size={16} />
+                      </button>
+                      <button className="text-primary text-xs font-bold hover:underline">查看文件</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(materialsData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={materialsData.length}
+        />
+      </div>
+    </div>
+  );
+};
+
+  const renderBasicInfo = () => {
+    const basicInfoData = currentData.basicInfo;
+
+    return (
+    <div className="flex flex-col">
+      <div className="p-0">
+        <div className="grid grid-cols-1 divide-y divide-slate-100">
+          {basicInfoData.map((item: any, idx: number) => (
+            <div key={idx} className="flex px-8 py-4 hover:bg-slate-50/50 transition-colors">
+              <div className="w-40 shrink-0 text-xs font-bold text-slate-400 uppercase tracking-wider">{item.label}</div>
+              <div className="text-sm text-slate-700 font-medium">{item.value}</div>
             </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+  };
+
+  const renderQualification = () => {
+    const qualificationData = currentData.qualification.map((q: any) => ({ ...q, name: `${enterpriseName} - ${q.name}` }));
+
+    return (
+    <div className="flex flex-col">
+      <div className="bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">资质名称</th>
+                <th className="px-6 py-4">资质编号</th>
+                <th className="px-6 py-4">有效期至</th>
+                <th className="px-6 py-4">状态</th>
+                <th className="px-6 py-4 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {qualificationData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item: any, idx: number) => (
+                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`size-8 rounded-lg flex items-center justify-center ${
+                        item.status === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-primary/5 text-primary'
+                      }`}>
+                        <FileText size={16} />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">{item.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-xs font-mono text-slate-400">{item.code}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <Clock size={14} className={item.status === 'warning' ? 'text-amber-500' : 'text-slate-400'} />
+                      <span className={`text-xs font-bold ${item.status === 'warning' ? 'text-amber-600' : 'text-slate-500'}`}>
+                        {item.date}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    {item.status === 'warning' ? (
+                      <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold border border-amber-100">
+                        即将到期
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold border border-emerald-100">
+                        正常
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                        <Edit2 size={16} />
+                      </button>
+                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
+                        <Trash2 size={16} />
+                      </button>
+                      <button className="text-primary text-xs font-bold hover:underline">查看详情</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(qualificationData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={qualificationData.length}
+        />
+      </div>
+    </div>
+  );
+};
+
+  const renderPerformance = () => {
+    const performanceData = currentData.performance.map((p: any) => ({ ...p, name: `${enterpriseName} - ${p.name}` }));
+
+    return (
+    <div className="flex flex-col">
+      <div className="bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">项目名称</th>
+                <th className="px-6 py-4">合同金额</th>
+                <th className="px-6 py-4">竣工日期</th>
+                <th className="px-6 py-4">项目负责人</th>
+                <th className="px-6 py-4">项目所在地</th>
+                <th className="px-6 py-4 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {performanceData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item: any, idx: number) => (
+                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                        <Briefcase size={14} />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">{item.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-bold text-primary">{item.amount}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm text-slate-500 font-medium">{item.date}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm text-slate-600 font-medium">{item.manager}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-1.5 text-slate-500">
+                      <MapPin size={12} />
+                      <span className="text-xs">{item.location}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                        <Edit2 size={16} />
+                      </button>
+                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
+                        <Trash2 size={16} />
+                      </button>
+                      <button className="text-primary text-xs font-bold hover:underline">查看详情</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(performanceData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={performanceData.length}
+        />
+      </div>
+    </div>
+  );
+};
+
+  const renderHonors = () => {
+    const honorsData = [
+      { name: '中国建筑工程鲁班奖', year: '2023', level: '国家级', icon: Award, color: 'text-amber-500 bg-amber-50' },
+      { name: '全国优秀施工企业', year: '2022', level: '国家级', icon: ShieldCheck, color: 'text-blue-500 bg-blue-50' },
+      { name: '省优质工程“扬子杯”', year: '2023', level: '省级', icon: Award, color: 'text-emerald-500 bg-emerald-50' },
+      { name: '市建筑业先进单位', year: '2022', level: '市级', icon: Award, color: 'text-purple-500 bg-purple-50' },
+      { name: 'AAA 级信用企业', year: '2023', level: '国家级', icon: ShieldCheck, color: 'text-rose-500 bg-rose-50' },
+      { name: '安全生产文明工地', year: '2021', level: '省级', icon: CheckCircle2, color: 'text-cyan-500 bg-cyan-50' },
+    ].map(h => ({ ...h, name: `${enterpriseName} - ${h.name}` }));
+
+    return (
+    <div className="flex flex-col">
+      <div className="bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">荣誉奖项名称</th>
+                <th className="px-6 py-4">级别</th>
+                <th className="px-6 py-4">年度</th>
+                <th className="px-6 py-4 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {honorsData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item, idx) => (
+                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`size-8 rounded-lg flex items-center justify-center ${item.color}`}>
+                        <item.icon size={16} />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">{item.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-0.5 bg-slate-50 text-slate-500 rounded-full text-[10px] font-bold border border-slate-100">
+                      {item.level}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500">{item.year}年度</td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                        <Edit2 size={16} />
+                      </button>
+                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
+                        <Trash2 size={16} />
+                      </button>
+                      <button className="text-primary text-xs font-bold hover:underline">查看证书</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(honorsData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={honorsData.length}
+        />
+      </div>
+    </div>
+  );
+};
+
+  const renderDisclosure = () => {
+    const disclosureData = [
+      { title: '关于公司 2023 年度利润分配预案的公告', date: '2024-03-20', type: '定期报告' },
+      { title: '关于中标重大工程项目的公告', date: '2024-02-15', type: '临时公告' },
+      { title: '关于公司法定代表人变更的公告', date: '2023-12-10', type: '临时公告' },
+    ].map(d => ({ ...d, title: `${enterpriseName} - ${d.title}` }));
+
+    return (
+    <div className="flex flex-col">
+      <div className="bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">公告标题</th>
+                <th className="px-6 py-4">类型</th>
+                <th className="px-6 py-4">发布日期</th>
+                <th className="px-6 py-4 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {disclosureData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item, idx) => (
+                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
+                        <FileText size={16} />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">{item.title}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-0.5 bg-slate-50 text-slate-500 rounded-full text-[10px] font-bold border border-slate-100">
+                      {item.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500">{item.date}</td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                        <Edit2 size={16} />
+                      </button>
+                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
+                        <Trash2 size={16} />
+                      </button>
+                      <ChevronRight size={16} className="text-slate-300 group-hover:text-primary" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(disclosureData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={disclosureData.length}
+        />
+      </div>
+    </div>
+  );
+};
+
+  const renderCredit = () => {
+    const creditData = [
+      { name: '企业信用等级', value: 'AAA', org: '中国建筑业协会', icon: ShieldCheck, color: 'bg-emerald-50 text-emerald-500' },
+      { name: '荣誉称号', value: '守合同重信用', org: '国家工商行政管理总局', icon: CheckCircle2, color: 'bg-blue-50 text-blue-500' },
+      { name: '售后服务评价', value: '五星级', org: 'GB/T 27922-2011', icon: Award, color: 'bg-purple-50 text-purple-500' },
+    ].map(c => ({ ...c, name: `${enterpriseName} - ${c.name}` }));
+
+    return (
+    <div className="flex flex-col">
+      <div className="bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4">评价项</th>
+                <th className="px-6 py-4">等级/称号</th>
+                <th className="px-6 py-4">颁发/评级机构</th>
+                <th className="px-6 py-4 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {creditData
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((item, idx) => (
+                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`size-8 rounded-lg flex items-center justify-center ${item.color}`}>
+                        <item.icon size={16} />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">{item.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-bold text-slate-900">{item.value}</span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500">{item.org}</td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                        <Edit2 size={16} />
+                      </button>
+                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
+                        <Trash2 size={16} />
+                      </button>
+                      <button className="text-primary text-xs font-bold hover:underline">查看详情</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(creditData.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={creditData.length}
+        />
+      </div>
+    </div>
+  );
+};
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Top Header */}
+      <div className="flex justify-between items-center mb-4 px-2">
+        <div className="flex items-center gap-3">
+          <div className="size-10 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-600 border border-blue-600/20">
+            <Building2 size={20} />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">{enterpriseName}</h1>
+            <p className="text-xs text-slate-500 mt-0.5">统一社会信用代码：91110000100001234X</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setSidePanel('certificates')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all border ${
+              sidePanel === 'certificates' 
+                ? 'bg-amber-500 text-white border-amber-500 shadow-md' 
+                : 'bg-white text-amber-600 border-amber-200 hover:bg-amber-50'
+            }`}
+          >
+            <Archive size={16} /> 电子证照库
+          </button>
+          
+          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+            <Download size={16} /> 导出企业档案
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs and Content Container */}
+      <div className="flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6 flex-1">
+        {/* Tabs Row */}
+        <div className="flex bg-slate-50 border-b border-slate-200 overflow-x-auto no-scrollbar">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setSidePanel(null);
+              }}
+              className={`flex items-center gap-2 px-6 py-4 text-sm font-bold transition-all whitespace-nowrap border-b-2 ${
+                activeTab === tab.id && !sidePanel
+                  ? 'border-blue-600 text-blue-600 bg-white' 
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'
+              }`}
+            >
+              <tab.icon size={18} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Action Bar Below Tabs */}
+        {(!sidePanel && (!showAddPersonnelModal || activeTab !== 'personnel')) && (
+          <div className="flex flex-col">
+            <div className="bg-white border-b border-slate-100 px-6 py-3 flex items-center">
+              <button 
+                onClick={() => {
+                  if (activeTab === 'personnel') {
+                    setPersonnelMode('add');
+                    setPersonnelFormData({
+                      name: '',
+                      isForeigner: '否',
+                      gender: '男',
+                      birthDate: '',
+                      idCard: '',
+                      region: '',
+                      phone: '',
+                      workPhone: '',
+                      postalCode: '',
+                      techTitle: '高级工程师',
+                      position: '',
+                      isEmployed: '是',
+                      careerStartDate: '',
+                      careerYears: '',
+                      education: '博士',
+                      major: '',
+                      address: '',
+                      experience: '',
+                      unitCode: '91999779974015331P',
+                      unitName: '上线运维测试有限公司',
+                      graduationDate: '',
+                      graduationSchool: '',
+                      unitPosition: '',
+                      email: '',
+                      dept: '',
+                      entryDate: '',
+                      titleNumber: '',
+                      titleMajor: '',
+                      titleAuthority: '',
+                      titleLevel: '高级',
+                      titleIssueDate: '',
+                      attachments: {
+                        socialSecurity: [],
+                        contract: [],
+                        photo: [],
+                        titleCert: [],
+                        others: []
+                      },
+                      performance: [],
+                      qualifications: []
+                    });
+                    setPerformanceSearch('');
+                    setQualificationSearch('');
+                    setPersonnelTab('basic');
+                    setShowAddPersonnelModal(true);
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow-sm transition-all"
+              >
+                {activeTab === 'basic' ? <Edit2 size={16} /> : <Plus size={16} />}
+                {sidePanel === 'certificates' ? '上传证照' : 
+                 activeTab === 'personnel' ? '新增人员' :
+                 activeTab === 'qualification' ? '新增资质' :
+                 activeTab === 'performance' ? '新增业绩' :
+                 activeTab === 'finance' ? '新增财务数据' :
+                 activeTab === 'rewards' ? '新增奖惩' :
+                 activeTab === 'honors' ? '新增荣誉' :
+                 activeTab === 'materials-list' ? '上传材料' :
+                 activeTab === 'disclosure' ? '新增披露' :
+                 activeTab === 'credit' ? '新增评价' : '编辑信息'}
+              </button>
+              
+              {activeTab === 'personnel' && (
+                <button className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-50 transition-all ml-3">
+                  <Trash2 size={16} />
+                  删除人员
+                </button>
+              )}
+            </div>
+            
+            {activeTab !== 'basic' && (
+              <div className="bg-white border-b border-slate-100 px-6 py-3">
+                {renderSearchAndFilter(`搜索${tabs.find(t => t.id === activeTab)?.label}...`)}
+              </div>
+            )}
           </div>
         )}
-      </AnimatePresence>
+
+        {/* Content Area */}
+        <div className="flex-1 min-h-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {activeTab === 'basic' && renderBasicInfo()}
+              {activeTab === 'personnel' && renderPersonnel()}
+              {activeTab === 'qualification' && renderQualification()}
+              {activeTab === 'performance' && renderPerformance()}
+              {activeTab === 'finance' && renderFinance()}
+              {activeTab === 'rewards' && renderRewards()}
+              {activeTab === 'honors' && renderHonors()}
+              {activeTab === 'materials-list' && renderMaterials()}
+              {activeTab === 'disclosure' && renderDisclosure()}
+              {activeTab === 'credit' && renderCredit()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
 
       {/* File Preview Modal */}
       <AnimatePresence>

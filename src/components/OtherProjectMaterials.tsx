@@ -492,23 +492,36 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
             <FolderOpen className="text-primary" size={20} />
             {activeCategory}
           </h3>
-          <button 
-            onClick={handleOpenAddModal}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-              isPaused 
-                ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                : 'bg-primary text-white hover:bg-primary/90 shadow-primary/10'
-            }`}
-          >
-            <Plus size={14} />
-            上传材料
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleOpenAddModal}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                isPaused 
+                  ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                  : 'bg-primary text-white hover:bg-primary/90 shadow-primary/10'
+              }`}
+            >
+              <Plus size={14} />
+              上传材料
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-50 transition-all">
+              <Trash2 size={14} />
+              删除资料
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all">
+              <Download size={14} />
+              导出数据
+            </button>
+          </div>
         </div>
 
         <div className="overflow-y-auto flex-1">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-100">
+                <th className="px-6 py-4 w-10">
+                  <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                </th>
                 <th className="px-6 py-4">文件名</th>
                 {activeCategory === '全部文档' && <th className="px-6 py-4">所属目录</th>}
                 <th className="px-6 py-4">类型</th>
@@ -523,6 +536,9 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                 .slice((detailCurrentPage - 1) * detailPageSize, detailCurrentPage * detailPageSize)
                 .map((item) => (
                 <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="size-8 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
@@ -549,14 +565,12 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                   <td className="px-6 py-4 text-xs text-slate-500">{item.uploadDate}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button className="p-2 text-slate-400 hover:text-primary transition-colors" title="预览">
-                        <Eye size={16} />
-                      </button>
-                      <button className="p-2 text-slate-400 hover:text-primary transition-colors" title="下载">
-                        <Download size={16} />
-                      </button>
-                      <button className="p-2 text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
+                      <button 
+                        onClick={handleOpenAddModal}
+                        className="p-2 text-primary hover:text-blue-700 transition-colors" 
+                        title="修改"
+                      >
+                        <Edit3 size={16} />
                       </button>
                     </div>
                   </td>

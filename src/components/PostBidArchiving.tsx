@@ -76,7 +76,7 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
     { unit: '某某建设集团有限公司', amount: 12105000, date: '2026-03-25', url: 'http://ggzy.example.com/...' },
   ]);
   const [contractRecords, setContractRecords] = useState([
-    { id: 'HT-2026-001', name: '城市基础设施施工合同', date: '2026-04-05', amount: 11800000, owner: '陈经理', status: '履行中', fulfillmentDate: '2026-04-10' },
+    { id: 'HT-2026-001', name: '城市基础设施施工合同', date: '2026-04-05', amount: 11800000, owner: '陈经理', duration: '30', status: '履行中', fulfillmentDate: '2026-04-10', expectedCompletionDate: '2026-05-10' },
   ]);
   const [contractAttachments, setContractAttachments] = useState<Attachment[]>([
     { id: '1', name: '中标通知书.pdf', size: '1.2MB', type: 'pdf', date: '2026-03-25' },
@@ -129,6 +129,41 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
   const updateContract = (index: number, field: string, value: any) => {
     const newRecords = [...contractRecords];
     (newRecords[index] as any)[field] = value;
+    
+    if (field === 'fulfillmentDate' || field === 'duration') {
+      const record = newRecords[index];
+      const durationVal = parseInt(record.duration as any);
+      if (record.fulfillmentDate && !isNaN(durationVal)) {
+        const start = new Date(record.fulfillmentDate);
+        const end = new Date(start);
+        end.setDate(start.getDate() + durationVal);
+        record.expectedCompletionDate = end.toISOString().split('T')[0];
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // Only auto-update status if it's not manually set to 'Terminated'
+        if (record.status !== '已终止') {
+          if (today < start) {
+            record.status = '未开始';
+          } else if (today > end) {
+            // If it's past the expected completion date and not marked as 'Completed', it's 'Overdue'
+            if (record.status !== '已完成') {
+              record.status = '逾期';
+            }
+          } else {
+            record.status = '履行中';
+          }
+        }
+      }
+    }
+    
+    setContractRecords(newRecords);
+  };
+
+  const deleteContract = (index: number) => {
+    const newRecords = [...contractRecords];
+    newRecords.splice(index, 1);
     setContractRecords(newRecords);
   };
 
@@ -683,42 +718,45 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                         </div>
                         {isEditing && (
                           <button 
-                            onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: '', owner: '', status: '履行中', fulfillmentDate: '' }])}
+                            onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: '', owner: '', duration: '', status: '未开始', fulfillmentDate: '', expectedCompletionDate: '' }])}
                             className="text-sm font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-1"
                           >
                             <Plus size={18} /> 添加合同
                           </button>
                         )}
                       </div>
-                      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-                        <table className="w-full text-left border-collapse">
+                      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left border-collapse min-w-[1100px]">
                           <thead>
-                            <tr className="bg-slate-50 text-slate-500 text-[12px] font-bold border-b border-slate-200">
-                              <th className="px-6 py-4">合同编号/名称</th>
-                              <th className="px-6 py-4">签署日期</th>
-                              <th className="px-6 py-4">合同金额（元）</th>
-                              <th className="px-6 py-4">负责人</th>
-                              <th className="px-6 py-4">履行时间</th>
-                              <th className="px-6 py-4">履行状态</th>
+                            <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                              <th className="px-3 py-3 min-w-[220px] whitespace-nowrap">合同编号/名称</th>
+                              <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">签署日期</th>
+                              <th className="px-3 py-3 min-w-[130px] whitespace-nowrap">合同金额（元）</th>
+                              <th className="px-3 py-3 min-w-[100px] whitespace-nowrap">负责人</th>
+                              <th className="px-3 py-3 min-w-[80px] whitespace-nowrap">工期（天）</th>
+                              <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">履行时间</th>
+                              <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">应当完成时间</th>
+                              <th className="px-3 py-3 min-w-[110px] whitespace-nowrap">履行状态</th>
+                              {isEditing && <th className="px-3 py-3 min-w-[60px] whitespace-nowrap text-right">操作</th>}
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
                             {contractRecords.map((row, i) => (
                               <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="px-6 py-4">
+                                <td className="px-3 py-3">
                                   {isEditing ? (
                                     <div className="space-y-1">
                                       <input 
                                         value={row.name} 
                                         onChange={(e) => updateContract(i, 'name', e.target.value)}
                                         placeholder="合同名称"
-                                        className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors font-bold"
+                                        className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-bold outline-none focus:border-primary"
                                       />
                                       <input 
                                         value={row.id} 
                                         onChange={(e) => updateContract(i, 'id', e.target.value)}
                                         placeholder="合同编号"
-                                        className="w-full border border-slate-200 rounded px-3 py-1.5 text-xs outline-none focus:border-primary transition-colors"
+                                        className="w-full border border-slate-200 rounded px-2 py-1 text-[10px] outline-none focus:border-primary"
                                       />
                                     </div>
                                   ) : (
@@ -728,76 +766,107 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                                     </>
                                   )}
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-3 py-3">
                                   {isEditing ? (
                                     <input 
                                       type="date"
                                       value={row.date} 
                                       onChange={(e) => updateContract(i, 'date', e.target.value)}
-                                      className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors"
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
                                     />
                                   ) : (
                                     <span className="text-sm text-slate-600">{row.date || '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-3 py-3">
                                   {isEditing ? (
                                     <input 
                                       type="number"
                                       value={row.amount} 
                                       onChange={(e) => updateContract(i, 'amount', parseFloat(e.target.value) || 0)}
-                                      className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors font-mono font-bold"
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold outline-none focus:border-primary"
                                       placeholder="0.00"
                                     />
                                   ) : (
                                     <span className="font-mono text-sm text-slate-900 font-bold">{formatCurrency(row.amount)}</span>
                                   )}
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-3 py-3">
                                   {isEditing ? (
                                     <input 
                                       value={row.owner} 
                                       onChange={(e) => updateContract(i, 'owner', e.target.value)}
-                                      className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors"
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
                                       placeholder="负责人"
                                     />
                                   ) : (
                                     <span className="text-sm text-slate-600">{row.owner || '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-3 py-3">
+                                  {isEditing ? (
+                                    <input 
+                                      type="number"
+                                      value={row.duration} 
+                                      onChange={(e) => updateContract(i, 'duration', e.target.value)}
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
+                                      placeholder="天数"
+                                    />
+                                  ) : (
+                                    <span className="text-sm text-slate-600">{row.duration ? `${row.duration}天` : '--'}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3">
                                   {isEditing ? (
                                     <input 
                                       type="date"
                                       value={row.fulfillmentDate} 
                                       onChange={(e) => updateContract(i, 'fulfillmentDate', e.target.value)}
-                                      className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors"
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
                                     />
                                   ) : (
                                     <span className="text-sm text-slate-600">{row.fulfillmentDate || '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-3 py-3">
+                                  <span className="text-sm text-slate-600">{row.expectedCompletionDate || '--'}</span>
+                                </td>
+                                <td className="px-3 py-3">
                                   {isEditing ? (
                                     <select 
                                       value={row.status} 
                                       onChange={(e) => updateContract(i, 'status', e.target.value)}
-                                      className="w-full border border-slate-200 rounded px-3 py-1.5 text-xs outline-none focus:border-primary transition-colors"
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-[10px] font-bold outline-none focus:border-primary cursor-pointer"
                                     >
-                                      <option>履行中</option>
-                                      <option>已完成</option>
-                                      <option>已终止</option>
+                                      <option value="未开始">未开始</option>
+                                      <option value="履行中">履行中</option>
+                                      <option value="已完成">已完成</option>
+                                      <option value="逾期">逾期</option>
+                                      <option value="已终止">已终止</option>
                                     </select>
                                   ) : (
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${
                                       row.status === '已完成' ? 'bg-green-50 text-green-600' : 
                                       row.status === '已终止' ? 'bg-red-50 text-red-600' : 
+                                      row.status === '逾期' ? 'bg-orange-50 text-orange-600' :
+                                      row.status === '未开始' ? 'bg-slate-50 text-slate-500' :
                                       'bg-blue-50 text-blue-600'
                                     }`}>
                                       {row.status}
                                     </span>
                                   )}
                                 </td>
+                                {isEditing && (
+                                  <td className="px-3 py-3 text-right">
+                                    <button 
+                                      onClick={() => deleteContract(i)}
+                                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                      title="删除合同"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </td>
+                                )}
                               </tr>
                             ))}
                           </tbody>

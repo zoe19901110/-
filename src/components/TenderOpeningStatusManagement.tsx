@@ -200,16 +200,29 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
         
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        if (today < start) {
-          record.status = '未开始';
-        } else if (today > end) {
-          record.status = '已完成';
-        } else {
-          record.status = '履行中';
+        
+        // Only auto-update status if it's not manually set to 'Terminated'
+        if (record.status !== '已终止') {
+          if (today < start) {
+            record.status = '未开始';
+          } else if (today > end) {
+            // If it's past the expected completion date and not marked as 'Completed', it's 'Overdue'
+            if (record.status !== '已完成') {
+              record.status = '逾期';
+            }
+          } else {
+            record.status = '履行中';
+          }
         }
       }
     }
     
+    setContractRecords(newRecords);
+  };
+
+  const deleteContract = (index: number) => {
+    const newRecords = [...contractRecords];
+    newRecords.splice(index, 1);
     setContractRecords(newRecords);
   };
 
@@ -1188,18 +1201,19 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                           </button>
                         )}
                       </div>
-                      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
-                        <table className="w-full text-left border-collapse min-w-[900px]">
+                      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left border-collapse min-w-[1100px]">
                           <thead>
                             <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
-                              <th className="px-3 py-3 min-w-[100px] whitespace-nowrap">合同编号/名称</th>
-                              <th className="px-3 py-3 whitespace-nowrap">签署日期</th>
-                              <th className="px-3 py-3 whitespace-nowrap w-[80px]">合同金额（元）</th>
-                              <th className="px-3 py-3 whitespace-nowrap w-[60px]">负责人</th>
-                              <th className="px-3 py-3 whitespace-nowrap w-[50px]">工期（天）</th>
-                              <th className="px-3 py-3 whitespace-nowrap">履行时间</th>
-                              <th className="px-3 py-3 whitespace-nowrap">应当完成时间</th>
-                              <th className="px-3 py-3 whitespace-nowrap">履行状态</th>
+                              <th className="px-3 py-3 min-w-[220px] whitespace-nowrap">合同编号/名称</th>
+                              <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">签署日期</th>
+                              <th className="px-3 py-3 min-w-[130px] whitespace-nowrap">合同金额（元）</th>
+                              <th className="px-3 py-3 min-w-[100px] whitespace-nowrap">负责人</th>
+                              <th className="px-3 py-3 min-w-[80px] whitespace-nowrap">工期（天）</th>
+                              <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">履行时间</th>
+                              <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">应当完成时间</th>
+                              <th className="px-3 py-3 min-w-[110px] whitespace-nowrap">履行状态</th>
+                              {isEditing && <th className="px-3 py-3 min-w-[60px] whitespace-nowrap text-right">操作</th>}
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
@@ -1212,13 +1226,13 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                         value={row.name} 
                                         onChange={(e) => updateContract(i, 'name', e.target.value)}
                                         placeholder="合同名称"
-                                        className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-bold"
+                                        className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-bold outline-none focus:border-primary"
                                       />
                                       <input 
                                         value={row.id} 
                                         onChange={(e) => updateContract(i, 'id', e.target.value)}
                                         placeholder="合同编号"
-                                        className="w-24 border border-slate-200 rounded px-2 py-1 text-[10px]"
+                                        className="w-full border border-slate-200 rounded px-2 py-1 text-[10px] outline-none focus:border-primary"
                                       />
                                     </div>
                                   ) : (
@@ -1228,81 +1242,107 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                     </>
                                   )}
                                 </td>
-                                <td className="px-3 py-3 whitespace-nowrap">
+                                <td className="px-3 py-3">
                                   {isEditing ? (
                                     <input 
                                       type="date"
                                       value={row.date} 
                                       onChange={(e) => updateContract(i, 'date', e.target.value)}
-                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
                                     />
                                   ) : (
                                     <span className="text-sm text-slate-600">{row.date || '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-3 py-3 whitespace-nowrap">
+                                <td className="px-3 py-3">
                                   {isEditing ? (
                                     <input 
                                       type="number"
                                       value={row.amount} 
                                       onChange={(e) => updateContract(i, 'amount', parseFloat(e.target.value) || 0)}
-                                      className="w-20 border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold"
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold outline-none focus:border-primary"
                                       placeholder="0.00"
                                     />
                                   ) : (
                                     <span className="font-mono text-sm text-slate-900 font-bold">{formatCurrency(row.amount)}</span>
                                   )}
                                 </td>
-                                <td className="px-3 py-3 whitespace-nowrap">
+                                <td className="px-3 py-3">
                                   {isEditing ? (
                                     <input 
                                       value={row.owner} 
                                       onChange={(e) => updateContract(i, 'owner', e.target.value)}
-                                      className="w-16 border border-slate-200 rounded px-2 py-1 text-sm"
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
                                       placeholder="负责人"
                                     />
                                   ) : (
                                     <span className="text-sm text-slate-600">{row.owner || '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-3 py-3 whitespace-nowrap">
+                                <td className="px-3 py-3">
                                   {isEditing ? (
                                     <input 
                                       type="number"
                                       value={row.duration} 
                                       onChange={(e) => updateContract(i, 'duration', e.target.value)}
-                                      className="w-12 border border-slate-200 rounded px-2 py-1 text-sm"
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
                                       placeholder="天数"
                                     />
                                   ) : (
                                     <span className="text-sm text-slate-600">{row.duration ? `${row.duration}天` : '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-3 py-3 whitespace-nowrap">
+                                <td className="px-3 py-3">
                                   {isEditing ? (
                                     <input 
                                       type="date"
                                       value={row.fulfillmentDate} 
                                       onChange={(e) => updateContract(i, 'fulfillmentDate', e.target.value)}
-                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
                                     />
                                   ) : (
                                     <span className="text-sm text-slate-600">{row.fulfillmentDate || '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-3 py-3 whitespace-nowrap">
+                                <td className="px-3 py-3">
                                   <span className="text-sm text-slate-600">{row.expectedCompletionDate || '--'}</span>
                                 </td>
-                                <td className="px-3 py-3 whitespace-nowrap min-w-[100px]">
-                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${
-                                    row.status === '已完成' ? 'bg-green-50 text-green-600' : 
-                                    row.status === '已终止' ? 'bg-red-50 text-red-600' : 
-                                    row.status === '未开始' ? 'bg-slate-50 text-slate-500' :
-                                    'bg-blue-50 text-blue-600'
-                                  }`}>
-                                    {row.status}
-                                  </span>
+                                <td className="px-3 py-3">
+                                  {isEditing ? (
+                                    <select 
+                                      value={row.status} 
+                                      onChange={(e) => updateContract(i, 'status', e.target.value)}
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-[10px] font-bold outline-none focus:border-primary cursor-pointer"
+                                    >
+                                      <option value="未开始">未开始</option>
+                                      <option value="履行中">履行中</option>
+                                      <option value="已完成">已完成</option>
+                                      <option value="逾期">逾期</option>
+                                      <option value="已终止">已终止</option>
+                                    </select>
+                                  ) : (
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${
+                                      row.status === '已完成' ? 'bg-green-50 text-green-600' : 
+                                      row.status === '已终止' ? 'bg-red-50 text-red-600' : 
+                                      row.status === '逾期' ? 'bg-orange-50 text-orange-600' :
+                                      row.status === '未开始' ? 'bg-slate-50 text-slate-500' :
+                                      'bg-blue-50 text-blue-600'
+                                    }`}>
+                                      {row.status}
+                                    </span>
+                                  )}
                                 </td>
+                                {isEditing && (
+                                  <td className="px-3 py-3 text-right">
+                                    <button 
+                                      onClick={() => deleteContract(i)}
+                                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                      title="删除合同"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </td>
+                                )}
                               </tr>
                             ))}
                           </tbody>

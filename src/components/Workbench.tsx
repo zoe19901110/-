@@ -2758,7 +2758,7 @@ const ArchiveRegisterView = ({ onBack, isPaused }: { onBack: () => void, isPause
   ]);
 
   const [contractRecords, setContractRecords] = useState([
-    { id: 'HT-2024-001', name: '某高速公路工程施工合同', date: '2024-03-15', amount: 125608800, owner: '张三', status: '履行中', fulfillmentDate: '2026-03-15' },
+    { id: 'HT-2024-001', name: '某高速公路工程施工合同', date: '2024-03-15', amount: 125608800, owner: '张三', duration: '30', status: '履行中', fulfillmentDate: '2024-03-15', expectedCompletionDate: '2024-04-14' },
   ]);
 
   const [bidFiles, setBidFiles] = useState([
@@ -2776,6 +2776,47 @@ const ArchiveRegisterView = ({ onBack, isPaused }: { onBack: () => void, isPause
   ]);
 
   const [unsuccessfulReason, setUnsuccessfulReason] = useState('');
+
+  const updateContract = (index: number, field: string, value: any) => {
+    const newRecords = [...contractRecords];
+    (newRecords[index] as any)[field] = value;
+    
+    if (field === 'fulfillmentDate' || field === 'duration') {
+      const record = newRecords[index];
+      const durationVal = parseInt(record.duration as any);
+      if (record.fulfillmentDate && !isNaN(durationVal)) {
+        const start = new Date(record.fulfillmentDate);
+        const end = new Date(start);
+        end.setDate(start.getDate() + durationVal);
+        record.expectedCompletionDate = end.toISOString().split('T')[0];
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // Only auto-update status if it's not manually set to 'Terminated'
+        if (record.status !== '已终止') {
+          if (today < start) {
+            record.status = '未开始';
+          } else if (today > end) {
+            // If it's past the expected completion date and not marked as 'Completed', it's 'Overdue'
+            if (record.status !== '已完成') {
+              record.status = '逾期';
+            }
+          } else {
+            record.status = '履行中';
+          }
+        }
+      }
+    }
+    
+    setContractRecords(newRecords);
+  };
+
+  const deleteContract = (index: number) => {
+    const newRecords = [...contractRecords];
+    newRecords.splice(index, 1);
+    setContractRecords(newRecords);
+  };
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(val);
@@ -3101,7 +3142,7 @@ const ArchiveRegisterView = ({ onBack, isPaused }: { onBack: () => void, isPause
                 <h4 className="text-lg">合同归档</h4>
               </div>
               <button 
-                onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: 0, owner: '', status: '履行中', fulfillmentDate: '' }])}
+                onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: 0, owner: '', duration: '', status: '未开始', fulfillmentDate: '', expectedCompletionDate: '' }])}
                 className="text-sm font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-1"
               >
                 <Plus size={18} /> 添加合同
@@ -3117,108 +3158,106 @@ const ArchiveRegisterView = ({ onBack, isPaused }: { onBack: () => void, isPause
                     合同详情
                   </h5>
                 </div>
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                  <table className="w-full text-left border-collapse">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto custom-scrollbar">
+                  <table className="w-full text-left border-collapse min-w-[1100px]">
                     <thead>
                       <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
-                        <th className="px-6 py-4">合同编号/名称</th>
-                        <th className="px-6 py-4">签署日期</th>
-                        <th className="px-6 py-4">合同金额（元）</th>
-                        <th className="px-6 py-4">负责人</th>
-                        <th className="px-6 py-4">履行时间</th>
-                        <th className="px-6 py-4">履行状态</th>
+                        <th className="px-3 py-4 min-w-[220px] whitespace-nowrap">合同编号/名称</th>
+                        <th className="px-3 py-4 min-w-[140px] whitespace-nowrap">签署日期</th>
+                        <th className="px-3 py-4 min-w-[130px] whitespace-nowrap">合同金额（元）</th>
+                        <th className="px-3 py-4 min-w-[100px] whitespace-nowrap">负责人</th>
+                        <th className="px-3 py-4 min-w-[80px] whitespace-nowrap">工期（天）</th>
+                        <th className="px-3 py-4 min-w-[140px] whitespace-nowrap">履行时间</th>
+                        <th className="px-3 py-4 min-w-[140px] whitespace-nowrap">应当完成时间</th>
+                        <th className="px-3 py-4 min-w-[110px] whitespace-nowrap">履行状态</th>
+                        <th className="px-3 py-4 min-w-[60px] whitespace-nowrap text-right">操作</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {contractRecords.map((row, i) => (
                         <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-4">
                             <div className="space-y-1">
                               <input 
                                 value={row.name} 
-                                onChange={(e) => {
-                                  const newRecords = [...contractRecords];
-                                  newRecords[i].name = e.target.value;
-                                  setContractRecords(newRecords);
-                                }}
+                                onChange={(e) => updateContract(i, 'name', e.target.value)}
                                 placeholder="合同名称"
-                                className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-bold"
+                                className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-bold outline-none focus:border-primary"
                               />
                               <input 
                                 value={row.id} 
-                                onChange={(e) => {
-                                  const newRecords = [...contractRecords];
-                                  newRecords[i].id = e.target.value;
-                                  setContractRecords(newRecords);
-                                }}
+                                onChange={(e) => updateContract(i, 'id', e.target.value)}
                                 placeholder="合同编号"
-                                className="w-full border border-slate-200 rounded px-2 py-1 text-[10px]"
+                                className="w-full border border-slate-200 rounded px-2 py-1 text-[10px] outline-none focus:border-primary"
                               />
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-4">
                             <input 
                               type="date"
                               value={row.date} 
-                              onChange={(e) => {
-                                const newRecords = [...contractRecords];
-                                newRecords[i].date = e.target.value;
-                                setContractRecords(newRecords);
-                              }}
-                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                              onChange={(e) => updateContract(i, 'date', e.target.value)}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
                             />
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-4">
                             <input 
                               type="number"
                               value={row.amount} 
-                              onChange={(e) => {
-                                const newRecords = [...contractRecords];
-                                newRecords[i].amount = parseFloat(e.target.value) || 0;
-                                setContractRecords(newRecords);
-                              }}
-                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold"
+                              onChange={(e) => updateContract(i, 'amount', parseFloat(e.target.value) || 0)}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold outline-none focus:border-primary"
                               placeholder="0.00"
                             />
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-4">
                             <input 
                               value={row.owner} 
-                              onChange={(e) => {
-                                const newRecords = [...contractRecords];
-                                newRecords[i].owner = e.target.value;
-                                setContractRecords(newRecords);
-                              }}
-                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                              onChange={(e) => updateContract(i, 'owner', e.target.value)}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
                               placeholder="负责人"
                             />
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-4">
+                            <input 
+                              type="number"
+                              value={row.duration} 
+                              onChange={(e) => updateContract(i, 'duration', e.target.value)}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
+                              placeholder="天数"
+                            />
+                          </td>
+                          <td className="px-3 py-4">
                             <input 
                               type="date"
                               value={row.fulfillmentDate} 
-                              onChange={(e) => {
-                                const newRecords = [...contractRecords];
-                                newRecords[i].fulfillmentDate = e.target.value;
-                                setContractRecords(newRecords);
-                              }}
-                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                              onChange={(e) => updateContract(i, 'fulfillmentDate', e.target.value)}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
                             />
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-4">
+                            <span className="text-sm text-slate-600">{row.expectedCompletionDate || '--'}</span>
+                          </td>
+                          <td className="px-3 py-4">
                             <select 
                               value={row.status}
-                              onChange={(e) => {
-                                const newRecords = [...contractRecords];
-                                newRecords[i].status = e.target.value;
-                                setContractRecords(newRecords);
-                              }}
-                              className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                              onChange={(e) => updateContract(i, 'status', e.target.value)}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-[10px] font-bold outline-none focus:border-primary cursor-pointer"
                             >
+                              <option value="未开始">未开始</option>
                               <option value="履行中">履行中</option>
                               <option value="已完成">已完成</option>
+                              <option value="逾期">逾期</option>
                               <option value="已终止">已终止</option>
                             </select>
+                          </td>
+                          <td className="px-3 py-4 text-right">
+                            <button 
+                              onClick={() => deleteContract(i)}
+                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                              title="删除合同"
+                            >
+                              <Trash2 size={16} />
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -4405,16 +4444,29 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
         
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        if (today < start) {
-          record.status = '未开始';
-        } else if (today > end) {
-          record.status = '已完成';
-        } else {
-          record.status = '履行中';
+        
+        // Only auto-update status if it's not manually set to 'Terminated'
+        if (record.status !== '已终止') {
+          if (today < start) {
+            record.status = '未开始';
+          } else if (today > end) {
+            // If it's past the expected completion date and not marked as 'Completed', it's 'Overdue'
+            if (record.status !== '已完成') {
+              record.status = '逾期';
+            }
+          } else {
+            record.status = '履行中';
+          }
         }
       }
     }
     
+    setContractRecords(newRecords);
+  };
+
+  const deleteContract = (index: number) => {
+    const newRecords = [...contractRecords];
+    newRecords.splice(index, 1);
     setContractRecords(newRecords);
   };
 
@@ -5062,7 +5114,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
             </div>
             {isEditing && (
               <button 
-                onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: 0, owner: '', duration: '', status: '待定', fulfillmentDate: '', expectedCompletionDate: '' }])}
+                onClick={() => setContractRecords([...contractRecords, { id: '', name: '', date: '', amount: 0, owner: '', duration: '', status: '未开始', fulfillmentDate: '', expectedCompletionDate: '' }])}
                 disabled={isPaused}
                 className={`text-sm font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-1 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
@@ -5070,18 +5122,19 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
               </button>
             )}
           </div>
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[900px]">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse min-w-[1100px]">
               <thead>
                 <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
-                  <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">合同编号/名称</th>
-                  <th className="px-3 py-3 whitespace-nowrap">签署日期</th>
-                  <th className="px-3 py-3 whitespace-nowrap w-[120px]">合同金额（元）</th>
-                  <th className="px-3 py-3 whitespace-nowrap w-[100px]">负责人</th>
-                  <th className="px-3 py-3 whitespace-nowrap w-[80px]">工期（天）</th>
-                  <th className="px-3 py-3 whitespace-nowrap">履行时间</th>
-                  <th className="px-3 py-3 whitespace-nowrap">应当完成时间</th>
-                  <th className="px-3 py-3 whitespace-nowrap">履行状态</th>
+                  <th className="px-3 py-3 min-w-[220px] whitespace-nowrap">合同编号/名称</th>
+                  <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">签署日期</th>
+                  <th className="px-3 py-3 min-w-[130px] whitespace-nowrap">合同金额（元）</th>
+                  <th className="px-3 py-3 min-w-[100px] whitespace-nowrap">负责人</th>
+                  <th className="px-3 py-3 min-w-[80px] whitespace-nowrap">工期（天）</th>
+                  <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">履行时间</th>
+                  <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">应当完成时间</th>
+                  <th className="px-3 py-3 min-w-[110px] whitespace-nowrap">履行状态</th>
+                  {isEditing && <th className="px-3 py-3 min-w-[60px] whitespace-nowrap text-right">操作</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -5095,14 +5148,14 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                             onChange={(e) => updateContract(i, 'name', e.target.value)}
                             disabled={isPaused}
                             placeholder="合同名称"
-                            className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-bold ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                            className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-bold outline-none focus:border-primary ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                           />
                           <input 
                             value={row.id} 
                             onChange={(e) => updateContract(i, 'id', e.target.value)}
                             disabled={isPaused}
                             placeholder="合同编号"
-                            className={`w-32 border border-slate-200 rounded px-2 py-1 text-[10px] ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                            className={`w-full border border-slate-200 rounded px-2 py-1 text-[10px] outline-none focus:border-primary ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                           />
                         </div>
                       ) : (
@@ -5119,7 +5172,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                           value={row.date} 
                           onChange={(e) => updateContract(i, 'date', e.target.value)}
                           disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="text-sm text-slate-600">{row.date || '--'}</span>
@@ -5132,7 +5185,8 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                           value={row.amount} 
                           onChange={(e) => updateContract(i, 'amount', parseFloat(e.target.value) || 0)}
                           disabled={isPaused}
-                          className={`w-28 border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono font-bold outline-none focus:border-primary ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          placeholder="0.00"
                         />
                       ) : (
                         <span className="font-mono text-sm text-slate-900 font-bold">{formatCurrency(row.amount)}</span>
@@ -5144,7 +5198,8 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                           value={row.owner} 
                           onChange={(e) => updateContract(i, 'owner', e.target.value)}
                           disabled={isPaused}
-                          className={`w-24 border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          placeholder="负责人"
                         />
                       ) : (
                         <span className="text-sm text-slate-600">{row.owner || '--'}</span>
@@ -5157,7 +5212,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                           value={row.duration} 
                           onChange={(e) => updateContract(i, 'duration', e.target.value)}
                           disabled={isPaused}
-                          className={`w-16 border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                           placeholder="天数"
                         />
                       ) : (
@@ -5171,7 +5226,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                           value={row.fulfillmentDate} 
                           onChange={(e) => updateContract(i, 'fulfillmentDate', e.target.value)}
                           disabled={isPaused}
-                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
                         />
                       ) : (
                         <span className="text-sm text-slate-600">{row.fulfillmentDate || '--'}</span>
@@ -5180,16 +5235,44 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                     <td className="px-3 py-3 whitespace-nowrap">
                       <span className="text-sm text-slate-600">{row.expectedCompletionDate || '--'}</span>
                     </td>
-                    <td className="px-3 py-3 whitespace-nowrap min-w-[100px]">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${
-                        row.status === '已完成' ? 'bg-green-50 text-green-600' : 
-                        row.status === '已终止' ? 'bg-red-50 text-red-600' : 
-                        row.status === '未开始' ? 'bg-slate-50 text-slate-500' :
-                        'bg-blue-50 text-blue-600'
-                      }`}>
-                        {row.status}
-                      </span>
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      {isEditing ? (
+                        <select 
+                          value={row.status}
+                          onChange={(e) => updateContract(i, 'status', e.target.value)}
+                          disabled={isPaused}
+                          className={`w-full border border-slate-200 rounded px-2 py-1 text-[10px] font-bold outline-none focus:border-primary cursor-pointer ${isPaused ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                        >
+                          <option value="未开始">未开始</option>
+                          <option value="履行中">履行中</option>
+                          <option value="已完成">已完成</option>
+                          <option value="逾期">逾期</option>
+                          <option value="已终止">已终止</option>
+                        </select>
+                      ) : (
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                          row.status === '已完成' ? 'bg-emerald-50 text-emerald-600' :
+                          row.status === '履行中' ? 'bg-blue-50 text-blue-600' :
+                          row.status === '逾期' ? 'bg-red-50 text-red-600' :
+                          row.status === '已终止' ? 'bg-slate-100 text-slate-500' :
+                          'bg-amber-50 text-amber-600'
+                        }`}>
+                          {row.status}
+                        </span>
+                      )}
                     </td>
+                    {isEditing && (
+                      <td className="px-3 py-3 text-right">
+                        <button 
+                          onClick={() => deleteContract(i)}
+                          disabled={isPaused}
+                          className={`p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all ${isPaused ? 'cursor-not-allowed' : ''}`}
+                          title="删除合同"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
