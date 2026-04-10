@@ -33,7 +33,8 @@ import {
   Eye,
   Upload,
   ImageIcon,
-  File
+  File,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -129,6 +130,132 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
   const [performanceSearch, setPerformanceSearch] = useState('');
   const [qualificationSearch, setQualificationSearch] = useState('');
   const [previewFile, setPreviewFile] = useState<string | null>(null);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [showGenericForm, setShowGenericForm] = useState(false);
+  const [genericFormMode, setGenericFormMode] = useState<'add' | 'edit'>('add');
+  const [isEditingBasicInfo, setIsEditingBasicInfo] = useState(false);
+  const [isEditingPersonnel, setIsEditingPersonnel] = useState(false);
+  const [uploadingField, setUploadingField] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [previewImage, setPreviewImage] = useState<{ url: string; name: string } | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [currentUploadField, setCurrentUploadField] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUploadField) return;
+
+    setUploadingField(currentUploadField);
+    setUploadProgress(0);
+
+    // 模拟上传进度
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.floor(Math.random() * 30) + 10;
+      if (progress >= 100) {
+        progress = 100;
+        setUploadProgress(100);
+        clearInterval(interval);
+
+        setTimeout(() => {
+          const newFile = { 
+            name: file.name, 
+            url: URL.createObjectURL(file),
+            size: (file.size / 1024).toFixed(2) + ' KB',
+            uploadDate: new Date().toLocaleDateString()
+          };
+
+          // 更新基本信息表单中的附件
+          setBasicInfoForm(prev => ({
+            ...prev,
+            attachments: {
+              ...prev.attachments,
+              [currentUploadField]: [newFile]
+            }
+          }));
+
+          // 同步到电子证照库 (Certificates)
+          // 这里我们假设有一个全局状态或通过某种方式通知 Certificates 组件
+          // 由于 Certificates 是独立组件，我们通过 console 模拟同步逻辑，
+          // 实际项目中可能需要通过 context 或 redux
+          console.log(`文件 ${file.name} 已同步到电子证照库`);
+
+          setUploadingField(null);
+          setUploadProgress(0);
+          setCurrentUploadField(null);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        }, 500);
+      } else {
+        setUploadProgress(progress);
+      }
+    }, 200);
+  };
+
+  const triggerUpload = (field: string) => {
+    setCurrentUploadField(field);
+    fileInputRef.current?.click();
+  };
+
+  const [basicInfoForm, setBasicInfoForm] = useState({
+    enterpriseName: '上线运维测试有限公司',
+    creditCode: '91999779974015331P',
+    legalPerson: '',
+    unitNature: '国有全资',
+    registeredCapital: '100 万元',
+    currency: '人民币',
+    businessPeriod: '2026-02-09至2026-02-25',
+    registrationAuthority: '登记机关',
+    country: '老挝',
+    region: '江苏省/苏州市/张家港市',
+    businessScope: '经营范围',
+    bankName: '农业引导',
+    bankAccount: '1234567890',
+    bankAddress: '',
+    bankPhone: '',
+    bankFax: '',
+    bankContact: '',
+    accountName: '上线运维测试有限公司',
+    safetyLicense: '皖JZ安许证字2019012250',
+    economicType: '',
+    unitAddress: '安徽省铜陵市枞阳县汤沟镇中心商贸城',
+    licenseScope: '建筑施工',
+    mainPerson: '',
+    safetyEnterpriseName: '上线运维测试有限公司',
+    safetyExpiry: '2016-10-03至2023-10-18',
+    legalName: '',
+    legalId: '',
+    gender: '',
+    legalPhone: '18911111111',
+    legalTitle: '',
+    legalPosition: '',
+    englishName: '',
+    unitAttribute: '制造商',
+    industryCategory: '农、林、牧、渔业·农业·谷物种植',
+    email: '',
+    postalCode: '',
+    manager: '',
+    contactPhone: '',
+    projectManagerCount: '',
+    seniorTitleCount: '',
+    middleTitleCount: '',
+    juniorTitleCount: '',
+    technicianCount: '',
+    totalEmployees: '',
+    fax: '',
+    website: '',
+    detailedAddress: '',
+    serviceRegion: '',
+    introduction: '',
+    attachments: {
+      license: [] as any[],
+      account: [] as any[],
+      safety: [] as any[],
+      legal: [] as any[],
+      other: [] as any[],
+      promise: [{ name: '诚信承诺书.pdf', url: '#' }],
+      authorization: [{ name: '法人授权委托书.pdf', url: '#' }]
+    }
+  });
 
   const enterpriseName = currentEnterprise?.name || 'XX建设集团有限公司';
   const enterpriseId = currentEnterprise?.id || 'ent-1';
@@ -191,7 +318,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
 
       {/* Action Buttons */}
       <div className="flex gap-2 ml-auto">
-        <button className="px-8 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all">
+        <button className="px-8 py-2 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-sm hover:shadow-md transition-all">
           查询
         </button>
         <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
@@ -301,76 +428,92 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
   const currentData = getEnterpriseData();
 
   const renderPersonnelForm = () => (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden min-h-[600px]">
-      {/* Modal Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-8">
-        <div className="flex">
-          {[
-            { id: 'basic', label: '基本信息', icon: User },
-            { id: 'performance', label: '人员业绩', icon: Briefcase },
-            { id: 'qualifications', label: '职业资格', icon: ShieldCheck },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setPersonnelTab(tab.id)}
-              className={`px-6 py-4 text-sm font-bold transition-all relative flex items-center gap-2 ${
-                personnelTab === tab.id ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'
-              }`}
+    <AnimatePresence>
+      {showAddPersonnelModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden w-[1100px] h-[800px] max-w-[95vw] max-h-[95vh]"
+          >
+            {/* Header */}
+            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="size-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                  <Users size={20} />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800">职业人员详情</h3>
+              </div>
+              <div className="flex items-center gap-8">
+                <button 
+                  onClick={() => setPersonnelTab('basic')}
+                  className={`text-sm font-bold pb-1 border-b-2 transition-all ${personnelTab === 'basic' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                >
+                  基本信息
+                </button>
+                <button 
+                  onClick={() => setPersonnelTab('performance')}
+                  className={`text-sm font-bold pb-1 border-b-2 transition-all ${personnelTab === 'performance' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                >
+                  人员业绩
+                </button>
+                <button 
+                  onClick={() => setPersonnelTab('qualifications')}
+                  className={`text-sm font-bold pb-1 border-b-2 transition-all ${personnelTab === 'qualifications' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                >
+                  执业资格
+                </button>
+              </div>
+              <button 
+                onClick={() => setShowAddPersonnelModal(false)}
+                className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="flex-1 overflow-y-auto px-12 py-8 custom-scrollbar bg-slate-50/30"
             >
-              <tab.icon size={16} />
-              {tab.label}
-              {personnelTab === tab.id && (
-                <motion.div 
-                  layoutId="personnelTabUnderline"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
-                />
-              )}
-            </button>
-          ))}
-        </div>
-        <button 
-          onClick={() => setShowAddPersonnelModal(false)}
-          className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600"
-          title="返回列表"
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-                {/* Modal Content */}
-                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                  {personnelTab === 'basic' && (
-                    <div className="space-y-12">
-                      {/* 1. 个人基本信息 */}
+              {personnelTab === 'basic' && (
+                <div className="space-y-12">
                       <section>
                         <div className="flex items-center gap-2 mb-6">
-                          <div className="w-1 h-4 bg-blue-600 rounded-full" />
+                          <div className="w-1 h-4 bg-[#0052CC] rounded-full" />
                           <h4 className="text-sm font-bold text-slate-900">个人基本信息</h4>
                         </div>
                         <div className="grid grid-cols-2 gap-x-12 gap-y-6">
                           {/* Row 1 */}
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">姓名 <span className="text-red-500">*</span></label>
-                            <input 
-                              type="text" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              placeholder="请输入姓名"
-                              value={personnelFormData.name}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, name: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">姓名 <span className="text-red-500">*</span></label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="text" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                placeholder="请输入姓名"
+                                value={personnelFormData.name}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, name: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.name || '-'}</div>
+                            )}
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">是否为外籍人员 <span className="text-red-500">*</span></label>
-                            <div className="flex items-center gap-6 h-[46px]">
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">是否为外籍人员 <span className="text-red-500">*</span></label>
+                            <div className="flex items-center gap-6 h-[32px]">
                               {['是', '否'].map(option => (
-                                <label key={option} className="flex items-center gap-2 cursor-pointer group">
+                                <label key={option} className={`flex items-center gap-2 ${isEditingPersonnel ? 'cursor-pointer' : 'cursor-default'}`}>
                                   <input 
                                     type="radio" 
-                                    className="size-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                                    className="size-4 text-[#0052CC] border-slate-300 focus:ring-[#0052CC]"
                                     checked={personnelFormData.isForeigner === option}
+                                    disabled={!isEditingPersonnel}
                                     onChange={() => setPersonnelFormData({...personnelFormData, isForeigner: option})}
                                   />
-                                  <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{option}</span>
+                                  <span className={`text-sm font-bold ${personnelFormData.isForeigner === option ? 'text-slate-900' : 'text-slate-400'}`}>{option}</span>
                                 </label>
                               ))}
                             </div>
@@ -378,126 +521,160 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
 
                           {/* Row 2 */}
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">性别 <span className="text-red-500">*</span></label>
-                            <div className="flex items-center gap-6 h-[46px]">
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">性别 <span className="text-red-500">*</span></label>
+                            <div className="flex items-center gap-6 h-[32px]">
                               {['男', '女'].map(option => (
-                                <label key={option} className="flex items-center gap-2 cursor-pointer group">
+                                <label key={option} className={`flex items-center gap-2 ${isEditingPersonnel ? 'cursor-pointer' : 'cursor-default'}`}>
                                   <input 
                                     type="radio" 
-                                    className="size-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                                    className="size-4 text-[#0052CC] border-slate-300 focus:ring-[#0052CC]"
                                     checked={personnelFormData.gender === option}
+                                    disabled={!isEditingPersonnel}
                                     onChange={() => setPersonnelFormData({...personnelFormData, gender: option})}
                                   />
-                                  <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{option}</span>
+                                  <span className={`text-sm font-bold ${personnelFormData.gender === option ? 'text-slate-900' : 'text-slate-400'}`}>{option}</span>
                                 </label>
                               ))}
                             </div>
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">出生年月 <span className="text-red-500">*</span></label>
-                            <input 
-                              type="date" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              value={personnelFormData.birthDate}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, birthDate: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">出生年月 <span className="text-red-500">*</span></label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="date" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                value={personnelFormData.birthDate}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, birthDate: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.birthDate || '-'}</div>
+                            )}
                           </div>
 
                           {/* Row 3 */}
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">身份证号码 <span className="text-red-500">*</span></label>
-                            <input 
-                              type="text" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              placeholder="请输入"
-                              value={personnelFormData.idCard}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, idCard: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">身份证号码 <span className="text-red-500">*</span></label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="text" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                placeholder="请输入"
+                                value={personnelFormData.idCard}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, idCard: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.idCard || '-'}</div>
+                            )}
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">所在行政区域 <span className="text-red-500">*</span></label>
-                            <select 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              value={personnelFormData.region}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, region: e.target.value})}
-                            >
-                              <option value="">请选择</option>
-                              <option value="北京市">北京市</option>
-                              <option value="上海市">上海市</option>
-                              <option value="广州市">广州市</option>
-                              <option value="深圳市">深圳市</option>
-                            </select>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">所在行政区域 <span className="text-red-500">*</span></label>
+                            {isEditingPersonnel ? (
+                              <select 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                value={personnelFormData.region}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, region: e.target.value})}
+                              >
+                                <option value="">请选择</option>
+                                <option value="北京市">北京市</option>
+                                <option value="上海市">上海市</option>
+                                <option value="广州市">广州市</option>
+                                <option value="深圳市">深圳市</option>
+                              </select>
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.region || '-'}</div>
+                            )}
                           </div>
 
                           {/* Row 4 */}
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">联系手机 <span className="text-red-500">*</span></label>
-                            <input 
-                              type="text" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              placeholder="请输入"
-                              value={personnelFormData.phone}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, phone: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">联系手机 <span className="text-red-500">*</span></label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="text" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                placeholder="请输入"
+                                value={personnelFormData.phone}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, phone: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.phone || '-'}</div>
+                            )}
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">单位电话</label>
-                            <input 
-                              type="text" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              placeholder="请输入"
-                              value={personnelFormData.workPhone}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, workPhone: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">单位电话</label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="text" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                placeholder="请输入"
+                                value={personnelFormData.workPhone}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, workPhone: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.workPhone || '-'}</div>
+                            )}
                           </div>
 
                           {/* Row 5 */}
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">邮政编码</label>
-                            <input 
-                              type="text" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              placeholder="请输入"
-                              value={personnelFormData.postalCode}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, postalCode: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">邮政编码</label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="text" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                placeholder="请输入"
+                                value={personnelFormData.postalCode}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, postalCode: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.postalCode || '-'}</div>
+                            )}
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">技术职称 <span className="text-red-500">*</span></label>
-                            <select 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              value={personnelFormData.techTitle}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, techTitle: e.target.value})}
-                            >
-                              <option>高级工程师</option>
-                              <option>中级工程师</option>
-                              <option>助理工程师</option>
-                            </select>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">技术职称 <span className="text-red-500">*</span></label>
+                            {isEditingPersonnel ? (
+                              <select 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                value={personnelFormData.techTitle}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, techTitle: e.target.value})}
+                              >
+                                <option>高级工程师</option>
+                                <option>中级工程师</option>
+                                <option>助理工程师</option>
+                              </select>
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.techTitle || '-'}</div>
+                            )}
                           </div>
 
                           {/* Row 6 */}
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">职务 <span className="text-red-500">*</span></label>
-                            <input 
-                              type="text" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              placeholder="请输入"
-                              value={personnelFormData.position}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, position: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">职务 <span className="text-red-500">*</span></label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="text" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                placeholder="请输入"
+                                value={personnelFormData.position}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, position: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.position || '-'}</div>
+                            )}
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">是否在职</label>
-                            <div className="flex items-center gap-6 h-[46px]">
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">是否在职</label>
+                            <div className="flex items-center gap-6 h-[32px]">
                               {['是', '否'].map(option => (
-                                <label key={option} className="flex items-center gap-2 cursor-pointer group">
+                                <label key={option} className={`flex items-center gap-2 ${isEditingPersonnel ? 'cursor-pointer' : 'cursor-default'}`}>
                                   <input 
                                     type="radio" 
-                                    className="size-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                                    className="size-4 text-[#0052CC] border-slate-300 focus:ring-[#0052CC]"
                                     checked={personnelFormData.isEmployed === option}
+                                    disabled={!isEditingPersonnel}
                                     onChange={() => setPersonnelFormData({...personnelFormData, isEmployed: option})}
                                   />
-                                  <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{option}</span>
+                                  <span className={`text-sm font-bold ${personnelFormData.isEmployed === option ? 'text-slate-900' : 'text-slate-400'}`}>{option}</span>
                                 </label>
                               ))}
                             </div>
@@ -505,94 +682,126 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
 
                           {/* Row 7 */}
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">从业开始时间</label>
-                            <input 
-                              type="date" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              value={personnelFormData.careerStartDate}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, careerStartDate: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">从业开始时间</label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="date" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                value={personnelFormData.careerStartDate}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, careerStartDate: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.careerStartDate || '-'}</div>
+                            )}
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">从业年限</label>
-                            <div className="relative">
-                              <input 
-                                type="text" 
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all pr-12"
-                                placeholder="请输入"
-                                value={personnelFormData.careerYears}
-                                onChange={(e) => setPersonnelFormData({...personnelFormData, careerYears: e.target.value})}
-                              />
-                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">年</span>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">从业年限</label>
+                            <div className="relative max-w-[320px]">
+                              {isEditingPersonnel ? (
+                                <input 
+                                  type="text" 
+                                  className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all pr-12"
+                                  placeholder="请输入"
+                                  value={personnelFormData.careerYears}
+                                  onChange={(e) => setPersonnelFormData({...personnelFormData, careerYears: e.target.value})}
+                                />
+                              ) : (
+                                <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.careerYears ? `${personnelFormData.careerYears} 年` : '-'}</div>
+                              )}
+                              {isEditingPersonnel && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">年</span>}
                             </div>
                           </div>
 
                           {/* Row 8 */}
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">学历 <span className="text-red-500">*</span></label>
-                            <select 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              value={personnelFormData.education}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, education: e.target.value})}
-                            >
-                              <option>博士</option>
-                              <option>硕士</option>
-                              <option>本科</option>
-                              <option>大专</option>
-                            </select>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">学历 <span className="text-red-500">*</span></label>
+                            {isEditingPersonnel ? (
+                              <select 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                value={personnelFormData.education}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, education: e.target.value})}
+                              >
+                                <option>博士</option>
+                                <option>硕士</option>
+                                <option>本科</option>
+                                <option>大专</option>
+                              </select>
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.education || '-'}</div>
+                            )}
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">毕业专业</label>
-                            <input 
-                              type="text" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              placeholder="请输入"
-                              value={personnelFormData.major}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, major: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">毕业专业</label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="text" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                placeholder="请输入"
+                                value={personnelFormData.major}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, major: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.major || '-'}</div>
+                            )}
                           </div>
 
                           {/* Row 9 */}
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">毕业时间</label>
-                            <input 
-                              type="date" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              value={personnelFormData.graduationDate}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, graduationDate: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">毕业时间</label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="date" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                value={personnelFormData.graduationDate}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, graduationDate: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.graduationDate || '-'}</div>
+                            )}
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">毕业学校</label>
-                            <input 
-                              type="text" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              placeholder="请输入"
-                              value={personnelFormData.graduationSchool}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, graduationSchool: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">毕业学校</label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="text" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                placeholder="请输入"
+                                value={personnelFormData.graduationSchool}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, graduationSchool: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.graduationSchool || '-'}</div>
+                            )}
                           </div>
 
                           {/* Full Width Rows */}
                           <div className="col-span-2 space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">通讯地址</label>
-                            <input 
-                              type="text" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              placeholder="请输入"
-                              value={personnelFormData.address}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, address: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">通讯地址</label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="text" 
+                                className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                placeholder="请输入"
+                                value={personnelFormData.address}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, address: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.address || '-'}</div>
+                            )}
                           </div>
 
                           <div className="col-span-2 space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">从业经历</label>
-                            <textarea 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all min-h-[100px] resize-none"
-                              placeholder="请输入"
-                              value={personnelFormData.experience}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, experience: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">从业经历</label>
+                            {isEditingPersonnel ? (
+                              <textarea 
+                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all min-h-[100px] resize-none"
+                                placeholder="请输入"
+                                value={personnelFormData.experience}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, experience: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5 min-h-[100px] whitespace-pre-wrap">{personnelFormData.experience || '-'}</div>
+                            )}
                           </div>
                         </div>
                       </section>
@@ -600,51 +809,67 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                       {/* 2. 职称证信息 */}
                       <section>
                         <div className="flex items-center gap-2 mb-6">
-                          <div className="w-1 h-4 bg-blue-600 rounded-full" />
+                          <div className="w-1 h-4 bg-[#0052CC] rounded-full" />
                           <h4 className="text-sm font-bold text-slate-900">职称证信息</h4>
                         </div>
                         <div className="grid grid-cols-2 gap-x-12 gap-y-6">
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">职称编号</label>
-                            <input 
-                              type="text" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              placeholder="请输入"
-                              value={personnelFormData.titleNumber}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, titleNumber: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">职称编号</label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="text" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                placeholder="请输入"
+                                value={personnelFormData.titleNumber}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, titleNumber: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.titleNumber || '-'}</div>
+                            )}
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">职称专业</label>
-                            <input 
-                              type="text" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              placeholder="请输入"
-                              value={personnelFormData.titleMajor}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, titleMajor: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">职称专业</label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="text" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                placeholder="请输入"
+                                value={personnelFormData.titleMajor}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, titleMajor: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.titleMajor || '-'}</div>
+                            )}
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">职称级别</label>
-                            <select 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              value={personnelFormData.titleLevel}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, titleLevel: e.target.value})}
-                            >
-                              <option>高级</option>
-                              <option>中级</option>
-                              <option>初级</option>
-                            </select>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">职称级别</label>
+                            {isEditingPersonnel ? (
+                              <select 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                value={personnelFormData.titleLevel}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, titleLevel: e.target.value})}
+                              >
+                                <option>高级</option>
+                                <option>中级</option>
+                                <option>初级</option>
+                              </select>
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.titleLevel || '-'}</div>
+                            )}
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">职称发证机关</label>
-                            <input 
-                              type="text" 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                              placeholder="请输入"
-                              value={personnelFormData.titleAuthority}
-                              onChange={(e) => setPersonnelFormData({...personnelFormData, titleAuthority: e.target.value})}
-                            />
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">职称发证机关</label>
+                            {isEditingPersonnel ? (
+                              <input 
+                                type="text" 
+                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                placeholder="请输入"
+                                value={personnelFormData.titleAuthority}
+                                onChange={(e) => setPersonnelFormData({...personnelFormData, titleAuthority: e.target.value})}
+                              />
+                            ) : (
+                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.titleAuthority || '-'}</div>
+                            )}
                           </div>
                         </div>
                       </section>
@@ -652,7 +877,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                       {/* 3. 附件 */}
                       <section>
                         <div className="flex items-center gap-2 mb-6">
-                          <div className="w-1 h-4 bg-blue-600 rounded-full" />
+                          <div className="w-1 h-4 bg-[#0052CC] rounded-full" />
                           <h4 className="text-sm font-bold text-slate-900">附件材料</h4>
                         </div>
                         <div className="grid grid-cols-2 gap-6">
@@ -662,33 +887,58 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                             { id: 'socialSecurity', label: '社保证明' },
                             { id: 'contract', label: '劳动合同' },
                             { id: 'others', label: '其他材料' },
-                          ].map((item) => (
-                            <div key={item.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                              <div className="flex items-center justify-between mb-3">
-                                <label className="text-xs font-bold text-slate-600">{item.label}</label>
-                                <button className="text-blue-600 hover:text-blue-700 text-xs font-bold flex items-center gap-1">
-                                  <Plus size={14} /> 上传
-                                </button>
-                              </div>
-                              <div className="space-y-2">
-                                {personnelFormData.attachments[item.id].length === 0 ? (
-                                  <div className="text-center py-4 border-2 border-dashed border-slate-200 rounded-xl">
-                                    <span className="text-[10px] text-slate-400">暂无附件</span>
-                                  </div>
-                                ) : (
-                                  personnelFormData.attachments[item.id].map((file: any, idx: number) => (
-                                    <div key={idx} className="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-100 text-xs">
-                                      <span className="text-slate-600 truncate max-w-[150px]">{file.name}</span>
-                                      <div className="flex items-center gap-2">
-                                        <button className="text-blue-600 hover:text-blue-700"><Eye size={14} /></button>
-                                        <button className="text-red-500 hover:text-red-600"><Trash2 size={14} /></button>
-                                      </div>
+                          ].map((item) => {
+                            const files = personnelFormData.attachments[item.id];
+                            const hasFile = files && files.length > 0;
+                            
+                            return (
+                              <div key={item.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                <div className="flex items-center justify-between mb-3">
+                                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{item.label}</label>
+                                  {isEditingPersonnel && (
+                                    <button className="text-[#0052CC] hover:underline text-xs font-bold flex items-center gap-1">
+                                      {hasFile ? <Clock size={12} /> : <Plus size={12} />}
+                                      {hasFile ? '重新上传' : '上传附件'}
+                                    </button>
+                                  )}
+                                </div>
+                                <div className="space-y-2">
+                                  {!hasFile ? (
+                                    <div className="text-center py-4 border-2 border-dashed border-slate-200 rounded-xl">
+                                      <span className="text-xs font-bold text-slate-400">
+                                        {isEditingPersonnel ? '点击右上角上传' : '未上传附件'}
+                                      </span>
                                     </div>
-                                  ))
-                                )}
+                                  ) : (
+                                    files.map((file: any, idx: number) => (
+                                      <div key={idx} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                          <div className="size-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center shrink-0">
+                                            <FileText size={16} />
+                                          </div>
+                                          <span className="text-xs font-bold text-slate-700 truncate">{file.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <button 
+                                            onClick={() => setPreviewImage({ url: file.url, name: file.name })}
+                                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                            title="查看"
+                                          >
+                                            <Eye size={14} />
+                                          </button>
+                                          {isEditingPersonnel && (
+                                            <button className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-all" title="删除">
+                                              <Trash2 size={14} />
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </section>
                     </div>
@@ -740,7 +990,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                                   setEditingPerformanceIndex(null);
                                   setShowPerformanceDetail(true);
                                 }}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-sm"
+                                className="flex items-center gap-2 px-4 py-2 bg-[#0052CC] text-white rounded-xl text-xs font-bold hover:bg-[#0052CC]/90 transition-all shadow-sm"
                               >
                                 <Plus size={14} /> 新增业绩
                               </button>
@@ -1035,7 +1285,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                                   setPersonnelFormData({...personnelFormData, performance: newList});
                                   setShowPerformanceDetail(false);
                                 }}
-                                className="px-8 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-sm"
+                                className="px-8 py-2 bg-[#0052CC] text-white rounded-lg text-sm font-bold hover:bg-[#0052CC]/90 transition-all shadow-sm"
                               >
                                 保存
                               </button>
@@ -1234,37 +1484,68 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                       </div>
                     </div>
                   )}
-                </div>
+                </motion.div>
 
-                {/* Modal Footer */}
-                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-4">
+            {/* Action Buttons for Basic Info */}
+            {personnelTab === 'basic' && (
+              <div className="px-8 py-6 border-t border-slate-100 bg-white flex items-center justify-center gap-4 shrink-0">
+                {isEditingPersonnel ? (
+                  <>
+                    <button 
+                      onClick={() => setIsEditingPersonnel(false)}
+                      className="px-12 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all shadow-lg shadow-blue-500/20"
+                    >
+                      修改保存
+                    </button>
+                    <button 
+                      onClick={() => setIsEditingPersonnel(false)}
+                      className="px-12 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all"
+                    >
+                      取消
+                    </button>
+                  </>
+                ) : (
                   <button 
-                    onClick={() => setShowAddPersonnelModal(false)}
-                    className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all"
+                    onClick={() => setIsEditingPersonnel(true)}
+                    className="px-12 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all shadow-lg shadow-blue-500/20"
                   >
-                    取消
+                    修改保存
                   </button>
-                  <button 
-                    onClick={() => {
-                      // Handle save logic here
-                      console.log('Saving personnel:', personnelFormData);
-                      setShowAddPersonnelModal(false);
-                    }}
-                    className="px-10 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all"
-                  >
-                    确认保存
-                  </button>
-                </div>
-              
-    </div>
-  );
+                )}
+              </div>
+            )}
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      );
 
   const renderPersonnel = () => {
-    if (showAddPersonnelModal) {
-      return renderPersonnelForm();
-    }
-
     const personnelData = currentData.personnel.map((p: any) => ({ ...p, name: `${p.name} (${enterpriseName})` }));
+    const currentPagePersonnel = personnelData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.checked) {
+        const newSelected = new Set(selectedItems);
+        currentPagePersonnel.forEach((item: any) => newSelected.add(item.name)); // Using name as ID for now since there's no id field
+        setSelectedItems(Array.from(newSelected));
+      } else {
+        const newSelected = new Set(selectedItems);
+        currentPagePersonnel.forEach((item: any) => newSelected.delete(item.name));
+        setSelectedItems(Array.from(newSelected));
+      }
+    };
+
+    const handleSelectPersonnel = (name: string) => {
+      if (selectedItems.includes(name)) {
+        setSelectedItems(selectedItems.filter(pName => pName !== name));
+      } else {
+        setSelectedItems([...selectedItems, name]);
+      }
+    };
+
+    const isAllCurrentPageSelected = currentPagePersonnel.length > 0 && currentPagePersonnel.every((item: any) => selectedItems.includes(item.name));
+    const isSomeCurrentPageSelected = currentPagePersonnel.some((item: any) => selectedItems.includes(item.name));
 
     return (
     <div className="flex flex-col">
@@ -1274,7 +1555,17 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
           <thead>
             <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
               <th className="px-6 py-4 w-10">
-                <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                <input 
+                  type="checkbox" 
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                  checked={isAllCurrentPageSelected}
+                  ref={input => {
+                    if (input) {
+                      input.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
+                    }
+                  }}
+                  onChange={handleSelectAll}
+                />
               </th>
               <th className="px-6 py-4">姓名</th>
               <th className="px-6 py-4">职位/职称</th>
@@ -1290,7 +1581,12 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               .map((item: any, idx: number) => (
               <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                 <td className="px-6 py-4">
-                  <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                    checked={selectedItems.includes(item.name)}
+                    onChange={() => handleSelectPersonnel(item.name)}
+                  />
                 </td>
                 <td className="px-6 py-4 font-bold text-slate-700">{item.name}</td>
                 <td className="px-6 py-4 text-sm text-slate-500">{item.title}</td>
@@ -1365,6 +1661,30 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
       { name: '2022年度财务审计报告', year: '2022', revenue: '11.1 亿元', profit: '7,800 万元', status: '已审计' },
       { name: '2021年度财务审计报告', year: '2021', revenue: '9.5 亿元', profit: '6,200 万元', status: '已审计' },
     ].map(f => ({ ...f, name: `${enterpriseName} - ${f.name}` }));
+    const currentPageData = financeData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.checked) {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.add(item.name));
+        setSelectedItems(Array.from(newSelected));
+      } else {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.delete(item.name));
+        setSelectedItems(Array.from(newSelected));
+      }
+    };
+
+    const handleSelectItem = (name: string) => {
+      if (selectedItems.includes(name)) {
+        setSelectedItems(selectedItems.filter(itemName => itemName !== name));
+      } else {
+        setSelectedItems([...selectedItems, name]);
+      }
+    };
+
+    const isAllCurrentPageSelected = currentPageData.length > 0 && currentPageData.every((item: any) => selectedItems.includes(item.name));
+    const isSomeCurrentPageSelected = currentPageData.some((item: any) => selectedItems.includes(item.name));
 
     return (
     <div className="flex flex-col">
@@ -1373,6 +1693,19 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4 w-10">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                    checked={isAllCurrentPageSelected}
+                    ref={input => {
+                      if (input) {
+                        input.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
+                      }
+                    }}
+                    onChange={handleSelectAll}
+                  />
+                </th>
                 <th className="px-6 py-4">报表名称</th>
                 <th className="px-6 py-4">年度</th>
                 <th className="px-6 py-4">营收金额</th>
@@ -1382,10 +1715,16 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {financeData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item, idx) => (
+              {currentPageData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                      checked={selectedItems.includes(item.name)}
+                      onChange={() => handleSelectItem(item.name)}
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="size-8 bg-red-50 text-red-500 rounded-lg flex items-center justify-center">
@@ -1403,14 +1742,17 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                    <div className="flex items-center justify-end gap-3">
+                      <button 
+                        className="text-primary hover:text-blue-700 transition-colors" 
+                        title="编辑"
+                        onClick={() => {
+                          setGenericFormMode('edit');
+                          setShowGenericForm(true);
+                        }}
+                      >
                         <Edit2 size={16} />
                       </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">下载报告</button>
                     </div>
                   </td>
                 </tr>
@@ -1437,6 +1779,30 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
       { type: '奖励', title: '抗洪救灾突出贡献奖', org: '某省应急管理厅', date: '2023-08-20', status: 'active' },
       { type: '处罚', title: '某工地扬尘治理不力通报批评', org: '某市住建局', date: '2023-03-15', status: 'expired' },
     ].map(r => ({ ...r, title: `${enterpriseName} - ${r.title}` }));
+    const currentPageData = rewardsData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.checked) {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.add(item.title));
+        setSelectedItems(Array.from(newSelected));
+      } else {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.delete(item.title));
+        setSelectedItems(Array.from(newSelected));
+      }
+    };
+
+    const handleSelectItem = (title: string) => {
+      if (selectedItems.includes(title)) {
+        setSelectedItems(selectedItems.filter(itemTitle => itemTitle !== title));
+      } else {
+        setSelectedItems([...selectedItems, title]);
+      }
+    };
+
+    const isAllCurrentPageSelected = currentPageData.length > 0 && currentPageData.every((item: any) => selectedItems.includes(item.title));
+    const isSomeCurrentPageSelected = currentPageData.some((item: any) => selectedItems.includes(item.title));
 
     return (
     <div className="flex flex-col">
@@ -1445,6 +1811,19 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4 w-10">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                    checked={isAllCurrentPageSelected}
+                    ref={input => {
+                      if (input) {
+                        input.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
+                      }
+                    }}
+                    onChange={handleSelectAll}
+                  />
+                </th>
                 <th className="px-6 py-4">类别</th>
                 <th className="px-6 py-4">事由</th>
                 <th className="px-6 py-4">决定机关</th>
@@ -1454,10 +1833,16 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {rewardsData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item, idx) => (
+              {currentPageData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                      checked={selectedItems.includes(item.title)}
+                      onChange={() => handleSelectItem(item.title)}
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                       item.type === '奖励' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'
@@ -1474,14 +1859,17 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                    <div className="flex items-center justify-end gap-3">
+                      <button 
+                        className="text-primary hover:text-blue-700 transition-colors" 
+                        title="编辑"
+                        onClick={() => {
+                          setGenericFormMode('edit');
+                          setShowGenericForm(true);
+                        }}
+                      >
                         <Edit2 size={16} />
                       </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">查看详情</button>
                     </div>
                   </td>
                 </tr>
@@ -1513,6 +1901,30 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
       { name: '纳税证明', type: '财务类', count: 6 },
       { name: '诚信承诺书', type: '通用类', count: 1 },
     ].map(m => ({ ...m, name: `${enterpriseName} - ${m.name}` }));
+    const currentPageData = materialsData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.checked) {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.add(item.name));
+        setSelectedItems(Array.from(newSelected));
+      } else {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.delete(item.name));
+        setSelectedItems(Array.from(newSelected));
+      }
+    };
+
+    const handleSelectItem = (name: string) => {
+      if (selectedItems.includes(name)) {
+        setSelectedItems(selectedItems.filter(itemName => itemName !== name));
+      } else {
+        setSelectedItems([...selectedItems, name]);
+      }
+    };
+
+    const isAllCurrentPageSelected = currentPageData.length > 0 && currentPageData.every((item: any) => selectedItems.includes(item.name));
+    const isSomeCurrentPageSelected = currentPageData.some((item: any) => selectedItems.includes(item.name));
 
     return (
     <div className="flex flex-col">
@@ -1521,6 +1933,19 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4 w-10">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                    checked={isAllCurrentPageSelected}
+                    ref={input => {
+                      if (input) {
+                        input.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
+                      }
+                    }}
+                    onChange={handleSelectAll}
+                  />
+                </th>
                 <th className="px-6 py-4">材料名称</th>
                 <th className="px-6 py-4">材料类别</th>
                 <th className="px-6 py-4">文件数量</th>
@@ -1528,10 +1953,16 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {materialsData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item, idx) => (
+              {currentPageData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                      checked={selectedItems.includes(item.name)}
+                      onChange={() => handleSelectItem(item.name)}
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="size-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
@@ -1545,14 +1976,17 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-500">共 {item.count} 份文件</td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                    <div className="flex items-center justify-end gap-3">
+                      <button 
+                        className="text-primary hover:text-blue-700 transition-colors" 
+                        title="编辑"
+                        onClick={() => {
+                          setGenericFormMode('edit');
+                          setShowGenericForm(true);
+                        }}
+                      >
                         <Edit2 size={16} />
                       </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">查看文件</button>
                     </div>
                   </td>
                 </tr>
@@ -1574,26 +2008,303 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
 };
 
   const renderBasicInfo = () => {
-    const basicInfoData = currentData.basicInfo;
+    const SectionHeader = ({ title, attachmentField }: { title: string; attachmentField?: keyof typeof basicInfoForm.attachments }) => {
+      const files = attachmentField ? basicInfoForm.attachments[attachmentField] : null;
+      const hasFile = files && files.length > 0;
+      const isUploading = attachmentField === uploadingField;
+
+      return (
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/30">
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-4 bg-primary rounded-full"></div>
+            <h3 className="text-sm font-bold text-slate-800">{title}</h3>
+          </div>
+          <div className="flex items-center gap-4">
+            {attachmentField && (
+              isEditingBasicInfo ? (
+                <button 
+                  disabled={isUploading}
+                  onClick={() => triggerUpload(attachmentField as string)}
+                  className={`text-xs font-bold flex items-center gap-1 transition-all ${
+                    isUploading ? 'text-slate-400 cursor-not-allowed' : 'text-primary hover:underline'
+                  }`}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin" />
+                      上传中 {uploadProgress}%
+                    </>
+                  ) : (
+                    <>
+                      {hasFile ? <Clock size={12} /> : <Plus size={12} />}
+                      {hasFile ? '重新上传' : '上传附件'}
+                    </>
+                  )}
+                </button>
+              ) : (
+                hasFile ? (
+                  <button 
+                    onClick={() => setPreviewImage({ url: files[0].url, name: files[0].name })}
+                    className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                  >
+                    <ExternalLink size={12} />
+                    查看附件
+                  </button>
+                ) : (
+                  <span className="text-xs font-bold text-slate-400">未上传附件</span>
+                )
+              )
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    const InfoItem = ({ label, value, field }: { label: string; value: string; field: keyof typeof basicInfoForm }) => (
+      <div className="flex flex-col gap-1 px-6 py-3">
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
+        {isEditingBasicInfo ? (
+          <input
+            type="text"
+            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+            value={basicInfoForm[field]}
+            onChange={(e) => setBasicInfoForm({ ...basicInfoForm, [field]: e.target.value })}
+          />
+        ) : (
+          <span className="text-sm text-slate-700 font-medium">{value || '-'}</span>
+        )}
+      </div>
+    );
+
+    const InfoTextArea = ({ label, value, field }: { label: string; value: string; field: keyof typeof basicInfoForm }) => (
+      <div className="flex flex-col gap-1 px-6 py-3">
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
+        {isEditingBasicInfo ? (
+          <textarea
+            rows={3}
+            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none"
+            value={basicInfoForm[field]}
+            onChange={(e) => setBasicInfoForm({ ...basicInfoForm, [field]: e.target.value })}
+          />
+        ) : (
+          <span className="text-sm text-slate-700 font-medium">{value || '-'}</span>
+        )}
+      </div>
+    );
+
+    const AttachmentItem = ({ label, field }: { label: string; field: 'promise' | 'authorization' }) => {
+      const files = basicInfoForm.attachments[field];
+      const hasFile = files && files.length > 0;
+      const isUploading = field === uploadingField;
+
+      return (
+        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="size-10 bg-white rounded border border-slate-200 flex items-center justify-center text-primary">
+              {isUploading ? <Loader2 size={20} className="animate-spin" /> : <FileText size={20} />}
+            </div>
+            <div>
+              <div className="text-sm font-bold text-slate-700">{label}</div>
+              <div className="text-[10px] text-slate-400">支持格式: jpg、jpeg bmp、png 文件大小上限: 50M</div>
+              {hasFile && !isEditingBasicInfo && (
+                <div className="text-[10px] text-blue-600 mt-1 flex items-center gap-1 cursor-pointer hover:underline">
+                  <ExternalLink size={10} /> {files[0].name}
+                </div>
+              )}
+              {isUploading && (
+                <div className="w-48 h-1 bg-slate-200 rounded-full mt-2 overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${uploadProgress}%` }}
+                    className="h-full bg-primary"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {isEditingBasicInfo ? (
+              isUploading ? (
+                <span className="text-xs font-bold text-slate-400">{uploadProgress}%</span>
+              ) : hasFile ? (
+                <button 
+                  onClick={() => {
+                    const newAttachments = { ...basicInfoForm.attachments, [field]: [] };
+                    setBasicInfoForm({ ...basicInfoForm, attachments: newAttachments });
+                  }}
+                  className="text-xs font-bold text-red-500 hover:underline flex items-center gap-1"
+                >
+                  <Trash2 size={12} /> 删除
+                </button>
+              ) : (
+                <button 
+                  onClick={() => triggerUpload(field)}
+                  className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                >
+                  <Plus size={12} /> 上传附件
+                </button>
+              )
+            ) : (
+              hasFile ? (
+                <button 
+                  onClick={() => setPreviewImage({ url: files[0].url, name: files[0].name })}
+                  className="text-xs font-bold text-primary hover:underline"
+                >
+                  查看
+                </button>
+              ) : (
+                <span className="text-xs font-bold text-slate-400">未上传附件</span>
+              )
+            )}
+          </div>
+        </div>
+      );
+    };
 
     return (
-    <div className="flex flex-col">
-      <div className="p-0">
-        <div className="grid grid-cols-1 divide-y divide-slate-100">
-          {basicInfoData.map((item: any, idx: number) => (
-            <div key={idx} className="flex px-8 py-4 hover:bg-slate-50/50 transition-colors">
-              <div className="w-40 shrink-0 text-xs font-bold text-slate-400 uppercase tracking-wider">{item.label}</div>
-              <div className="text-sm text-slate-700 font-medium">{item.value}</div>
+      <div className="flex flex-col gap-6 p-4">
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          onChange={handleFileChange}
+        />
+        {/* 营业执照信息 */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <SectionHeader title="营业执照信息" attachmentField="license" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 py-2">
+            <InfoItem label="企业名称" value={basicInfoForm.enterpriseName} field="enterpriseName" />
+            <InfoItem label="统一社会信用代码" value={basicInfoForm.creditCode} field="creditCode" />
+            <InfoItem label="法定代表人" value={basicInfoForm.legalPerson} field="legalPerson" />
+            <InfoItem label="单位性质" value={basicInfoForm.unitNature} field="unitNature" />
+            <InfoItem label="注册资本" value={basicInfoForm.registeredCapital} field="registeredCapital" />
+            <InfoItem label="注册资本币种" value={basicInfoForm.currency} field="currency" />
+            <InfoItem label="营业期限" value={basicInfoForm.businessPeriod} field="businessPeriod" />
+            <InfoItem label="登记机关" value={basicInfoForm.registrationAuthority} field="registrationAuthority" />
+            <InfoItem label="国别/地区" value={basicInfoForm.country} field="country" />
+            <div className="md:col-span-3">
+              <InfoItem label="注册地区" value={basicInfoForm.region} field="region" />
             </div>
-          ))}
+            <div className="md:col-span-3">
+              <InfoTextArea label="经营范围" value={basicInfoForm.businessScope} field="businessScope" />
+            </div>
+          </div>
+        </div>
+
+        {/* 基本户信息 */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <SectionHeader title="基本户信息" attachmentField="account" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 py-2">
+            <InfoItem label="开户银行" value={basicInfoForm.bankName} field="bankName" />
+            <InfoItem label="开户账号(基本账号)" value={basicInfoForm.bankAccount} field="bankAccount" />
+            <InfoItem label="开户银行地址" value={basicInfoForm.bankAddress} field="bankAddress" />
+            <InfoItem label="开户银行电话" value={basicInfoForm.bankPhone} field="bankPhone" />
+            <InfoItem label="开户银行传真" value={basicInfoForm.bankFax} field="bankFax" />
+            <InfoItem label="开户银行联系人及职务" value={basicInfoForm.bankContact} field="bankContact" />
+            <div className="md:col-span-3">
+              <InfoItem label="基本户名称" value={basicInfoForm.accountName} field="accountName" />
+            </div>
+          </div>
+        </div>
+
+        {/* 安全许可证信息 */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <SectionHeader title="安全许可证信息" attachmentField="safety" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 py-2">
+            <InfoItem label="安全生产许可证编号" value={basicInfoForm.safetyLicense} field="safetyLicense" />
+            <InfoItem label="经济类型" value={basicInfoForm.economicType} field="economicType" />
+            <InfoItem label="单位地址" value={basicInfoForm.unitAddress} field="unitAddress" />
+            <InfoItem label="许可范围" value={basicInfoForm.licenseScope} field="licenseScope" />
+            <InfoItem label="主要负责人" value={basicInfoForm.mainPerson} field="mainPerson" />
+            <InfoItem label="企业名称" value={basicInfoForm.safetyEnterpriseName} field="safetyEnterpriseName" />
+            <InfoItem label="有效期" value={basicInfoForm.safetyExpiry} field="safetyExpiry" />
+          </div>
+        </div>
+
+        {/* 法人信息 */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <SectionHeader title="法人信息" attachmentField="legal" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 py-2">
+            <InfoItem label="法人姓名" value={basicInfoForm.legalName} field="legalName" />
+            <InfoItem label="法人身份证号码" value={basicInfoForm.legalId} field="legalId" />
+            <InfoItem label="性别" value={basicInfoForm.gender} field="gender" />
+            <InfoItem label="法定代表人电话" value={basicInfoForm.legalPhone} field="legalPhone" />
+            <InfoItem label="法定代表人技术职称" value={basicInfoForm.legalTitle} field="legalTitle" />
+            <InfoItem label="法定代表人公司职务" value={basicInfoForm.legalPosition} field="legalPosition" />
+          </div>
+        </div>
+
+        {/* 其他信息 */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <SectionHeader title="其他信息" attachmentField="other" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 py-2">
+            <InfoItem label="企业英文名称" value={basicInfoForm.englishName} field="englishName" />
+            <InfoItem label="单位属性" value={basicInfoForm.unitAttribute} field="unitAttribute" />
+            <InfoItem label="国民经济行业分类" value={basicInfoForm.industryCategory} field="industryCategory" />
+            <InfoItem label="电子邮箱" value={basicInfoForm.email} field="email" />
+            <InfoItem label="邮政编码" value={basicInfoForm.postalCode} field="postalCode" />
+            <InfoItem label="负责人" value={basicInfoForm.manager} field="manager" />
+            <InfoItem label="联系电话" value={basicInfoForm.contactPhone} field="contactPhone" />
+            <InfoItem label="单位项目经理人数" value={basicInfoForm.projectManagerCount} field="projectManagerCount" />
+            <InfoItem label="单位高级职称人数" value={basicInfoForm.seniorTitleCount} field="seniorTitleCount" />
+            <InfoItem label="单位中级职称人数" value={basicInfoForm.middleTitleCount} field="middleTitleCount" />
+            <InfoItem label="单位初级职称人数" value={basicInfoForm.juniorTitleCount} field="juniorTitleCount" />
+            <InfoItem label="单位技工人数" value={basicInfoForm.technicianCount} field="technicianCount" />
+            <InfoItem label="员工总人数" value={basicInfoForm.totalEmployees} field="totalEmployees" />
+            <InfoItem label="单位传真" value={basicInfoForm.fax} field="fax" />
+            <InfoItem label="企业网址" value={basicInfoForm.website} field="website" />
+            <div className="md:col-span-3">
+              <InfoItem label="详细地址" value={basicInfoForm.detailedAddress} field="detailedAddress" />
+            </div>
+            <div className="md:col-span-3">
+              <InfoItem label="主要供货/服务区域" value={basicInfoForm.serviceRegion} field="serviceRegion" />
+            </div>
+            <div className="md:col-span-3">
+              <InfoTextArea label="单位简介" value={basicInfoForm.introduction} field="introduction" />
+            </div>
+          </div>
+        </div>
+
+        {/* 相关附件 */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <SectionHeader title="相关附件" />
+          <div className="p-6">
+            <div className="flex flex-col gap-4">
+              <AttachmentItem label="诚信承诺书" field="promise" />
+              <AttachmentItem label="法人授权委托书" field="authorization" />
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
   };
 
   const renderQualification = () => {
     const qualificationData = currentData.qualification.map((q: any) => ({ ...q, name: `${enterpriseName} - ${q.name}` }));
+    const currentPageData = qualificationData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.checked) {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.add(item.name));
+        setSelectedItems(Array.from(newSelected));
+      } else {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.delete(item.name));
+        setSelectedItems(Array.from(newSelected));
+      }
+    };
+
+    const handleSelectItem = (name: string) => {
+      if (selectedItems.includes(name)) {
+        setSelectedItems(selectedItems.filter(itemName => itemName !== name));
+      } else {
+        setSelectedItems([...selectedItems, name]);
+      }
+    };
+
+    const isAllCurrentPageSelected = currentPageData.length > 0 && currentPageData.every((item: any) => selectedItems.includes(item.name));
+    const isSomeCurrentPageSelected = currentPageData.some((item: any) => selectedItems.includes(item.name));
 
     return (
     <div className="flex flex-col">
@@ -1602,6 +2313,19 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4 w-10">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                    checked={isAllCurrentPageSelected}
+                    ref={input => {
+                      if (input) {
+                        input.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
+                      }
+                    }}
+                    onChange={handleSelectAll}
+                  />
+                </th>
                 <th className="px-6 py-4">资质名称</th>
                 <th className="px-6 py-4">资质编号</th>
                 <th className="px-6 py-4">有效期至</th>
@@ -1610,10 +2334,16 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {qualificationData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item: any, idx: number) => (
+              {currentPageData.map((item: any, idx: number) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                      checked={selectedItems.includes(item.name)}
+                      onChange={() => handleSelectItem(item.name)}
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className={`size-8 rounded-lg flex items-center justify-center ${
@@ -1645,14 +2375,17 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                     )}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                    <div className="flex items-center justify-end gap-3">
+                      <button 
+                        className="text-primary hover:text-blue-700 transition-colors" 
+                        title="编辑"
+                        onClick={() => {
+                          setGenericFormMode('edit');
+                          setShowGenericForm(true);
+                        }}
+                      >
                         <Edit2 size={16} />
                       </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">查看详情</button>
                     </div>
                   </td>
                 </tr>
@@ -1675,6 +2408,30 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
 
   const renderPerformance = () => {
     const performanceData = currentData.performance.map((p: any) => ({ ...p, name: `${enterpriseName} - ${p.name}` }));
+    const currentPageData = performanceData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.checked) {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.add(item.name));
+        setSelectedItems(Array.from(newSelected));
+      } else {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.delete(item.name));
+        setSelectedItems(Array.from(newSelected));
+      }
+    };
+
+    const handleSelectItem = (name: string) => {
+      if (selectedItems.includes(name)) {
+        setSelectedItems(selectedItems.filter(itemName => itemName !== name));
+      } else {
+        setSelectedItems([...selectedItems, name]);
+      }
+    };
+
+    const isAllCurrentPageSelected = currentPageData.length > 0 && currentPageData.every((item: any) => selectedItems.includes(item.name));
+    const isSomeCurrentPageSelected = currentPageData.some((item: any) => selectedItems.includes(item.name));
 
     return (
     <div className="flex flex-col">
@@ -1683,6 +2440,19 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4 w-10">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                    checked={isAllCurrentPageSelected}
+                    ref={input => {
+                      if (input) {
+                        input.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
+                      }
+                    }}
+                    onChange={handleSelectAll}
+                  />
+                </th>
                 <th className="px-6 py-4">项目名称</th>
                 <th className="px-6 py-4">合同金额</th>
                 <th className="px-6 py-4">竣工日期</th>
@@ -1692,10 +2462,16 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {performanceData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item: any, idx: number) => (
+              {currentPageData.map((item: any, idx: number) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                      checked={selectedItems.includes(item.name)}
+                      onChange={() => handleSelectItem(item.name)}
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="size-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
@@ -1720,14 +2496,17 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                    <div className="flex items-center justify-end gap-3">
+                      <button 
+                        className="text-primary hover:text-blue-700 transition-colors" 
+                        title="编辑"
+                        onClick={() => {
+                          setGenericFormMode('edit');
+                          setShowGenericForm(true);
+                        }}
+                      >
                         <Edit2 size={16} />
                       </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">查看详情</button>
                     </div>
                   </td>
                 </tr>
@@ -1757,6 +2536,30 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
       { name: 'AAA 级信用企业', year: '2023', level: '国家级', icon: ShieldCheck, color: 'text-rose-500 bg-rose-50' },
       { name: '安全生产文明工地', year: '2021', level: '省级', icon: CheckCircle2, color: 'text-cyan-500 bg-cyan-50' },
     ].map(h => ({ ...h, name: `${enterpriseName} - ${h.name}` }));
+    const currentPageData = honorsData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.checked) {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.add(item.name));
+        setSelectedItems(Array.from(newSelected));
+      } else {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.delete(item.name));
+        setSelectedItems(Array.from(newSelected));
+      }
+    };
+
+    const handleSelectItem = (name: string) => {
+      if (selectedItems.includes(name)) {
+        setSelectedItems(selectedItems.filter(itemName => itemName !== name));
+      } else {
+        setSelectedItems([...selectedItems, name]);
+      }
+    };
+
+    const isAllCurrentPageSelected = currentPageData.length > 0 && currentPageData.every((item: any) => selectedItems.includes(item.name));
+    const isSomeCurrentPageSelected = currentPageData.some((item: any) => selectedItems.includes(item.name));
 
     return (
     <div className="flex flex-col">
@@ -1765,6 +2568,19 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4 w-10">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                    checked={isAllCurrentPageSelected}
+                    ref={input => {
+                      if (input) {
+                        input.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
+                      }
+                    }}
+                    onChange={handleSelectAll}
+                  />
+                </th>
                 <th className="px-6 py-4">荣誉奖项名称</th>
                 <th className="px-6 py-4">级别</th>
                 <th className="px-6 py-4">年度</th>
@@ -1772,10 +2588,16 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {honorsData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item, idx) => (
+              {currentPageData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                      checked={selectedItems.includes(item.name)}
+                      onChange={() => handleSelectItem(item.name)}
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className={`size-8 rounded-lg flex items-center justify-center ${item.color}`}>
@@ -1791,14 +2613,17 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-500">{item.year}年度</td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                    <div className="flex items-center justify-end gap-3">
+                      <button 
+                        className="text-primary hover:text-blue-700 transition-colors" 
+                        title="编辑"
+                        onClick={() => {
+                          setGenericFormMode('edit');
+                          setShowGenericForm(true);
+                        }}
+                      >
                         <Edit2 size={16} />
                       </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">查看证书</button>
                     </div>
                   </td>
                 </tr>
@@ -1825,6 +2650,30 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
       { title: '关于中标重大工程项目的公告', date: '2024-02-15', type: '临时公告' },
       { title: '关于公司法定代表人变更的公告', date: '2023-12-10', type: '临时公告' },
     ].map(d => ({ ...d, title: `${enterpriseName} - ${d.title}` }));
+    const currentPageData = disclosureData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.checked) {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.add(item.title));
+        setSelectedItems(Array.from(newSelected));
+      } else {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.delete(item.title));
+        setSelectedItems(Array.from(newSelected));
+      }
+    };
+
+    const handleSelectItem = (title: string) => {
+      if (selectedItems.includes(title)) {
+        setSelectedItems(selectedItems.filter(itemTitle => itemTitle !== title));
+      } else {
+        setSelectedItems([...selectedItems, title]);
+      }
+    };
+
+    const isAllCurrentPageSelected = currentPageData.length > 0 && currentPageData.every((item: any) => selectedItems.includes(item.title));
+    const isSomeCurrentPageSelected = currentPageData.some((item: any) => selectedItems.includes(item.title));
 
     return (
     <div className="flex flex-col">
@@ -1833,6 +2682,19 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4 w-10">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                    checked={isAllCurrentPageSelected}
+                    ref={input => {
+                      if (input) {
+                        input.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
+                      }
+                    }}
+                    onChange={handleSelectAll}
+                  />
+                </th>
                 <th className="px-6 py-4">公告标题</th>
                 <th className="px-6 py-4">类型</th>
                 <th className="px-6 py-4">发布日期</th>
@@ -1840,10 +2702,16 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {disclosureData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item, idx) => (
+              {currentPageData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                  <td className="px-6 py-4">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                      checked={selectedItems.includes(item.title)}
+                      onChange={() => handleSelectItem(item.title)}
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="size-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
@@ -1859,14 +2727,17 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-500">{item.date}</td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                    <div className="flex items-center justify-end gap-3">
+                      <button 
+                        className="text-primary hover:text-blue-700 transition-colors" 
+                        title="编辑"
+                        onClick={() => {
+                          setGenericFormMode('edit');
+                          setShowGenericForm(true);
+                        }}
+                      >
                         <Edit2 size={16} />
                       </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <ChevronRight size={16} className="text-slate-300 group-hover:text-primary" />
                     </div>
                   </td>
                 </tr>
@@ -1893,6 +2764,30 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
       { name: '荣誉称号', value: '守合同重信用', org: '国家工商行政管理总局', icon: CheckCircle2, color: 'bg-blue-50 text-blue-500' },
       { name: '售后服务评价', value: '五星级', org: 'GB/T 27922-2011', icon: Award, color: 'bg-purple-50 text-purple-500' },
     ].map(c => ({ ...c, name: `${enterpriseName} - ${c.name}` }));
+    const currentPageData = creditData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.checked) {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.add(item.name));
+        setSelectedItems(Array.from(newSelected));
+      } else {
+        const newSelected = new Set(selectedItems);
+        currentPageData.forEach((item: any) => newSelected.delete(item.name));
+        setSelectedItems(Array.from(newSelected));
+      }
+    };
+
+    const handleSelectItem = (name: string) => {
+      if (selectedItems.includes(name)) {
+        setSelectedItems(selectedItems.filter(itemName => itemName !== name));
+      } else {
+        setSelectedItems([...selectedItems, name]);
+      }
+    };
+
+    const isAllCurrentPageSelected = currentPageData.length > 0 && currentPageData.every((item: any) => selectedItems.includes(item.name));
+    const isSomeCurrentPageSelected = currentPageData.some((item: any) => selectedItems.includes(item.name));
 
     return (
     <div className="flex flex-col">
@@ -1901,6 +2796,19 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th className="px-6 py-4 w-10">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                    checked={isAllCurrentPageSelected}
+                    ref={input => {
+                      if (input) {
+                        input.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
+                      }
+                    }}
+                    onChange={handleSelectAll}
+                  />
+                </th>
                 <th className="px-6 py-4">评价项</th>
                 <th className="px-6 py-4">等级/称号</th>
                 <th className="px-6 py-4">颁发/评级机构</th>
@@ -1908,10 +2816,16 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {creditData
-                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                .map((item, idx) => (
+              {currentPageData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                      checked={selectedItems.includes(item.name)}
+                      onChange={() => handleSelectItem(item.name)}
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className={`size-8 rounded-lg flex items-center justify-center ${item.color}`}>
@@ -1925,14 +2839,17 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-500">{item.org}</td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-primary hover:text-blue-700 transition-colors" title="编辑">
+                    <div className="flex items-center justify-end gap-3">
+                      <button 
+                        className="text-primary hover:text-blue-700 transition-colors" 
+                        title="编辑"
+                        onClick={() => {
+                          setGenericFormMode('edit');
+                          setShowGenericForm(true);
+                        }}
+                      >
                         <Edit2 size={16} />
                       </button>
-                      <button className="text-slate-400 hover:text-red-500 transition-colors" title="删除">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-primary text-xs font-bold hover:underline">查看详情</button>
                     </div>
                   </td>
                 </tr>
@@ -1958,7 +2875,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
       {/* Top Header */}
       <div className="flex justify-between items-center mb-4 px-2">
         <div className="flex items-center gap-3">
-          <div className="size-10 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-600 border border-blue-600/20">
+          <div className="size-10 bg-[#0052CC]/10 rounded-xl flex items-center justify-center text-[#0052CC] border border-[#0052CC]/20">
             <Building2 size={20} />
           </div>
           <div>
@@ -1995,6 +2912,10 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               onClick={() => {
                 setActiveTab(tab.id);
                 setSidePanel(null);
+                setSelectedItems([]);
+                setShowGenericForm(false);
+                setShowAddPersonnelModal(false);
+                setIsEditingBasicInfo(false);
               }}
               className={`flex items-center gap-2 px-6 py-4 text-sm font-bold transition-all whitespace-nowrap border-b-2 ${
                 activeTab === tab.id && !sidePanel
@@ -2014,7 +2935,9 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
             <div className="bg-white border-b border-slate-100 px-6 py-3 flex items-center">
               <button 
                 onClick={() => {
-                  if (activeTab === 'personnel') {
+                  if (activeTab === 'basic') {
+                    setIsEditingBasicInfo(!isEditingBasicInfo);
+                  } else if (activeTab === 'personnel') {
                     setPersonnelMode('add');
                     setPersonnelFormData({
                       name: '',
@@ -2062,11 +2985,14 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                     setQualificationSearch('');
                     setPersonnelTab('basic');
                     setShowAddPersonnelModal(true);
+                  } else if (activeTab !== 'basic') {
+                    setGenericFormMode('add');
+                    setShowGenericForm(true);
                   }
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow-sm transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-[#0052CC] text-white rounded-lg text-sm font-bold hover:bg-[#0052CC]/90 shadow-sm transition-all"
               >
-                {activeTab === 'basic' ? <Edit2 size={16} /> : <Plus size={16} />}
+                {activeTab === 'basic' ? (isEditingBasicInfo ? <CheckCircle2 size={16} /> : <Edit2 size={16} />) : <Plus size={16} />}
                 {sidePanel === 'certificates' ? '上传证照' : 
                  activeTab === 'personnel' ? '新增人员' :
                  activeTab === 'qualification' ? '新增资质' :
@@ -2076,13 +3002,13 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                  activeTab === 'honors' ? '新增荣誉' :
                  activeTab === 'materials-list' ? '上传材料' :
                  activeTab === 'disclosure' ? '新增披露' :
-                 activeTab === 'credit' ? '新增评价' : '编辑信息'}
+                 activeTab === 'credit' ? '新增评价' : (isEditingBasicInfo ? '保存信息' : '编辑信息')}
               </button>
               
-              {activeTab === 'personnel' && (
+              {activeTab !== 'basic' && (
                 <button className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-50 transition-all ml-3">
                   <Trash2 size={16} />
-                  删除人员
+                  删除{tabs.find(t => t.id === activeTab)?.label.replace('新增', '')}
                 </button>
               )}
             </div>
@@ -2120,34 +3046,93 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
         </div>
       </div>
 
-      {/* File Preview Modal */}
+      {/* Personnel Form Modal */}
+      {renderPersonnelForm()}
+
+      {/* Image Preview Modal */}
       <AnimatePresence>
-        {previewFile && (
-          <div 
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-            onClick={() => setPreviewFile(null)}
+        {(previewFile || previewImage) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+            onClick={() => {
+              setPreviewFile(null);
+              setPreviewImage(null);
+            }}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="relative max-w-4xl w-full max-h-full flex items-center justify-center"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-5xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <img 
-                src={previewFile} 
-                alt="File Preview" 
-                className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
-                referrerPolicy="no-referrer"
-              />
-              <button 
-                onClick={() => setPreviewFile(null)}
-                className="absolute -top-12 right-0 p-2 text-white hover:bg-white/10 rounded-full transition-all"
-              >
-                <X size={32} />
-              </button>
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
+                <div className="flex items-center gap-3">
+                  <div className="size-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                    <ImageIcon size={18} />
+                  </div>
+                  <h3 className="font-bold text-slate-800">{previewImage?.name || '文件预览'}</h3>
+                </div>
+                <button 
+                  onClick={() => {
+                    setPreviewFile(null);
+                    setPreviewImage(null);
+                  }}
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-4 flex items-center justify-center bg-slate-50 min-h-[400px] max-h-[80vh] overflow-auto">
+                {(() => {
+                  const url = previewFile || previewImage?.url;
+                  const name = previewImage?.name || '预览文件';
+                  
+                  if (!url) return null;
+
+                  // Check if it's likely an image
+                  const isImage = url.startsWith('blob:') || 
+                                 url.includes('picsum.photos') || 
+                                 url === '#' ||
+                                 /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(name);
+
+                  if (isImage) {
+                    return (
+                      <img 
+                        src={url === '#' ? `https://picsum.photos/seed/${name}/1200/800` : url} 
+                        alt={name}
+                        className="max-w-full max-h-[70vh] object-contain shadow-lg rounded-lg"
+                        referrerPolicy="no-referrer"
+                      />
+                    );
+                  }
+
+                  return (
+                    <div className="flex flex-col items-center gap-4 py-12">
+                      <div className="size-20 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center text-slate-300">
+                        <FileText size={40} />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-slate-800 font-bold">{name}</p>
+                        <p className="text-slate-500 text-sm mt-1">该文件类型暂不支持直接预览</p>
+                      </div>
+                      <a 
+                        href={url} 
+                        download={name}
+                        className="mt-2 px-6 py-2.5 bg-[#0052CC] text-white rounded-xl font-bold text-sm hover:bg-[#0052CC]/90 transition-all shadow-md shadow-blue-200 flex items-center gap-2"
+                      >
+                        <Download size={16} />
+                        下载文件查看
+                      </a>
+                    </div>
+                  );
+                })()}
+              </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 

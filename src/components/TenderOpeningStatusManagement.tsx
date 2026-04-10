@@ -63,6 +63,19 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
   ]);
   const [personnelInput, setPersonnelInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const handleTenderFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files).map((file: File, index) => ({
+        id: `tf-new-${Date.now()}-${index}`,
+        name: file.name,
+        size: `${(file.size / 1024 / 1024).toFixed(1)}MB`,
+        type: file.name.split('.').pop()?.toLowerCase() || 'unknown',
+        date: new Date().toISOString().split('T')[0]
+      }));
+      setTenderFiles([...tenderFiles, ...newFiles]);
+    }
+  };
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
   const [showPersonnelDropdown, setShowPersonnelDropdown] = useState(false);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
@@ -629,14 +642,6 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                               <Upload size={16} className="text-primary" />
                               投标文件
                             </h5>
-                            {isEditing && (
-                              <div className="relative">
-                                <input type="file" multiple className="absolute inset-0 opacity-0 cursor-pointer" />
-                                <button className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 rounded-lg transition-colors">
-                                  <Plus size={14} /> 批量上传
-                                </button>
-                              </div>
-                            )}
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -673,9 +678,17 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                             )}
                           </div>
                           {isEditing && (
-                            <button className="w-full py-4 bg-primary/5 border border-primary/20 rounded-2xl text-sm font-bold text-primary hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm group">
-                              <Plus size={18} className="group-hover:rotate-90 transition-transform" /> 点击上传投标文件
-                            </button>
+                            <div className="relative w-full">
+                              <input 
+                                type="file" 
+                                multiple 
+                                onChange={handleTenderFileUpload}
+                                className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                              />
+                              <div className="w-full py-4 bg-primary/5 border border-primary/20 rounded-2xl text-sm font-bold text-primary hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm group">
+                                <Plus size={18} className="group-hover:rotate-90 transition-transform" /> 点击上传投标文件
+                              </div>
+                            </div>
                           )}
                         </div>
 

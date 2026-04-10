@@ -39,11 +39,15 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null);
   const [uploadFiles, setUploadFiles] = useState<{ file: File; name: string }[]>([]);
   const [materialName, setMaterialName] = useState('');
   const [uploadType, setUploadType] = useState('技术材料');
   const [uploadRemarks, setUploadRemarks] = useState('');
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
+  const [previewFile, setPreviewFile] = useState<{ url: string; type: string; name: string } | null>(null);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,6 +71,37 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
       alert('此项目已暂停');
       return;
     }
+    setModalMode('add');
+    setMaterialName('');
+    setUploadType('技术材料');
+    setUploadRemarks('');
+    setUploadFiles([]);
+    setHasAttemptedSave(false);
+    setShowAddModal(true);
+  };
+
+  const handleOpenEditModal = (item: any) => {
+    if (isPaused) {
+      alert('此项目已暂停');
+      return;
+    }
+    setModalMode('edit');
+    setEditingMaterialId(item.id);
+    
+    const nameWithoutExt = item.fileName.includes('.') 
+      ? item.fileName.substring(0, item.fileName.lastIndexOf('.')) 
+      : item.fileName;
+      
+    setMaterialName(nameWithoutExt);
+    setUploadType(item.type);
+    setUploadRemarks(''); 
+    
+    const mockFile = new File([""], item.fileName, { type: "application/octet-stream" });
+    const sizeMatch = item.size ? item.size.match(/[\d.]+/) : null;
+    const sizeInMB = sizeMatch ? parseFloat(sizeMatch[0]) : 0;
+    Object.defineProperty(mockFile, 'size', { value: sizeInMB * 1024 * 1024 });
+    
+    setUploadFiles([{ file: mockFile, name: nameWithoutExt }]);
     setHasAttemptedSave(false);
     setShowAddModal(true);
   };
@@ -152,6 +187,31 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
   const filteredMaterials = activeCategory === '全部文档' 
     ? projectMaterials 
     : projectMaterials.filter(m => m.type === activeCategory);
+
+  const currentPageMaterials = filteredMaterials.slice((detailCurrentPage - 1) * detailPageSize, detailCurrentPage * detailPageSize);
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      const newSelected = new Set(selectedMaterials);
+      currentPageMaterials.forEach(item => newSelected.add(item.id));
+      setSelectedMaterials(Array.from(newSelected));
+    } else {
+      const newSelected = new Set(selectedMaterials);
+      currentPageMaterials.forEach(item => newSelected.delete(item.id));
+      setSelectedMaterials(Array.from(newSelected));
+    }
+  };
+
+  const handleSelectMaterial = (id: string) => {
+    if (selectedMaterials.includes(id)) {
+      setSelectedMaterials(selectedMaterials.filter(mId => mId !== id));
+    } else {
+      setSelectedMaterials([...selectedMaterials, id]);
+    }
+  };
+
+  const isAllCurrentPageSelected = currentPageMaterials.length > 0 && currentPageMaterials.every(item => selectedMaterials.includes(item.id));
+  const isSomeCurrentPageSelected = currentPageMaterials.some(item => selectedMaterials.includes(item.id));
 
   const handleEnterDetail = (project: any) => {
     setSelectedProject(project);
@@ -520,10 +580,19 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
             <thead>
               <tr className="bg-slate-50/50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-100">
                 <th className="px-6 py-4 w-10">
-                  <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                    checked={isAllCurrentPageSelected}
+                    ref={input => {
+                      if (input) {
+                        input.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
+                      }
+                    }}
+                    onChange={handleSelectAll}
+                  />
                 </th>
                 <th className="px-6 py-4">文件名</th>
-                {activeCategory === '全部文档' && <th className="px-6 py-4">所属目录</th>}
                 <th className="px-6 py-4">类型</th>
                 <th className="px-6 py-4">大小</th>
                 <th className="px-6 py-4">上传人</th>
@@ -537,17 +606,23 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                 .map((item) => (
                 <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
-                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                      checked={selectedMaterials.includes(item.id)}
+                      onChange={() => handleSelectMaterial(item.id)}
+                    />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="size-8 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                         <FileText size={16} />
                       </div>
-                      <span className="text-sm font-bold text-slate-900 truncate max-w-xs" title={item.fileName}>{item.fileName}</span>
+                      <span className="text-sm font-bold text-slate-900 truncate max-w-xs" title={item.fileName}>
+                        {item.fileName.includes('.') ? item.fileName.substring(0, item.fileName.lastIndexOf('.')) : item.fileName}
+                      </span>
                     </div>
                   </td>
-                  {activeCategory === '全部文档' && <td className="px-6 py-4 text-xs text-slate-500">{item.type}</td>}
                   <td className="px-6 py-4">
                     <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider">
                       {item.type}
@@ -566,7 +641,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button 
-                        onClick={handleOpenAddModal}
+                        onClick={() => handleOpenEditModal(item)}
                         className="p-2 text-primary hover:text-blue-700 transition-colors" 
                         title="修改"
                       >
@@ -614,9 +689,9 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                 <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
                   <div className="flex items-center gap-3">
                     <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white">
-                      <Upload size={24} />
+                      {modalMode === 'add' ? <Upload size={24} /> : <Edit3 size={24} />}
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900">上传项目材料</h3>
+                    <h3 className="text-xl font-bold text-slate-900">{modalMode === 'add' ? '上传项目材料' : '修改项目材料'}</h3>
                   </div>
                   <button 
                     onClick={() => {
@@ -696,36 +771,46 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                       </div>
 
                       {uploadFiles.length > 0 && (
-                        <div className="space-y-3">
-                          <label className="text-xs font-bold text-slate-500 ml-1 uppercase">待上传列表 ({uploadFiles.length})</label>
-                          <div className="space-y-3">
-                            {uploadFiles.map((item, idx) => (
-                              <div key={idx} className="flex flex-col gap-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3 overflow-hidden">
-                                    <FileText size={18} className="text-primary shrink-0" />
-                                    <span className="text-xs text-slate-400 truncate">{item.file.name}</span>
-                                  </div>
-                                  <button 
-                                    onClick={() => handleRemoveUploadFile(idx)}
-                                    className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-all"
-                                  >
-                                    <X size={16} />
-                                  </button>
+                        <div className="space-y-3 mt-4">
+                          {uploadFiles.map((item, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl">
+                              <div className="flex items-center gap-4 overflow-hidden">
+                                <div className="size-10 bg-red-50 rounded-xl flex items-center justify-center shrink-0">
+                                  <FileText size={20} className="text-red-500" />
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <input 
-                                    type="text" 
-                                    value={item.name}
-                                    onChange={(e) => handleUpdateFileName(idx, e.target.value)}
-                                    placeholder="输入材料名称..."
-                                    className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                  />
-                                  <span className="text-[10px] text-slate-400 font-mono shrink-0">{(item.file.size / 1024 / 1024).toFixed(2)} MB</span>
+                                <div className="flex flex-col overflow-hidden">
+                                  <span className="text-sm font-bold text-slate-900 truncate">
+                                    {item.file.name.includes('.') ? item.file.name.substring(0, item.file.name.lastIndexOf('.')) : item.file.name}
+                                  </span>
+                                  <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+                                    <span>{(item.file.size / 1024 / 1024).toFixed(1)}MB</span>
+                                    <span>·</span>
+                                    <span>{new Date().toISOString().split('T')[0]}</span>
+                                  </div>
                                 </div>
                               </div>
-                            ))}
-                          </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button 
+                                  onClick={() => {
+                                    const url = URL.createObjectURL(item.file);
+                                    const type = item.file.type || (item.file.name.endsWith('.pdf') ? 'application/pdf' : '');
+                                    setPreviewFile({ url, type, name: item.file.name });
+                                  }}
+                                  className="p-1.5 text-slate-400 hover:text-primary transition-colors"
+                                  title="预览"
+                                >
+                                  <Eye size={18} />
+                                </button>
+                                <button 
+                                  onClick={() => handleRemoveUploadFile(idx)}
+                                  className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
+                                  title="删除"
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
 
@@ -743,10 +828,10 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                     <div className="flex gap-4 pt-8 mt-auto shrink-0 sticky bottom-0 bg-white pb-2">
                       <button 
                         onClick={handleUpload} 
-                        disabled={uploadFiles.length === 0 || !materialName.trim()}
+                        disabled={(modalMode === 'add' && uploadFiles.length === 0) || !materialName.trim()}
                         className="flex-1 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        开始上传
+                        {modalMode === 'add' ? '保存' : '修改保存'}
                       </button>
                       <button 
                         onClick={() => {
@@ -766,6 +851,38 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
           </div>
         )}
       </AnimatePresence>
+
+      {/* Preview Modal */}
+      {previewFile && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setPreviewFile(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+              <h3 className="text-lg font-bold text-slate-900 truncate pr-4">{previewFile.name}</h3>
+              <button 
+                onClick={() => setPreviewFile(null)}
+                className="p-2 hover:bg-slate-200 text-slate-500 rounded-xl transition-colors shrink-0"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-6 bg-slate-100/50 flex items-center justify-center min-h-[400px]">
+              {previewFile.type.startsWith('image/') ? (
+                <img src={previewFile.url} alt="Preview" className="max-w-full max-h-full object-contain rounded-lg shadow-sm" />
+              ) : previewFile.type === 'application/pdf' ? (
+                <iframe src={previewFile.url} className="w-full h-full min-h-[600px] rounded-lg shadow-sm border-0" title="PDF Preview" />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-slate-400 gap-4">
+                  <div className="size-20 bg-white rounded-2xl shadow-sm flex items-center justify-center">
+                    <FileText size={40} className="text-slate-300" />
+                  </div>
+                  <p className="font-medium">该文件类型不支持预览</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };

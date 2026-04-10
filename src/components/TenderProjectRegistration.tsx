@@ -206,16 +206,6 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
       animate={{ opacity: 1, x: 0 }}
       className="space-y-6"
     >
-      <div className="flex items-center justify-between">
-        <button 
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95"
-        >
-          <Plus size={20} />
-          新增项目登记
-        </button>
-      </div>
-
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -257,6 +247,16 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
           <h3 className="text-2xl font-bold text-slate-900">3 个</h3>
           <p className="text-xs text-slate-400 mt-2">成功率 37.5%</p>
         </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95"
+        >
+          <Plus size={20} />
+          新增项目登记
+        </button>
       </div>
 
       {/* Filters & Search */}
