@@ -202,6 +202,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
 
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0); // Dummy state for forcing re-render
+  const [confirmDialog, setConfirmDialog] = useState<{ message: string, onConfirm: () => void } | null>(null);
   const [projectData, setProjectData] = useState(initialProjectData || {
     projectName: `城市基础设施二期项目 (${currentEnterprise.name})`,
     projectNumber: 'BID-2025-00892',
@@ -223,19 +224,25 @@ const Workbench: React.FC<WorkbenchProps> = ({
   const isPaused = projectData.status === '放弃投标';
 
   const handlePauseProject = () => {
-    if (window.confirm('确定要放弃该项目的投标吗？')) {
-      const newData = { ...projectData, status: '放弃投标' };
-      setProjectData(newData);
-      onUpdateProject?.(newData);
-    }
+    setConfirmDialog({
+      message: '确定要放弃该项目的投标吗？',
+      onConfirm: () => {
+        const newData = { ...projectData, status: '放弃投标' };
+        setProjectData(newData);
+        onUpdateProject?.(newData);
+      }
+    });
   };
 
   const handleRestartProject = () => {
-    if (window.confirm('确定要重启该项目的投标吗？')) {
-      const newData = { ...projectData, status: '进行中' };
-      setProjectData(newData);
-      onUpdateProject?.(newData);
-    }
+    setConfirmDialog({
+      message: '确定要重启该项目的投标吗？',
+      onConfirm: () => {
+        const newData = { ...projectData, status: '进行中' };
+        setProjectData(newData);
+        onUpdateProject?.(newData);
+      }
+    });
   };
 
   useEffect(() => {
@@ -317,7 +324,8 @@ const Workbench: React.FC<WorkbenchProps> = ({
   };
 
   return (
-    <motion.div 
+    <>
+      <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6 pb-20"
@@ -1356,8 +1364,43 @@ const Workbench: React.FC<WorkbenchProps> = ({
           <CollaborativeSharingModal onClose={() => setShowCollaborativeSharing(false)} />
         )}
       </AnimatePresence>
+
+      {/* Confirm Dialog */}
+      <AnimatePresence>
+        {confirmDialog && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+            >
+              <h3 className="text-lg font-bold text-slate-900 mb-2">确认操作</h3>
+              <p className="text-sm text-slate-600 mb-6">{confirmDialog.message}</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmDialog(null)}
+                  className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    confirmDialog.onConfirm();
+                    setConfirmDialog(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20"
+                >
+                  确定
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
-  );
+  </>
+);
 };
 
 const FileProductionView = ({ onBack, isPaused, onShare }: { onBack: () => void, isPaused: boolean, onShare: () => void }) => (

@@ -48,6 +48,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [isTenderUploaded, setIsTenderUploaded] = useState(false);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ message: string, onConfirm: () => void } | null>(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -156,15 +157,21 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
   };
 
   const handleGiveUpProject = (id: string) => {
-    if (window.confirm('请再次确认是否作废？')) {
-      setProjects(projects.map(p => p.id === id ? { ...p, status: '放弃投标' } : p));
-    }
+    setConfirmDialog({
+      message: '请再次确认是否作废？',
+      onConfirm: () => {
+        setProjects(projects.map(p => p.id === id ? { ...p, status: '放弃投标' } : p));
+      }
+    });
   };
 
   const handleRestartProject = (id: string) => {
-    if (window.confirm('确定要重启该项目的投标吗？')) {
-      setProjects(projects.map(p => p.id === id ? { ...p, status: '投标中' } : p));
-    }
+    setConfirmDialog({
+      message: '确定要重启该项目的投标吗？',
+      onConfirm: () => {
+        setProjects(projects.map(p => p.id === id ? { ...p, status: '投标中' } : p));
+      }
+    });
   };
 
   const handleSaveProject = () => {
@@ -746,6 +753,40 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
               </div>
             </motion.div>
             </div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Confirm Dialog */}
+      <AnimatePresence>
+        {confirmDialog && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+            >
+              <h3 className="text-lg font-bold text-slate-900 mb-2">确认操作</h3>
+              <p className="text-sm text-slate-600 mb-6">{confirmDialog.message}</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmDialog(null)}
+                  className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    confirmDialog.onConfirm();
+                    setConfirmDialog(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20"
+                >
+                  确定
+                </button>
+              </div>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>

@@ -564,7 +564,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
               )}
             </div>
             
-            <div className={`flex items-center gap-1 shrink-0 transition-opacity duration-200 ${showActions ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="flex items-center gap-1 shrink-0 opacity-100">
               {level < 2 && (
                 <button 
                   onClick={(e) => {
@@ -710,27 +710,19 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
         {deleteConfirmId && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl"
             >
-              <div className="px-8 py-8">
-                <div className="flex items-start gap-4">
-                  <div className="size-12 bg-blue-50 rounded-full flex items-center justify-center shrink-0">
-                    <div className="size-3 bg-blue-500 rounded-full" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-slate-700 text-lg leading-relaxed font-medium">
-                      删除此节点将删除此节点下所有子节点下以及素材内容，是否确认删除？
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="px-8 py-6 bg-slate-50 flex justify-end gap-3">
+              <h3 className="text-lg font-bold text-slate-900 mb-2">确认操作</h3>
+              <p className="text-sm text-slate-600 mb-6">
+                删除此节点将删除此节点下所有子节点下以及素材内容，是否确认删除？
+              </p>
+              <div className="flex gap-3">
                 <button
                   onClick={() => setDeleteConfirmId(null)}
-                  className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-200 transition-all"
+                  className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50"
                 >
                   取消
                 </button>
@@ -739,9 +731,9 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                     deleteCategory(deleteConfirmId);
                     setDeleteConfirmId(null);
                   }}
-                  className="px-6 py-2.5 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20"
                 >
-                  确认删除
+                  确定
                 </button>
               </div>
             </motion.div>
