@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
   Search, 
@@ -8,15 +8,19 @@ import {
   Paperclip, 
   Download,
   Eye,
+  Folder,
   FolderOpen,
   Upload,
   X,
   ChevronLeft,
+  ChevronRight,
+  ChevronDown,
   Briefcase,
   User,
   Edit3,
   Trash2,
   MoreHorizontal,
+  MoreVertical,
   AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -58,6 +62,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
   const [projects, setProjects] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('全部文档');
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [categories, setCategories] = useState<CategoryNode[]>([
     { id: 'cat-1', name: '技术材料', children: [] },
     { id: 'cat-2', name: '商务材料', children: [] },
@@ -438,59 +443,202 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
     setEditingCatId(null);
   };
 
-  const renderCategoryNode = (node: CategoryNode, level: number = 0) => {
+  const deleteCategory = (id: string) => {
+    const findAndRemove = (nodes: CategoryNode[]): CategoryNode[] => {
+      return nodes.filter(node => {
+        if (node.id === id) return false;
+        if (node.children.length > 0) {
+          node.children = findAndRemove(node.children);
+        }
+        return true;
+      });
+    };
+    setCategories(findAndRemove(categories));
+  };
+
+  const CategoryItem: React.FC<{
+    node: CategoryNode;
+    level?: number;
+    activeCategory: string;
+    editingCatId: string | null;
+    setActiveCategory: (name: string) => void;
+    updateCategoryName: (id: string, newName: string) => void;
+    addSubCategory: (parentId: string, name: string) => void;
+    deleteCategory: (id: string) => void;
+    setEditingCatId: (id: string | null) => void;
+  }> = ({ 
+    node, 
+    level = 0, 
+    activeCategory, 
+    editingCatId, 
+    setActiveCategory, 
+    updateCategoryName, 
+    addSubCategory, 
+    setDeleteConfirmId,
+    setEditingCatId
+  }) => {
     const isActive = activeCategory === node.name;
     const isEditing = editingCatId === node.id;
+    const [showActions, setShowActions] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(true);
+    const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
+
+    const hasChildren = node.children.length > 0;
+
+    const handleContextMenu = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setContextMenu({ x: e.clientX, y: e.clientY });
+    };
+
+    useEffect(() => {
+      const handleClick = () => setContextMenu(null);
+      if (contextMenu) {
+        window.addEventListener('click', handleClick);
+        window.addEventListener('contextmenu', handleClick);
+      }
+      return () => {
+        window.removeEventListener('click', handleClick);
+        window.removeEventListener('contextmenu', handleClick);
+      };
+    }, [contextMenu]);
 
     return (
-      <div key={node.id} className="space-y-1">
-        <div 
-          className={`group flex items-center justify-between px-3 py-2 rounded-xl transition-all cursor-pointer ${
-            isActive ? 'bg-primary/5 text-primary font-bold' : 'text-slate-600 hover:bg-slate-50'
-          }`}
-          style={{ paddingLeft: `${level * 12 + 12}px` }}
-          onClick={() => setActiveCategory(node.name)}
-        >
-          {isEditing ? (
-            <input 
-              autoFocus
-              className="bg-white border border-primary/30 rounded px-1 w-full outline-none text-sm"
-              defaultValue={node.name}
-              onBlur={(e) => updateCategoryName(node.id, e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && updateCategoryName(node.id, (e.target as HTMLInputElement).value)}
-              onClick={(e) => e.stopPropagation()}
-            />
-          ) : (
-            <div className="flex items-center gap-2 flex-1 overflow-hidden">
-              <span className={`truncate ${level === 0 ? 'text-sm' : 'text-xs'}`}>{node.name}</span>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEditingCatId(node.id);
-                }}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:text-primary transition-all"
-              >
-                <Edit3 size={level === 0 ? 12 : 10} />
-              </button>
+      <div className="relative">
+        <div className="space-y-1">
+          <div 
+            className={`group flex items-center justify-between px-3 py-2 rounded-xl transition-all cursor-pointer relative ${
+              isActive ? 'bg-primary/5 text-primary font-bold' : 'text-slate-600 hover:bg-slate-50'
+            }`}
+            style={{ paddingLeft: `${level * 16 + 12}px` }}
+            onClick={() => setActiveCategory(node.name)}
+            onMouseEnter={() => setShowActions(true)}
+            onMouseLeave={() => setShowActions(false)}
+            onContextMenu={handleContextMenu}
+          >
+            <div className="flex items-center gap-1.5 flex-1 overflow-hidden">
+              {hasChildren ? (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExpanded(!isExpanded);
+                  }}
+                  className="p-0.5 hover:bg-slate-200 rounded transition-colors text-slate-400"
+                >
+                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </button>
+              ) : (
+                <div className="w-5" /> // Spacer for alignment
+              )}
+
+              {isEditing ? (
+                <input 
+                  autoFocus
+                  className="bg-white border border-primary/30 rounded px-1 w-full outline-none text-sm"
+                  defaultValue={node.name}
+                  onBlur={(e) => updateCategoryName(node.id, e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && updateCategoryName(node.id, (e.target as HTMLInputElement).value)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <div className="flex items-center gap-1.5 overflow-hidden">
+                  {isExpanded && hasChildren ? (
+                    <FolderOpen size={14} className="text-primary shrink-0" />
+                  ) : (
+                    <Folder size={14} className="text-primary shrink-0" />
+                  )}
+                  <span className={`truncate whitespace-nowrap ${level === 0 ? 'text-sm' : 'text-xs'}`}>
+                    {node.name}
+                  </span>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingCatId(node.id);
+                    }}
+                    className={`p-0.5 text-slate-400 hover:text-primary transition-all ${showActions ? 'opacity-100' : 'opacity-0'}`}
+                    title="重命名"
+                  >
+                    <Edit3 size={12} />
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-          {level < 2 && (
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                addSubCategory(node.id, '新子分类');
-              }} 
-              className="text-slate-400 hover:text-primary p-1"
-            >
-              <Plus size={level === 0 ? 14 : 12}/>
-            </button>
-          )}
-        </div>
-        {node.children.length > 0 && (
-          <div className="space-y-1">
-            {node.children.map(child => renderCategoryNode(child, level + 1))}
+            
+            <div className={`flex items-center gap-1 shrink-0 transition-opacity duration-200 ${showActions ? 'opacity-100' : 'opacity-0'}`}>
+              {level < 2 && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addSubCategory(node.id, '新子分类');
+                    setIsExpanded(true);
+                  }} 
+                  className="p-1 text-slate-400 hover:text-primary hover:bg-primary/10 rounded transition-all"
+                  title="新增子分类"
+                >
+                  <Plus size={14}/>
+                </button>
+              )}
+            </div>
           </div>
-        )}
+
+          {/* Custom Context Menu */}
+          <AnimatePresence>
+            {contextMenu && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                style={{ 
+                  position: 'fixed', 
+                  top: contextMenu.y, 
+                  left: contextMenu.x,
+                  zIndex: 9999
+                }}
+                className="bg-white rounded-xl shadow-2xl border border-slate-100 py-1.5 w-32 overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button 
+                  onClick={() => {
+                    setDeleteConfirmId(node.id);
+                    setContextMenu(null);
+                  }}
+                  className="w-full px-4 py-2 text-left text-xs text-red-500 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                >
+                  <Trash2 size={14} />
+                  <span>删除分类</span>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          <AnimatePresence initial={false}>
+            {isExpanded && hasChildren && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-1">
+                  {node.children.map(child => (
+                    <CategoryItem 
+                      key={child.id}
+                      node={child} 
+                      level={level + 1}
+                      activeCategory={activeCategory}
+                      editingCatId={editingCatId}
+                      setActiveCategory={setActiveCategory}
+                      updateCategoryName={updateCategoryName}
+                      addSubCategory={addSubCategory}
+                      setDeleteConfirmId={setDeleteConfirmId}
+                      setEditingCatId={setEditingCatId}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     );
   };
@@ -523,7 +671,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
 
       <div className="flex gap-6 flex-1 overflow-hidden">
         {/* Left Tree Structure */}
-      <div className="w-64 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 overflow-y-auto">
+      <div className="w-80 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 overflow-y-auto">
         <div 
           className="px-2 mb-4 cursor-pointer hover:text-primary transition-colors"
           onClick={() => setActiveCategory('全部文档')}
@@ -541,9 +689,65 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
         </div>
 
         <div className="space-y-1">
-          {categories.map((node) => renderCategoryNode(node))}
+          {categories.map((node) => (
+            <CategoryItem 
+              key={node.id}
+              node={node}
+              activeCategory={activeCategory}
+              editingCatId={editingCatId}
+              setActiveCategory={setActiveCategory}
+              updateCategoryName={updateCategoryName}
+              addSubCategory={addSubCategory}
+              setDeleteConfirmId={setDeleteConfirmId}
+              setEditingCatId={setEditingCatId}
+            />
+          ))}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+            >
+              <div className="px-8 py-8">
+                <div className="flex items-start gap-4">
+                  <div className="size-12 bg-blue-50 rounded-full flex items-center justify-center shrink-0">
+                    <div className="size-3 bg-blue-500 rounded-full" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-slate-700 text-lg leading-relaxed font-medium">
+                      删除此节点将删除此节点下所有子节点下以及素材内容，是否确认删除？
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="px-8 py-6 bg-slate-50 flex justify-end gap-3">
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-200 transition-all"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    deleteCategory(deleteConfirmId);
+                    setDeleteConfirmId(null);
+                  }}
+                  className="px-6 py-2.5 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                >
+                  确认删除
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Right Content */}
       <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">

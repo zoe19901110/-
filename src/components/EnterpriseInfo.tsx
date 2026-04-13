@@ -30,6 +30,7 @@ import {
   Handshake,
   HeartPulse,
   Paperclip,
+  RotateCcw,
   Eye,
   Upload,
   ImageIcon,
@@ -445,430 +446,533 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                 </div>
                 <h3 className="text-lg font-bold text-slate-800">职业人员详情</h3>
               </div>
-              <div className="flex items-center gap-8">
-                <button 
-                  onClick={() => setPersonnelTab('basic')}
-                  className={`text-sm font-bold pb-1 border-b-2 transition-all ${personnelTab === 'basic' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
-                >
-                  基本信息
-                </button>
-                <button 
-                  onClick={() => setPersonnelTab('performance')}
-                  className={`text-sm font-bold pb-1 border-b-2 transition-all ${personnelTab === 'performance' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
-                >
-                  人员业绩
-                </button>
-                <button 
-                  onClick={() => setPersonnelTab('qualifications')}
-                  className={`text-sm font-bold pb-1 border-b-2 transition-all ${personnelTab === 'qualifications' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
-                >
-                  执业资格
-                </button>
-              </div>
               <button 
                 onClick={() => setShowAddPersonnelModal(false)}
-                className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 transition-all"
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600"
               >
                 <X size={20} />
               </button>
             </div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="flex-1 overflow-y-auto px-12 py-8 custom-scrollbar bg-slate-50/30"
-            >
+
+            {/* Modal Tabs */}
+            <div className="flex items-center border-b border-slate-100 bg-slate-50/50 px-8 shrink-0">
+              <div className="flex">
+                {[
+                  { id: 'basic', label: '基本信息', icon: User },
+                  { id: 'performance', label: '人员业绩', icon: Briefcase },
+                  { id: 'qualifications', label: '职业资格', icon: ShieldCheck },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setPersonnelTab(tab.id)}
+                    className={`px-6 py-4 text-sm font-bold transition-all relative flex items-center gap-2 ${
+                      personnelTab === tab.id ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    <tab.icon size={16} />
+                    {tab.label}
+                    {personnelTab === tab.id && (
+                      <motion.div 
+                        layoutId="personnelTabUnderline"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0052CC]"
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 relative">
               {personnelTab === 'basic' && (
-                <div className="space-y-12">
-                      <section>
-                        <div className="flex items-center gap-2 mb-6">
-                          <div className="w-1 h-4 bg-[#0052CC] rounded-full" />
-                          <h4 className="text-sm font-bold text-slate-900">个人基本信息</h4>
+                <div className="relative">
+                  {/* Tab-level Sticky Header */}
+                  <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-8 py-5 border-b border-slate-100 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={() => {
+                          if (isEditingPersonnel) {
+                            console.log('Saving personnel:', personnelFormData);
+                            setIsEditingPersonnel(false);
+                          } else {
+                            setIsEditingPersonnel(true);
+                          }
+                        }}
+                        className={`min-w-[110px] h-10 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md active:scale-95 ${
+                          isEditingPersonnel 
+                            ? 'bg-emerald-500 text-white hover:bg-emerald-600' 
+                            : 'bg-[#0052CC] text-white hover:bg-[#0052CC]/90'
+                        }`}
+                      >
+                        {isEditingPersonnel ? (
+                          <>
+                            <CheckCircle2 size={16} />
+                            确认保存
+                          </>
+                        ) : (
+                          <>
+                            <Edit2 size={16} />
+                            编辑信息
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-8 space-y-12 pb-12">
+                    {/* 1. 个人基本信息 */}
+                    <section>
+                      <div className="flex items-center gap-3 mb-8">
+                        <div className="w-1.5 h-5 bg-[#0052CC] rounded-full" />
+                        <h4 className="text-base font-bold text-slate-900">个人基本信息</h4>
+                      </div>
+
+                      <div className={`grid grid-cols-2 gap-x-12 gap-y-8 ${!isEditingPersonnel ? 'opacity-90' : ''}`}>
+                        {/* Row 1 */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                            姓名 <span className="text-red-500">*</span>
+                          </label>
+                          {isEditingPersonnel ? (
+                            <input 
+                              type="text" 
+                              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all placeholder:text-slate-300"
+                              placeholder="请输入姓名"
+                              value={personnelFormData.name}
+                              onChange={(e) => setPersonnelFormData({...personnelFormData, name: e.target.value})}
+                            />
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.name || '-'}</div>
+                          )}
                         </div>
-                        <div className="grid grid-cols-2 gap-x-12 gap-y-6">
-                          {/* Row 1 */}
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">姓名 <span className="text-red-500">*</span></label>
-                            {isEditingPersonnel ? (
-                              <input 
-                                type="text" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
-                                placeholder="请输入姓名"
-                                value={personnelFormData.name}
-                                onChange={(e) => setPersonnelFormData({...personnelFormData, name: e.target.value})}
-                              />
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.name || '-'}</div>
-                            )}
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">是否为外籍人员 <span className="text-red-500">*</span></label>
-                            <div className="flex items-center gap-6 h-[32px]">
-                              {['是', '否'].map(option => (
-                                <label key={option} className={`flex items-center gap-2 ${isEditingPersonnel ? 'cursor-pointer' : 'cursor-default'}`}>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                            是否为外籍人员 <span className="text-red-500">*</span>
+                          </label>
+                          <div className="flex items-center gap-8 h-[46px]">
+                            {['是', '否'].map(option => (
+                              <label key={option} className={`flex items-center gap-2.5 ${isEditingPersonnel ? 'cursor-pointer group' : 'cursor-default'}`}>
+                                <div className="relative flex items-center justify-center">
                                   <input 
                                     type="radio" 
-                                    className="size-4 text-[#0052CC] border-slate-300 focus:ring-[#0052CC]"
+                                    className="peer appearance-none size-5 border-2 border-slate-300 rounded-full checked:border-[#0052CC] transition-all disabled:opacity-50"
                                     checked={personnelFormData.isForeigner === option}
                                     disabled={!isEditingPersonnel}
                                     onChange={() => setPersonnelFormData({...personnelFormData, isForeigner: option})}
                                   />
-                                  <span className={`text-sm font-bold ${personnelFormData.isForeigner === option ? 'text-slate-900' : 'text-slate-400'}`}>{option}</span>
-                                </label>
-                              ))}
-                            </div>
+                                  <div className="absolute size-2.5 bg-[#0052CC] rounded-full scale-0 peer-checked:scale-100 transition-transform" />
+                                </div>
+                                <span className={`text-sm font-bold transition-colors ${personnelFormData.isForeigner === option ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`}>{option}</span>
+                              </label>
+                            ))}
                           </div>
+                        </div>
 
-                          {/* Row 2 */}
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">性别 <span className="text-red-500">*</span></label>
-                            <div className="flex items-center gap-6 h-[32px]">
-                              {['男', '女'].map(option => (
-                                <label key={option} className={`flex items-center gap-2 ${isEditingPersonnel ? 'cursor-pointer' : 'cursor-default'}`}>
+                        {/* Row 2 */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                            性别 <span className="text-red-500">*</span>
+                          </label>
+                          <div className="flex items-center gap-8 h-[46px]">
+                            {['男', '女'].map(option => (
+                              <label key={option} className={`flex items-center gap-2.5 ${isEditingPersonnel ? 'cursor-pointer group' : 'cursor-default'}`}>
+                                <div className="relative flex items-center justify-center">
                                   <input 
                                     type="radio" 
-                                    className="size-4 text-[#0052CC] border-slate-300 focus:ring-[#0052CC]"
+                                    className="peer appearance-none size-5 border-2 border-slate-300 rounded-full checked:border-[#0052CC] transition-all disabled:opacity-50"
                                     checked={personnelFormData.gender === option}
                                     disabled={!isEditingPersonnel}
                                     onChange={() => setPersonnelFormData({...personnelFormData, gender: option})}
                                   />
-                                  <span className={`text-sm font-bold ${personnelFormData.gender === option ? 'text-slate-900' : 'text-slate-400'}`}>{option}</span>
-                                </label>
-                              ))}
-                            </div>
+                                  <div className="absolute size-2.5 bg-[#0052CC] rounded-full scale-0 peer-checked:scale-100 transition-transform" />
+                                </div>
+                                <span className={`text-sm font-bold transition-colors ${personnelFormData.gender === option ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`}>{option}</span>
+                              </label>
+                            ))}
                           </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">出生年月 <span className="text-red-500">*</span></label>
-                            {isEditingPersonnel ? (
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                            出生年月 <span className="text-red-500">*</span>
+                          </label>
+                          {isEditingPersonnel ? (
+                            <div className="relative">
+                              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                               <input 
                                 type="date" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all"
                                 value={personnelFormData.birthDate}
                                 onChange={(e) => setPersonnelFormData({...personnelFormData, birthDate: e.target.value})}
                               />
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.birthDate || '-'}</div>
-                            )}
-                          </div>
+                            </div>
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.birthDate || '-'}</div>
+                          )}
+                        </div>
 
-                          {/* Row 3 */}
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">身份证号码 <span className="text-red-500">*</span></label>
-                            {isEditingPersonnel ? (
-                              <input 
-                                type="text" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
-                                placeholder="请输入"
-                                value={personnelFormData.idCard}
-                                onChange={(e) => setPersonnelFormData({...personnelFormData, idCard: e.target.value})}
-                              />
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.idCard || '-'}</div>
-                            )}
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">所在行政区域 <span className="text-red-500">*</span></label>
-                            {isEditingPersonnel ? (
+                        {/* Row 3 */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                            身份证号码 <span className="text-red-500">*</span>
+                          </label>
+                          {isEditingPersonnel ? (
+                            <input 
+                              type="text" 
+                              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all placeholder:text-slate-300"
+                              placeholder="请输入身份证号码"
+                              value={personnelFormData.idCard}
+                              onChange={(e) => setPersonnelFormData({...personnelFormData, idCard: e.target.value})}
+                            />
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.idCard || '-'}</div>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                            所在行政区域 <span className="text-red-500">*</span>
+                          </label>
+                          {isEditingPersonnel ? (
+                            <div className="relative">
+                              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                               <select 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all appearance-none"
                                 value={personnelFormData.region}
                                 onChange={(e) => setPersonnelFormData({...personnelFormData, region: e.target.value})}
                               >
-                                <option value="">请选择</option>
+                                <option value="">请选择行政区域</option>
                                 <option value="北京市">北京市</option>
                                 <option value="上海市">上海市</option>
                                 <option value="广州市">广州市</option>
                                 <option value="深圳市">深圳市</option>
                               </select>
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.region || '-'}</div>
-                            )}
-                          </div>
+                              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.region || '-'}</div>
+                          )}
+                        </div>
 
-                          {/* Row 4 */}
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">联系手机 <span className="text-red-500">*</span></label>
-                            {isEditingPersonnel ? (
-                              <input 
-                                type="text" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
-                                placeholder="请输入"
-                                value={personnelFormData.phone}
-                                onChange={(e) => setPersonnelFormData({...personnelFormData, phone: e.target.value})}
-                              />
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.phone || '-'}</div>
-                            )}
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">单位电话</label>
-                            {isEditingPersonnel ? (
-                              <input 
-                                type="text" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
-                                placeholder="请输入"
-                                value={personnelFormData.workPhone}
-                                onChange={(e) => setPersonnelFormData({...personnelFormData, workPhone: e.target.value})}
-                              />
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.workPhone || '-'}</div>
-                            )}
-                          </div>
+                        {/* Row 4 */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                            联系手机 <span className="text-red-500">*</span>
+                          </label>
+                          {isEditingPersonnel ? (
+                            <input 
+                              type="text" 
+                              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all placeholder:text-slate-300"
+                              placeholder="请输入手机号"
+                              value={personnelFormData.phone}
+                              onChange={(e) => setPersonnelFormData({...personnelFormData, phone: e.target.value})}
+                            />
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.phone || '-'}</div>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">单位电话</label>
+                          {isEditingPersonnel ? (
+                            <input 
+                              type="text" 
+                              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all placeholder:text-slate-300"
+                              placeholder="请输入单位电话"
+                              value={personnelFormData.workPhone}
+                              onChange={(e) => setPersonnelFormData({...personnelFormData, workPhone: e.target.value})}
+                            />
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.workPhone || '-'}</div>
+                          )}
+                        </div>
 
-                          {/* Row 5 */}
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">邮政编码</label>
-                            {isEditingPersonnel ? (
-                              <input 
-                                type="text" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
-                                placeholder="请输入"
-                                value={personnelFormData.postalCode}
-                                onChange={(e) => setPersonnelFormData({...personnelFormData, postalCode: e.target.value})}
-                              />
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.postalCode || '-'}</div>
-                            )}
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">技术职称 <span className="text-red-500">*</span></label>
-                            {isEditingPersonnel ? (
+                        {/* Row 5 */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">邮政编码</label>
+                          {isEditingPersonnel ? (
+                            <input 
+                              type="text" 
+                              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all placeholder:text-slate-300"
+                              placeholder="请输入邮政编码"
+                              value={personnelFormData.postalCode}
+                              onChange={(e) => setPersonnelFormData({...personnelFormData, postalCode: e.target.value})}
+                            />
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.postalCode || '-'}</div>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                            技术职称 <span className="text-red-500">*</span>
+                          </label>
+                          {isEditingPersonnel ? (
+                            <div className="relative">
+                              <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                               <select 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all appearance-none"
                                 value={personnelFormData.techTitle}
                                 onChange={(e) => setPersonnelFormData({...personnelFormData, techTitle: e.target.value})}
                               >
-                                <option>高级工程师</option>
-                                <option>中级工程师</option>
-                                <option>助理工程师</option>
+                                <option value="高级工程师">高级工程师</option>
+                                <option value="中级工程师">中级工程师</option>
+                                <option value="助理工程师">助理工程师</option>
                               </select>
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.techTitle || '-'}</div>
-                            )}
-                          </div>
+                              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.techTitle || '-'}</div>
+                          )}
+                        </div>
 
-                          {/* Row 6 */}
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">职务 <span className="text-red-500">*</span></label>
-                            {isEditingPersonnel ? (
-                              <input 
-                                type="text" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
-                                placeholder="请输入"
-                                value={personnelFormData.position}
-                                onChange={(e) => setPersonnelFormData({...personnelFormData, position: e.target.value})}
-                              />
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.position || '-'}</div>
-                            )}
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">是否在职</label>
-                            <div className="flex items-center gap-6 h-[32px]">
-                              {['是', '否'].map(option => (
-                                <label key={option} className={`flex items-center gap-2 ${isEditingPersonnel ? 'cursor-pointer' : 'cursor-default'}`}>
+                        {/* Row 6 */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                            职务 <span className="text-red-500">*</span>
+                          </label>
+                          {isEditingPersonnel ? (
+                            <input 
+                              type="text" 
+                              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all placeholder:text-slate-300"
+                              placeholder="请输入职务"
+                              value={personnelFormData.position}
+                              onChange={(e) => setPersonnelFormData({...personnelFormData, position: e.target.value})}
+                            />
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.position || '-'}</div>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">是否在职</label>
+                          <div className="flex items-center gap-8 h-[46px]">
+                            {['是', '否'].map(option => (
+                              <label key={option} className={`flex items-center gap-2.5 ${isEditingPersonnel ? 'cursor-pointer group' : 'cursor-default'}`}>
+                                <div className="relative flex items-center justify-center">
                                   <input 
                                     type="radio" 
-                                    className="size-4 text-[#0052CC] border-slate-300 focus:ring-[#0052CC]"
+                                    className="peer appearance-none size-5 border-2 border-slate-300 rounded-full checked:border-[#0052CC] transition-all disabled:opacity-50"
                                     checked={personnelFormData.isEmployed === option}
                                     disabled={!isEditingPersonnel}
                                     onChange={() => setPersonnelFormData({...personnelFormData, isEmployed: option})}
                                   />
-                                  <span className={`text-sm font-bold ${personnelFormData.isEmployed === option ? 'text-slate-900' : 'text-slate-400'}`}>{option}</span>
-                                </label>
-                              ))}
-                            </div>
+                                  <div className="absolute size-2.5 bg-[#0052CC] rounded-full scale-0 peer-checked:scale-100 transition-transform" />
+                                </div>
+                                <span className={`text-sm font-bold transition-colors ${personnelFormData.isEmployed === option ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`}>{option}</span>
+                              </label>
+                            ))}
                           </div>
+                        </div>
 
-                          {/* Row 7 */}
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">从业开始时间</label>
-                            {isEditingPersonnel ? (
+                        {/* Row 7 */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">从业开始时间</label>
+                          {isEditingPersonnel ? (
+                            <div className="relative">
+                              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                               <input 
                                 type="date" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all"
                                 value={personnelFormData.careerStartDate}
                                 onChange={(e) => setPersonnelFormData({...personnelFormData, careerStartDate: e.target.value})}
                               />
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.careerStartDate || '-'}</div>
-                            )}
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">从业年限</label>
-                            <div className="relative max-w-[320px]">
-                              {isEditingPersonnel ? (
+                            </div>
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.careerStartDate || '-'}</div>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">从业年限</label>
+                          <div className="relative">
+                            {isEditingPersonnel ? (
+                              <div className="relative">
+                                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                 <input 
                                   type="text" 
-                                  className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all pr-12"
-                                  placeholder="请输入"
+                                  className="w-full pl-11 pr-12 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all placeholder:text-slate-300"
+                                  placeholder="请输入年限"
                                   value={personnelFormData.careerYears}
                                   onChange={(e) => setPersonnelFormData({...personnelFormData, careerYears: e.target.value})}
                                 />
-                              ) : (
-                                <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.careerYears ? `${personnelFormData.careerYears} 年` : '-'}</div>
-                              )}
-                              {isEditingPersonnel && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">年</span>}
-                            </div>
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">年</span>
+                              </div>
+                            ) : (
+                              <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.careerYears ? `${personnelFormData.careerYears} 年` : '-'}</div>
+                            )}
                           </div>
+                        </div>
 
-                          {/* Row 8 */}
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">学历 <span className="text-red-500">*</span></label>
-                            {isEditingPersonnel ? (
+                        {/* Row 8 */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                            学历 <span className="text-red-500">*</span>
+                          </label>
+                          {isEditingPersonnel ? (
+                            <div className="relative">
+                              <Award className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                               <select 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all appearance-none"
                                 value={personnelFormData.education}
                                 onChange={(e) => setPersonnelFormData({...personnelFormData, education: e.target.value})}
                               >
-                                <option>博士</option>
-                                <option>硕士</option>
-                                <option>本科</option>
-                                <option>大专</option>
+                                <option value="博士">博士</option>
+                                <option value="硕士">硕士</option>
+                                <option value="本科">本科</option>
+                                <option value="大专">大专</option>
                               </select>
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.education || '-'}</div>
-                            )}
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">毕业专业</label>
-                            {isEditingPersonnel ? (
-                              <input 
-                                type="text" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
-                                placeholder="请输入"
-                                value={personnelFormData.major}
-                                onChange={(e) => setPersonnelFormData({...personnelFormData, major: e.target.value})}
-                              />
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.major || '-'}</div>
-                            )}
-                          </div>
+                              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.education || '-'}</div>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">毕业专业</label>
+                          {isEditingPersonnel ? (
+                            <input 
+                              type="text" 
+                              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all placeholder:text-slate-300"
+                              placeholder="请输入毕业专业"
+                              value={personnelFormData.major}
+                              onChange={(e) => setPersonnelFormData({...personnelFormData, major: e.target.value})}
+                            />
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.major || '-'}</div>
+                          )}
+                        </div>
 
-                          {/* Row 9 */}
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">毕业时间</label>
-                            {isEditingPersonnel ? (
+                        {/* Row 9 */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">毕业时间</label>
+                          {isEditingPersonnel ? (
+                            <div className="relative">
+                              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                               <input 
                                 type="date" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
+                                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all"
                                 value={personnelFormData.graduationDate}
                                 onChange={(e) => setPersonnelFormData({...personnelFormData, graduationDate: e.target.value})}
                               />
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.graduationDate || '-'}</div>
-                            )}
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">毕业学校</label>
-                            {isEditingPersonnel ? (
+                            </div>
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.graduationDate || '-'}</div>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">毕业学校</label>
+                          {isEditingPersonnel ? (
+                            <div className="relative">
+                              <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                               <input 
                                 type="text" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
-                                placeholder="请输入"
+                                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all placeholder:text-slate-300"
+                                placeholder="请输入毕业学校"
                                 value={personnelFormData.graduationSchool}
                                 onChange={(e) => setPersonnelFormData({...personnelFormData, graduationSchool: e.target.value})}
                               />
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.graduationSchool || '-'}</div>
-                            )}
-                          </div>
+                            </div>
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.graduationSchool || '-'}</div>
+                          )}
+                        </div>
 
-                          {/* Full Width Rows */}
-                          <div className="col-span-2 space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">通讯地址</label>
-                            {isEditingPersonnel ? (
+                        {/* Full Width Rows */}
+                        <div className="col-span-2 space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">通讯地址</label>
+                          {isEditingPersonnel ? (
+                            <div className="relative">
+                              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                               <input 
                                 type="text" 
-                                className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
-                                placeholder="请输入"
+                                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all placeholder:text-slate-300"
+                                placeholder="请输入通讯地址"
                                 value={personnelFormData.address}
                                 onChange={(e) => setPersonnelFormData({...personnelFormData, address: e.target.value})}
                               />
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.address || '-'}</div>
-                            )}
-                          </div>
-
-                          <div className="col-span-2 space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">从业经历</label>
-                            {isEditingPersonnel ? (
-                              <textarea 
-                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all min-h-[100px] resize-none"
-                                placeholder="请输入"
-                                value={personnelFormData.experience}
-                                onChange={(e) => setPersonnelFormData({...personnelFormData, experience: e.target.value})}
-                              />
-                            ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5 min-h-[100px] whitespace-pre-wrap">{personnelFormData.experience || '-'}</div>
-                            )}
-                          </div>
+                            </div>
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.address || '-'}</div>
+                          )}
                         </div>
-                      </section>
+
+                        <div className="col-span-2 space-y-2">
+                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">从业经历</label>
+                          {isEditingPersonnel ? (
+                            <textarea 
+                              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all min-h-[120px] resize-none placeholder:text-slate-300"
+                              placeholder="请输入从业经历描述..."
+                              value={personnelFormData.experience}
+                              onChange={(e) => setPersonnelFormData({...personnelFormData, experience: e.target.value})}
+                            />
+                          ) : (
+                            <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent min-h-[120px] whitespace-pre-wrap">{personnelFormData.experience || '-'}</div>
+                          )}
+                        </div>
+                      </div>
+                    </section>
 
                       {/* 2. 职称证信息 */}
                       <section>
-                        <div className="flex items-center gap-2 mb-6">
-                          <div className="w-1 h-4 bg-[#0052CC] rounded-full" />
-                          <h4 className="text-sm font-bold text-slate-900">职称证信息</h4>
+                        <div className="flex items-center gap-3 mb-8">
+                          <div className="w-1.5 h-5 bg-[#0052CC] rounded-full" />
+                          <h4 className="text-base font-bold text-slate-900">职称证信息</h4>
                         </div>
-                        <div className="grid grid-cols-2 gap-x-12 gap-y-6">
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">职称编号</label>
+                        <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 flex items-center gap-1">职称编号</label>
                             {isEditingPersonnel ? (
                               <input 
                                 type="text" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
-                                placeholder="请输入"
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all placeholder:text-slate-300"
+                                placeholder="请输入职称编号"
                                 value={personnelFormData.titleNumber}
                                 onChange={(e) => setPersonnelFormData({...personnelFormData, titleNumber: e.target.value})}
                               />
                             ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.titleNumber || '-'}</div>
+                              <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.titleNumber || '-'}</div>
                             )}
                           </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">职称专业</label>
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 flex items-center gap-1">职称专业</label>
                             {isEditingPersonnel ? (
                               <input 
                                 type="text" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
-                                placeholder="请输入"
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all placeholder:text-slate-300"
+                                placeholder="请输入职称专业"
                                 value={personnelFormData.titleMajor}
                                 onChange={(e) => setPersonnelFormData({...personnelFormData, titleMajor: e.target.value})}
                               />
                             ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.titleMajor || '-'}</div>
+                              <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.titleMajor || '-'}</div>
                             )}
                           </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">职称级别</label>
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 flex items-center gap-1">职称级别</label>
                             {isEditingPersonnel ? (
-                              <select 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
-                                value={personnelFormData.titleLevel}
-                                onChange={(e) => setPersonnelFormData({...personnelFormData, titleLevel: e.target.value})}
-                              >
-                                <option>高级</option>
-                                <option>中级</option>
-                                <option>初级</option>
-                              </select>
+                              <div className="relative">
+                                <select 
+                                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all appearance-none"
+                                  value={personnelFormData.titleLevel}
+                                  onChange={(e) => setPersonnelFormData({...personnelFormData, titleLevel: e.target.value})}
+                                >
+                                  <option>高级</option>
+                                  <option>中级</option>
+                                  <option>初级</option>
+                                </select>
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                              </div>
                             ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.titleLevel || '-'}</div>
+                              <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.titleLevel || '-'}</div>
                             )}
                           </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">职称发证机关</label>
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 flex items-center gap-1">职称发证机关</label>
                             {isEditingPersonnel ? (
                               <input 
                                 type="text" 
-                                className="w-full max-w-[320px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-[#0052CC]/20 outline-none transition-all"
-                                placeholder="请输入"
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-[#0052CC]/10 focus:border-[#0052CC] outline-none transition-all placeholder:text-slate-300"
+                                placeholder="请输入发证机关"
                                 value={personnelFormData.titleAuthority}
                                 onChange={(e) => setPersonnelFormData({...personnelFormData, titleAuthority: e.target.value})}
                               />
                             ) : (
-                              <div className="text-sm font-bold text-slate-900 py-1.5">{personnelFormData.titleAuthority || '-'}</div>
+                              <div className="w-full px-4 py-3 text-sm font-bold text-slate-900 bg-slate-100/50 rounded-xl border border-transparent">{personnelFormData.titleAuthority || '-'}</div>
                             )}
                           </div>
                         </div>
@@ -876,76 +980,64 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
 
                       {/* 3. 附件 */}
                       <section>
-                        <div className="flex items-center gap-2 mb-6">
-                          <div className="w-1 h-4 bg-[#0052CC] rounded-full" />
-                          <h4 className="text-sm font-bold text-slate-900">附件材料</h4>
+                        <div className="flex items-center gap-3 mb-8">
+                          <div className="w-1.5 h-5 bg-[#0052CC] rounded-full" />
+                          <h4 className="text-base font-bold text-slate-900">附件材料</h4>
                         </div>
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-2 gap-8">
                           {[
-                            { id: 'photo', label: '个人照片' },
-                            { id: 'titleCert', label: '职称证' },
-                            { id: 'socialSecurity', label: '社保证明' },
-                            { id: 'contract', label: '劳动合同' },
-                            { id: 'others', label: '其他材料' },
-                          ].map((item) => {
-                            const files = personnelFormData.attachments[item.id];
-                            const hasFile = files && files.length > 0;
-                            
-                            return (
-                              <div key={item.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                <div className="flex items-center justify-between mb-3">
-                                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{item.label}</label>
-                                  {isEditingPersonnel && (
-                                    <button className="text-[#0052CC] hover:underline text-xs font-bold flex items-center gap-1">
-                                      {hasFile ? <Clock size={12} /> : <Plus size={12} />}
-                                      {hasFile ? '重新上传' : '上传附件'}
-                                    </button>
-                                  )}
+                            { id: 'photo', label: '个人照片', icon: ImageIcon },
+                            { id: 'titleCert', label: '职称证', icon: Award },
+                            { id: 'socialSecurity', label: '社保证明', icon: ShieldCheck },
+                            { id: 'contract', label: '劳动合同', icon: FileText },
+                            { id: 'others', label: '其他材料', icon: Archive },
+                          ].map((item) => (
+                            <div key={item.id} className="p-6 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="size-8 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                                    <item.icon size={16} />
+                                  </div>
+                                  <label className="text-sm font-bold text-slate-700">{item.label}</label>
                                 </div>
-                                <div className="space-y-2">
-                                  {!hasFile ? (
-                                    <div className="text-center py-4 border-2 border-dashed border-slate-200 rounded-xl">
-                                      <span className="text-xs font-bold text-slate-400">
-                                        {isEditingPersonnel ? '点击右上角上传' : '未上传附件'}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    files.map((file: any, idx: number) => (
-                                      <div key={idx} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                                        <div className="flex items-center gap-2 overflow-hidden">
-                                          <div className="size-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center shrink-0">
-                                            <FileText size={16} />
-                                          </div>
-                                          <span className="text-xs font-bold text-slate-700 truncate">{file.name}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <button 
-                                            onClick={() => setPreviewImage({ url: file.url, name: file.name })}
-                                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                            title="查看"
-                                          >
-                                            <Eye size={14} />
-                                          </button>
-                                          {isEditingPersonnel && (
-                                            <button className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-all" title="删除">
-                                              <Trash2 size={14} />
-                                            </button>
-                                          )}
-                                        </div>
-                                      </div>
-                                    ))
-                                  )}
-                                </div>
+                                {isEditingPersonnel && (
+                                  <button className="px-3 py-1.5 bg-blue-50 text-[#0052CC] hover:bg-blue-100 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all">
+                                    <Upload size={14} /> 上传文件
+                                  </button>
+                                )}
                               </div>
-                            );
-                          })}
+                              <div className="space-y-2.5">
+                                {personnelFormData.attachments[item.id].length === 0 ? (
+                                  <div className="text-center py-6 border-2 border-dashed border-slate-100 rounded-xl bg-slate-50/50">
+                                    <span className="text-xs text-slate-400 font-medium">暂无附件</span>
+                                  </div>
+                                ) : (
+                                  personnelFormData.attachments[item.id].map((file: any, idx: number) => (
+                                    <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 text-sm group/file">
+                                      <div className="flex items-center gap-2 truncate">
+                                        <File size={14} className="text-slate-400 shrink-0" />
+                                        <span className="text-slate-600 truncate font-medium">{file.name}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5 shrink-0">
+                                        <button className="p-1.5 text-slate-400 hover:text-[#0052CC] hover:bg-blue-50 rounded-lg transition-all"><Eye size={14} /></button>
+                                        {isEditingPersonnel && (
+                                          <button className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={14} /></button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </section>
                     </div>
-                  )}
+                  </div>
+                )}
 
                   {personnelTab === 'performance' && (
-                    <div className="h-full flex flex-col">
+                    <div className="flex flex-col">
                       <AnimatePresence mode="wait">
                         {!showPerformanceDetail ? (
                           <motion.div 
@@ -953,60 +1045,104 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="space-y-6 flex flex-col h-full"
+                            className="flex flex-col h-full pt-6"
                           >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4 flex-1">
-                                <div className="relative flex-1 max-w-md">
-                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                  <input 
-                                    type="text"
-                                    placeholder="搜索标段名称、交易甲方..."
-                                    className="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
-                                    value={performanceSearch}
-                                    onChange={(e) => setPerformanceSearch(e.target.value)}
-                                  />
+                            {/* Action & Search Header */}
+                            <div className="px-5 space-y-4 mb-6">
+                              {/* Top Row: Action Buttons */}
+                              <div className="flex items-center gap-3">
+                                <button 
+                                  onClick={() => {
+                                    setPerformanceFormData({
+                                      packageName: '',
+                                      packageCode: '',
+                                      client: '',
+                                      clientContact: '',
+                                      projectLeader: personnelFormData.name || '',
+                                      leaderLeftCompany: '否',
+                                      winningAmount: '',
+                                      amountUnit: '元',
+                                      winningDate: '',
+                                      constructionLocation: '',
+                                      attachments: {
+                                        notification: [],
+                                        contract: [],
+                                        completion: []
+                                      }
+                                    });
+                                    setEditingPerformanceIndex(null);
+                                    setShowPerformanceDetail(true);
+                                  }}
+                                  className="flex items-center gap-2 px-4 py-2 bg-[#0052CC] text-white rounded text-xs font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95"
+                                >
+                                  <Plus size={14} /> 新增业绩
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    if (selectedItems.size > 0) {
+                                      const newList = personnelFormData.performance.filter((_: any, i: number) => !selectedItems.has(i));
+                                      setPersonnelFormData({...personnelFormData, performance: newList});
+                                      setSelectedItems(new Set());
+                                    }
+                                  }}
+                                  className="flex items-center gap-2 px-4 py-2 bg-white text-[#0052CC] border border-[#0052CC] rounded text-xs font-bold hover:bg-blue-50 transition-all active:scale-95"
+                                >
+                                  <Trash2 size={14} /> 删除投标业绩
+                                </button>
+                              </div>
+
+                              {/* Bottom Row: Search & Filters */}
+                              <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                  {/* Search Input */}
+                                  <div className="relative w-[220px]">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                    <input 
+                                      type="text"
+                                      placeholder="搜索投标业绩..."
+                                      className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                      value={performanceSearch}
+                                      onChange={(e) => setPerformanceSearch(e.target.value)}
+                                    />
+                                  </div>
+
+                                  {/* Date Picker */}
+                                  <div className="relative w-[160px]">
+                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                    <input 
+                                      type="text"
+                                      placeholder="yyyy-mm"
+                                      className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 outline-none focus:border-blue-500 transition-all"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex items-center gap-2">
+                                  <button className="px-8 py-2 bg-[#0052CC] text-white rounded-lg text-xs font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95">
+                                    查询
+                                  </button>
+                                  <button className="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-50 transition-all active:scale-95 flex items-center gap-2">
+                                    <Filter size={14} />
+                                    重置
+                                  </button>
                                 </div>
                               </div>
-                              <button 
-                                onClick={() => {
-                                  setPerformanceFormData({
-                                    packageName: '',
-                                    packageCode: '',
-                                    client: '',
-                                    clientContact: '',
-                                    projectLeader: personnelFormData.name || '',
-                                    leaderLeftCompany: '否',
-                                    winningAmount: '',
-                                    amountUnit: '元',
-                                    winningDate: '',
-                                    constructionLocation: '',
-                                    attachments: {
-                                      notification: [],
-                                      contract: [],
-                                      completion: []
-                                    }
-                                  });
-                                  setEditingPerformanceIndex(null);
-                                  setShowPerformanceDetail(true);
-                                }}
-                                className="flex items-center gap-2 px-4 py-2 bg-[#0052CC] text-white rounded-xl text-xs font-bold hover:bg-[#0052CC]/90 transition-all shadow-sm"
-                              >
-                                <Plus size={14} /> 新增业绩
-                              </button>
                             </div>
 
-                            <div className="flex-1 overflow-hidden border border-slate-200 rounded-2xl bg-white">
+                            <div className="mx-5 flex-1 overflow-hidden border border-slate-200 rounded-2xl bg-white">
                               <table className="w-full text-left border-collapse">
                                 <thead>
                                   <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
-                                    <th className="px-4 py-3 w-12 text-center">序</th>
-                                    <th className="px-4 py-3">标段（包）名称</th>
-                                    <th className="px-4 py-3">交易甲方</th>
-                                    <th className="px-4 py-3">中标时间</th>
-                                    <th className="px-4 py-3">中标金额</th>
+                                    <th className="px-4 py-3 w-10 text-center">
+                                      <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                                    </th>
+                                    <th className="px-4 py-3">项目名称</th>
+                                    <th className="px-4 py-3">合同金额</th>
+                                    <th className="px-4 py-3">竣工日期</th>
                                     <th className="px-4 py-3">项目负责人</th>
-                                    <th className="px-4 py-3 text-right">操作</th>
+                                    <th className="px-4 py-3">项目所在地</th>
+                                    <th className="px-4 py-3 text-center">操作</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -1018,44 +1154,44 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                                     )
                                     .map((item: any, idx: number) => (
                                     <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                                      <td className="px-4 py-3 text-center text-xs text-slate-400">{idx + 1}</td>
-                                      <td className="px-4 py-3">
-                                        <span className="text-xs font-bold text-slate-700">{item.packageName || '-'}</span>
+                                      <td className="px-4 py-3 text-center">
+                                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
                                       </td>
                                       <td className="px-4 py-3">
-                                        <span className="text-xs text-slate-600">{item.client || '-'}</span>
+                                        <div className="flex items-center gap-2">
+                                          <div className="size-8 bg-slate-50 text-slate-400 rounded flex items-center justify-center shrink-0">
+                                            <Briefcase size={16} />
+                                          </div>
+                                          <span className="text-xs font-bold text-slate-700">{item.packageName || '-'}</span>
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        <span className="text-xs font-bold text-blue-600">{item.winningAmount} {item.amountUnit}</span>
                                       </td>
                                       <td className="px-4 py-3">
                                         <span className="text-xs text-slate-500">{item.winningDate || '-'}</span>
                                       </td>
                                       <td className="px-4 py-3">
-                                        <span className="text-xs font-mono text-blue-600 font-bold">{item.winningAmount} {item.amountUnit}</span>
-                                      </td>
-                                      <td className="px-4 py-3">
                                         <span className="text-xs text-slate-600">{item.projectLeader || '-'}</span>
                                       </td>
-                                      <td className="px-4 py-3 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                          <button 
-                                            onClick={() => {
-                                              setPerformanceFormData({...item});
-                                              setEditingPerformanceIndex(idx);
-                                              setShowPerformanceDetail(true);
-                                            }}
-                                            className="text-blue-600 hover:underline text-[11px] font-bold"
-                                          >
-                                            编辑
-                                          </button>
-                                          <button 
-                                            onClick={() => {
-                                              const newList = personnelFormData.performance.filter((_: any, i: number) => i !== idx);
-                                              setPersonnelFormData({...personnelFormData, performance: newList});
-                                            }}
-                                            className="text-red-500 hover:underline text-[11px] font-bold"
-                                          >
-                                            删除
-                                          </button>
+                                      <td className="px-4 py-3">
+                                        <div className="flex items-center gap-1 text-slate-500">
+                                          <MapPin size={12} />
+                                          <span className="text-xs">{item.constructionLocation || '-'}</span>
                                         </div>
+                                      </td>
+                                      <td className="px-4 py-3 text-center">
+                                        <button 
+                                          onClick={() => {
+                                            setPerformanceFormData({...item});
+                                            setEditingPerformanceIndex(idx);
+                                            setShowPerformanceDetail(true);
+                                          }}
+                                          className="p-2 text-[#0052CC] hover:bg-blue-50 rounded-lg transition-all active:scale-90"
+                                          title="编辑"
+                                        >
+                                          <Edit2 size={16} />
+                                        </button>
                                       </td>
                                     </tr>
                                   ))}
@@ -1074,70 +1210,64 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                             </div>
                           </motion.div>
                         ) : (
-                          <motion.div 
-                            key="form"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="flex flex-col h-full bg-slate-50 -m-6 rounded-b-3xl overflow-hidden"
-                          >
-                            {/* Form Header */}
-                            <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
-                              <div className="flex items-center gap-8">
-                                <button 
-                                  onClick={() => setPerformanceDetailTab('notification')}
-                                  className={`text-sm font-bold pb-1 border-b-2 transition-all ${performanceDetailTab === 'notification' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
-                                >
-                                  业绩中标通知书
-                                </button>
-                                <button 
-                                  onClick={() => setPerformanceDetailTab('contract')}
-                                  className={`text-sm font-bold pb-1 border-b-2 transition-all ${performanceDetailTab === 'contract' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
-                                >
-                                  业绩合同协议书
-                                </button>
-                                <button 
-                                  onClick={() => setPerformanceDetailTab('completion')}
-                                  className={`text-sm font-bold pb-1 border-b-2 transition-all ${performanceDetailTab === 'completion' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
-                                >
-                                  工程竣工验收证明
-                                </button>
-                              </div>
-                              <button 
-                                onClick={() => setShowPerformanceDetail(false)}
-                                className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 transition-all"
-                              >
-                                <X size={18} />
-                              </button>
-                            </div>
-
-                            {/* Form Content */}
-                            <div className="flex-1 flex overflow-hidden">
-                              {/* Left: Upload */}
-                              <div className="w-48 bg-white border-r border-slate-200 p-6 flex flex-col items-center">
-                                <div className="w-full aspect-square bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all group">
-                                  <Plus size={24} className="text-slate-300 group-hover:text-blue-500" />
-                                  <span className="text-xs font-bold text-slate-400 group-hover:text-blue-600">上传图片</span>
-                                </div>
-                                <div className="mt-6 space-y-2">
-                                  <h5 className="text-xs font-bold text-slate-900">证照照片要求</h5>
-                                  <p className="text-[10px] text-slate-400 leading-relaxed">
-                                    支持格式：jpg、jpeg、bmp、png<br />
-                                    文件大小上限：5M
-                                  </p>
+                            <motion.div 
+                              key="form"
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -20 }}
+                              className="flex flex-col min-h-full bg-slate-50 rounded-b-3xl"
+                            >
+                              {/* Form Header */}
+                              <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+                                <div className="flex items-center gap-8">
+                                  <button 
+                                    onClick={() => setPerformanceDetailTab('notification')}
+                                    className={`text-sm font-bold pb-1 border-b-2 transition-all ${performanceDetailTab === 'notification' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                                  >
+                                    业绩中标通知书
+                                  </button>
+                                  <button 
+                                    onClick={() => setPerformanceDetailTab('contract')}
+                                    className={`text-sm font-bold pb-1 border-b-2 transition-all ${performanceDetailTab === 'contract' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                                  >
+                                    业绩合同协议书
+                                  </button>
+                                  <button 
+                                    onClick={() => setPerformanceDetailTab('completion')}
+                                    className={`text-sm font-bold pb-1 border-b-2 transition-all ${performanceDetailTab === 'completion' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                                  >
+                                    工程竣工验收证明
+                                  </button>
                                 </div>
                               </div>
 
-                              {/* Middle: Preview */}
-                              <div className="flex-1 bg-slate-100/50 p-8 flex items-center justify-center relative">
-                                <div className="flex flex-col items-center gap-4 text-slate-300">
-                                  <ImageIcon size={64} strokeWidth={1} />
-                                  <p className="text-sm font-medium">请上传证照图片</p>
+                              {/* Form Content */}
+                              <div className="flex-1 flex">
+                                {/* Left: Upload */}
+                                <div className="w-48 bg-white border-r border-slate-200 p-6 flex flex-col items-center">
+                                  <div className="w-full aspect-square bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all group">
+                                    <Plus size={24} className="text-slate-300 group-hover:text-blue-500" />
+                                    <span className="text-xs font-bold text-slate-400 group-hover:text-blue-600">上传图片</span>
+                                  </div>
+                                  <div className="mt-6 space-y-2">
+                                    <h5 className="text-xs font-bold text-slate-900">证照照片要求</h5>
+                                    <p className="text-[10px] text-slate-400 leading-relaxed">
+                                      支持格式：jpg、jpeg、bmp、png<br />
+                                      文件大小上限：5M
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
 
-                              {/* Right: Fields */}
-                              <div className="w-96 bg-white border-l border-slate-200 p-6 overflow-y-auto custom-scrollbar">
+                                {/* Middle: Preview */}
+                                <div className="flex-1 bg-slate-100/50 p-8 flex items-center justify-center relative">
+                                  <div className="flex flex-col items-center gap-4 text-slate-300">
+                                    <ImageIcon size={64} strokeWidth={1} />
+                                    <p className="text-sm font-medium">请上传证照图片</p>
+                                  </div>
+                                </div>
+
+                                {/* Right: Fields */}
+                                <div className="w-96 bg-white border-l border-slate-200 p-6">
                                 <div className="space-y-4">
                                   <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
@@ -1484,36 +1614,8 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                       </div>
                     </div>
                   )}
-                </motion.div>
+                </div>
 
-            {/* Action Buttons for Basic Info */}
-            {personnelTab === 'basic' && (
-              <div className="px-8 py-6 border-t border-slate-100 bg-white flex items-center justify-center gap-4 shrink-0">
-                {isEditingPersonnel ? (
-                  <>
-                    <button 
-                      onClick={() => setIsEditingPersonnel(false)}
-                      className="px-12 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all shadow-lg shadow-blue-500/20"
-                    >
-                      修改保存
-                    </button>
-                    <button 
-                      onClick={() => setIsEditingPersonnel(false)}
-                      className="px-12 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all"
-                    >
-                      取消
-                    </button>
-                  </>
-                ) : (
-                  <button 
-                    onClick={() => setIsEditingPersonnel(true)}
-                    className="px-12 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all shadow-lg shadow-blue-500/20"
-                  >
-                    修改保存
-                  </button>
-                )}
-              </div>
-            )}
               </motion.div>
             </div>
           )}
