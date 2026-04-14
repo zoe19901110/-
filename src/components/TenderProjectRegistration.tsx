@@ -259,7 +259,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
       <div className="flex items-center justify-between">
         <button 
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95"
+          className="flex items-center gap-2 px-6 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95 shadow-sm hover:shadow-md"
         >
           <Plus size={20} />
           新增项目登记
@@ -306,7 +306,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
         </div>
 
         <div className="flex gap-2">
-          <button className="px-8 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all">
+          <button className="px-8 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-sm hover:shadow-md transition-all active:scale-95">
             查询
           </button>
           <button 
@@ -315,7 +315,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
               setStatusFilter('全部');
               setDateFilter('');
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all"
+            className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm hover:shadow-md active:scale-95"
           >
             <Filter size={16} /> 重置
           </button>
@@ -392,7 +392,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
                       className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 group/btn ${
                         project.status === '放弃投标' 
                           ? 'text-slate-300 cursor-not-allowed' 
-                          : 'text-primary hover:bg-primary/5'
+                          : 'text-[#0052CC] hover:bg-[#0052CC]/5'
                       }`}
                       title={project.status === '放弃投标' ? '此项目已暂停' : '进入工作台'}
                     >
@@ -476,7 +476,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
               >
               <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white">
+                  <div className="size-10 bg-[#0052CC] rounded-xl flex items-center justify-center text-white">
                     <Briefcase size={24} />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900">{isEditing ? '编辑投标项目' : '新增投标项目'}</h3>
@@ -495,7 +495,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
                   {/* Import Section */}
                   {!isAnalyzed && !isAnalyzing && !isEditing && (
                     <div 
-                      className="border-2 border-dashed border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center gap-4 bg-slate-50/50 hover:bg-primary/5 hover:border-primary/30 transition-all cursor-pointer group shrink-0"
+                      className="border-2 border-dashed border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center gap-4 bg-slate-50/50 hover:bg-[#0052CC]/5 hover:border-[#0052CC]/30 transition-all cursor-pointer group shrink-0"
                       onClick={() => document.getElementById('file-upload')?.click()}
                     >
                       <input 
@@ -738,7 +738,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
                     <button 
                       onClick={handleSaveProject}
                       disabled={!analyzedData.projectName.trim()}
-                      className="flex-1 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 py-4 bg-[#0052CC] text-white rounded-2xl font-bold hover:bg-[#0052CC]/90 transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isEditing ? '保存修改' : '确认新增'}
                     </button>
@@ -772,7 +772,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmDialog(null)}
-                  className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50"
+                  className="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
                 >
                   取消
                 </button>
@@ -781,7 +781,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
                     confirmDialog.onConfirm();
                     setConfirmDialog(null);
                   }}
-                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20"
+                  className="flex-1 px-4 py-2 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                 >
                   确定
                 </button>

@@ -83,6 +83,19 @@ const Materials: React.FC<MaterialsProps> = ({ currentEnterprise }) => {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; folderId: string } | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent, folderId: string) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, folderId });
+  };
+
+  const closeContextMenu = () => setContextMenu(null);
+
+  React.useEffect(() => {
+    window.addEventListener('click', closeContextMenu);
+    return () => window.removeEventListener('click', closeContextMenu);
+  }, []);
 
   const renderFolder = (folder: FolderNode, level: number = 0) => {
     const isExpanded = expandedFolders.includes(folder.id);
@@ -92,38 +105,67 @@ const Materials: React.FC<MaterialsProps> = ({ currentEnterprise }) => {
     return (
       <div key={folder.id}>
         <div 
-          className={`flex items-center gap-1.5 py-2 px-2 rounded-lg cursor-pointer transition-colors mb-0.5 ${
-            isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-slate-50 text-slate-700'
+          className={`group/folder flex items-center justify-between py-2 px-2 rounded-xl cursor-pointer transition-all mb-0.5 ${
+            isSelected ? 'bg-blue-50 text-blue-600' : 'hover:bg-slate-50 text-slate-700'
           }`}
           style={{ paddingLeft: `${level * 16 + 8}px` }}
-          onClick={() => {
-            setSelectedFolder(folder.id);
-          }}
+          onClick={() => setSelectedFolder(folder.id)}
+          onContextMenu={(e) => handleContextMenu(e, folder.id)}
         >
-          <div 
-            className="w-4 h-4 flex items-center justify-center shrink-0 hover:bg-slate-200 rounded transition-colors"
+          <div className="flex items-center gap-1.5 flex-1 overflow-hidden">
+            <div 
+              className="w-4 h-4 flex items-center justify-center shrink-0 hover:bg-slate-200 rounded transition-colors"
+              onClick={(e) => {
+                if (hasChildren) {
+                  e.stopPropagation();
+                  setExpandedFolders(prev => 
+                    prev.includes(folder.id) ? prev.filter(id => id !== folder.id) : [...prev, folder.id]
+                  );
+                }
+              }}
+            >
+              {hasChildren ? (
+                isExpanded ? <ChevronDown size={14} className={isSelected ? "text-blue-600" : "text-slate-400"} /> : <ChevronRight size={14} className={isSelected ? "text-blue-600" : "text-slate-400"} />
+              ) : <span className="w-4" />}
+            </div>
+            
+            {isExpanded && hasChildren ? (
+              <FolderOpen size={16} className={isSelected ? "text-blue-600" : "text-slate-400"} />
+            ) : (
+              <Folder size={16} className={isSelected ? "text-blue-600" : "text-slate-400"} />
+            )}
+            
+            <div className="flex items-center gap-1 truncate">
+              <span className={`text-sm truncate select-none ${isSelected ? 'font-bold' : 'font-medium'}`}>
+                {folder.name}
+              </span>
+              <button 
+                className={`p-0.5 text-slate-400 hover:text-blue-600 transition-opacity opacity-0 ${isSelected ? 'group-hover/folder:opacity-100' : ''}`} 
+                title="重命名"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newName = prompt('请输入新的文件夹名称:', folder.name);
+                  if (newName) {
+                    // In a real app, update state here
+                    console.log(`Renaming folder ${folder.id} to ${newName}`);
+                  }
+                }}
+              >
+                <Edit2 size={12} />
+              </button>
+            </div>
+          </div>
+
+          <button 
+            className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all shrink-0" 
+            title="新增子目录"
             onClick={(e) => {
-              if (hasChildren) {
-                e.stopPropagation();
-                setExpandedFolders(prev => 
-                  prev.includes(folder.id) ? prev.filter(id => id !== folder.id) : [...prev, folder.id]
-                );
-              }
+              e.stopPropagation();
+              // Add logic here
             }}
           >
-            {hasChildren ? (
-              isExpanded ? <ChevronDown size={14} className={isSelected ? "text-primary" : "text-slate-400"} /> : <ChevronRight size={14} className={isSelected ? "text-primary" : "text-slate-400"} />
-            ) : <span className="w-4" />}
-          </div>
-          
-          {isExpanded && hasChildren ? (
-            <FolderOpen size={16} className={isSelected ? "text-primary" : "text-amber-500"} />
-          ) : (
-            <Folder size={16} className={isSelected ? "text-primary" : "text-amber-500"} />
-          )}
-          <span className={`text-sm truncate select-none ${isSelected ? 'font-bold' : 'font-medium'}`}>
-            {folder.name}
-          </span>
+            <Plus size={14} />
+          </button>
         </div>
         {isExpanded && hasChildren && (
           <div>
@@ -135,157 +177,167 @@ const Materials: React.FC<MaterialsProps> = ({ currentEnterprise }) => {
   };
 
   return (
-    <div className="space-y-6 h-[calc(100vh-120px)] flex flex-col">
-      {/* Header: Upload Button */}
-      <div className="flex items-center justify-end shrink-0">
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-[#0052CC] text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95">
-            <Plus size={20} />
-            上传文件
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-all active:scale-95">
-            <Upload size={18} />
-            批量导入
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-all active:scale-95">
-            <Download size={18} />
-            批量导出 {selectedFiles.length > 0 && `(${selectedFiles.length})`}
-          </button>
-        </div>
-      </div>
-
-      {/* Filters & Search */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="w-56 relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#0052CC] transition-colors" size={16} />
-            <input 
-              type="text" 
-              placeholder="搜索文件名称..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#0052CC]/20 focus:bg-white transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <div className="w-40 relative group">
-            <select 
-              className="w-full pl-4 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#0052CC]/20 focus:bg-white transition-all appearance-none cursor-pointer text-slate-600 font-medium"
-            >
-              <option value="全部">全部类型</option>
-              <option value="pdf">PDF</option>
-              <option value="word">Word</option>
-              <option value="image">图片</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-[#0052CC] transition-colors" size={16} />
-          </div>
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 h-[calc(100vh-120px)] flex overflow-hidden">
+      {/* Left: Folder Tree */}
+      <div className="w-80 border-r border-slate-100 p-6 flex flex-col shrink-0">
+        <div className="mb-6">
+          <h3 className="font-bold text-slate-900 text-lg">文档素材</h3>
         </div>
         
-        <div className="flex gap-2">
-          <button className="px-8 py-2 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-sm hover:shadow-md transition-all">
-            查询
+        <div className="mb-6">
+          <button className="w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-primary/30 hover:text-primary transition-all group">
+            <Plus size={18} className="group-hover:scale-110 transition-transform" /> 新增目录
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
-            <Filter size={16} /> 重置
-          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+          {initialFolders.map(folder => renderFolder(folder))}
         </div>
       </div>
 
-      {/* Main Content: Left/Right Split */}
-      <div className="flex gap-6 flex-1 min-h-0">
-        {/* Left: Folder Tree */}
-        <div className="w-72 bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col shrink-0">
-          <div className="flex items-center justify-between mb-4 px-2">
-            <h3 className="font-bold text-slate-800">知识库目录</h3>
-            <button className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors" title="新建文件夹">
-              <FolderPlus size={16} />
-            </button>
+      {/* Context Menu */}
+      {contextMenu && (
+        <div 
+          className="fixed z-[100] bg-white border border-slate-200 rounded-xl shadow-2xl py-1.5 min-w-[140px] animate-in fade-in zoom-in duration-200"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button 
+            className="w-full px-4 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
+            onClick={() => {
+              // In a real app, update state here to delete folder
+              console.log(`Deleting folder ${contextMenu.folderId}`);
+              closeContextMenu();
+            }}
+          >
+            <Trash2 size={14} />
+            删除目录
+          </button>
+        </div>
+      )}
+
+      {/* Right: File List */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-8 flex-1">
+            <h4 className="text-base font-bold text-slate-800 flex items-center gap-2 shrink-0">
+              <FolderOpen size={20} className="text-[#0052CC]" />
+              全部文档
+            </h4>
+            
+            <div className="max-w-md w-full relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#0052CC] transition-colors" size={18} />
+              <input 
+                type="text" 
+                placeholder="搜索文档名称..."
+                className="w-full pl-12 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#0052CC]/20 focus:bg-white transition-all shadow-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-            {initialFolders.map(folder => renderFolder(folder))}
+
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-2 px-6 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-md shadow-blue-500/20 transition-all active:scale-95">
+              <Plus size={18} />
+              上传材料
+            </button>
+            <button className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all shadow-sm active:scale-95">
+              <Trash2 size={18} className="text-slate-400" />
+              删除资料
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-500 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all">
+              <Download size={16} />
+              导出数据
+            </button>
           </div>
         </div>
 
-        {/* Right: File List */}
-        <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
-            <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <FolderOpen size={18} className="text-amber-500" />
-              当前目录文件
-            </h4>
-            <span className="text-xs text-slate-500 font-medium">共 {mockFiles.length} 个文件</span>
-          </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 bg-white z-10 shadow-sm">
-                <tr className="bg-slate-50/80 text-slate-400 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm">
-                  <th className="px-6 py-3 border-b border-slate-100 w-12">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse">
+            <thead className="sticky top-0 bg-white z-10">
+              <tr className="bg-slate-50/50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-100">
+                <th className="px-8 py-4 w-12">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                    checked={selectedFiles.length === mockFiles.length && mockFiles.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedFiles(mockFiles.map(f => f.id));
+                      } else {
+                        setSelectedFiles([]);
+                      }
+                    }}
+                  />
+                </th>
+                <th className="px-8 py-4">文件名</th>
+                <th className="px-8 py-4">类型</th>
+                <th className="px-8 py-4">大小</th>
+                <th className="px-8 py-4">上传人</th>
+                <th className="px-8 py-4">最后更新日期</th>
+                <th className="px-8 py-4 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {mockFiles
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map((file) => (
+                <tr key={file.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-8 py-4">
                     <input 
                       type="checkbox" 
                       className="rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
-                      checked={selectedFiles.length === mockFiles.length && mockFiles.length > 0}
+                      checked={selectedFiles.includes(file.id)}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedFiles(mockFiles.map(f => f.id));
+                          setSelectedFiles(prev => [...prev, file.id]);
                         } else {
-                          setSelectedFiles([]);
+                          setSelectedFiles(prev => prev.filter(id => id !== file.id));
                         }
                       }}
                     />
-                  </th>
-                  <th className="px-6 py-3 border-b border-slate-100">文件名称</th>
-                  <th className="px-6 py-3 border-b border-slate-100">大小</th>
-                  <th className="px-6 py-3 border-b border-slate-100">上传日期</th>
-                  <th className="px-6 py-3 border-b border-slate-100 text-right">操作</th>
+                  </td>
+                  <td className="px-8 py-4">
+                    <div className="flex items-center gap-4">
+                      <div className={`size-10 rounded-xl flex items-center justify-center shadow-sm ${
+                        file.type === 'ppt' ? 'bg-orange-50 text-orange-500' :
+                        file.type === 'pdf' ? 'bg-rose-50 text-rose-500' :
+                        file.type === 'image' ? 'bg-blue-50 text-blue-500' :
+                        file.type === 'zip' ? 'bg-purple-50 text-purple-500' :
+                        'bg-indigo-50 text-indigo-500'
+                      }`}>
+                        {file.type === 'image' ? <ImageIcon size={20} /> : <FileText size={20} />}
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors cursor-pointer">{file.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-8 py-4">
+                    <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-[11px] font-bold">
+                      {file.type === 'ppt' ? '技术材料' : file.type === 'pdf' ? '商务材料' : '其它'}
+                    </span>
+                  </td>
+                  <td className="px-8 py-4 text-sm text-slate-500 font-medium">{file.size}</td>
+                  <td className="px-8 py-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="size-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
+                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${file.id}`} alt="avatar" className="size-full object-cover" />
+                      </div>
+                      <span className="text-sm text-slate-600 font-medium">管理员</span>
+                    </div>
+                  </td>
+                  <td className="px-8 py-4 text-sm text-slate-500">{file.date}</td>
+                  <td className="px-8 py-4 text-right">
+                    <button className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all" title="编辑">
+                      <Edit2 size={18} />
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {mockFiles
-                  .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                  .map((file) => (
-                  <tr key={file.id} className="hover:bg-slate-50/80 transition-colors group">
-                    <td className="px-6 py-3">
-                      <input 
-                        type="checkbox" 
-                        className="rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
-                        checked={selectedFiles.includes(file.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedFiles(prev => [...prev, file.id]);
-                          } else {
-                            setSelectedFiles(prev => prev.filter(id => id !== file.id));
-                          }
-                        }}
-                      />
-                    </td>
-                    <td className="px-6 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`size-8 rounded-lg flex items-center justify-center shadow-sm ${
-                          file.type === 'ppt' ? 'bg-orange-50 text-orange-500' :
-                          file.type === 'pdf' ? 'bg-rose-50 text-rose-500' :
-                          file.type === 'image' ? 'bg-blue-50 text-blue-500' :
-                          file.type === 'zip' ? 'bg-purple-50 text-purple-500' :
-                          'bg-indigo-50 text-indigo-500'
-                        }`}>
-                          {file.type === 'image' ? <ImageIcon size={16} /> : <FileText size={16} />}
-                        </div>
-                        <span className="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors cursor-pointer">{file.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3 text-sm text-slate-500">{file.size}</td>
-                    <td className="px-6 py-3 text-sm text-slate-500">{file.date}</td>
-                    <td className="px-6 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors" title="导出/下载"><Download size={14} /></button>
-                        <button className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors" title="删除"><Trash2 size={14} /></button>
-                        <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="更多"><MoreVertical size={14} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-8 py-4 border-t border-slate-100 bg-slate-50/30">
           <Pagination 
             currentPage={currentPage}
             totalPages={Math.ceil(mockFiles.length / pageSize)}

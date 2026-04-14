@@ -95,7 +95,7 @@ const BidParsingList: React.FC<BidParsingListProps> = ({ onEnterDetail, currentE
               return;
             }
           }}
-          className={`flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`flex items-center gap-2 px-6 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95 shadow-sm hover:shadow-md ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <Plus size={20} />
           新增解析项目
@@ -276,7 +276,7 @@ const BidParsingList: React.FC<BidParsingListProps> = ({ onEnterDetail, currentE
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmDialog(null)}
-                  className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50"
+                  className="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
                 >
                   取消
                 </button>
@@ -285,7 +285,7 @@ const BidParsingList: React.FC<BidParsingListProps> = ({ onEnterDetail, currentE
                     confirmDialog.onConfirm();
                     setConfirmDialog(null);
                   }}
-                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20"
+                  className="flex-1 px-4 py-2 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                 >
                   确定
                 </button>

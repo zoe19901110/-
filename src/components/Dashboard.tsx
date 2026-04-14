@@ -280,7 +280,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
                           depositDeadline: '2026-05-19 17:00'
                         });
                       }}
-                      className={`bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 ${project.isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`bg-[#0052CC] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-blue-500/20 hover:bg-[#0052CC]/90 transition-all active:scale-95 ${project.isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       进入工作台
                     </button>
@@ -322,13 +322,13 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
                     <div 
                       key={day} 
                       className={`h-10 flex items-center justify-center text-sm font-medium rounded-lg cursor-pointer transition-colors relative
-                        ${isToday ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'hover:bg-slate-50'}
+                        ${isToday ? 'bg-[#0052CC] text-white shadow-lg shadow-blue-500/20' : 'hover:bg-slate-50'}
                         ${day > 30 ? 'text-slate-300' : ''}
                         ${(day === 4 || day === 5 || day === 11 || day === 12 || day === 18 || day === 19 || day === 25 || day === 26) ? 'text-red-400' : ''}
                       `}
                     >
                       {day}
-                      {hasEvent && !isToday && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary rounded-full"></span>}
+                      {hasEvent && !isToday && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#0052CC] rounded-full"></span>}
                       {isToday && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-400 rounded-full border border-white"></span>}
                     </div>
                   );
@@ -343,7 +343,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-1 h-10 bg-primary rounded-full shrink-0"></div>
+                  <div className="w-1 h-10 bg-[#0052CC] rounded-full shrink-0"></div>
                   <div>
                     <p className="text-xs font-bold text-primary">11-25 关键节点</p>
                     <p className="text-xs text-slate-500">智慧城市管理平台开标</p>
@@ -388,7 +388,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
               >
               <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white">
+                  <div className="size-10 bg-[#0052CC] rounded-xl flex items-center justify-center text-white">
                     <PlusCircle size={24} />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900">新增投标项目</h3>
@@ -408,7 +408,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
                   {!isAnalyzed && !isAnalyzing && (
                     <div 
                       onClick={handleFileUpload}
-                      className="border-2 border-dashed border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center gap-4 bg-slate-50/50 hover:bg-primary/5 hover:border-primary/30 transition-all cursor-pointer group shrink-0"
+                      className="border-2 border-dashed border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center gap-4 bg-slate-50/50 hover:bg-[#0052CC]/5 hover:border-[#0052CC]/30 transition-all cursor-pointer group shrink-0"
                     >
                       <div className="size-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
                         <UploadCloud size={32} />
@@ -634,7 +634,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
                         resetModal();
                       }}
                       disabled={!analyzedData.projectName.trim()}
-                      className="flex-1 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 py-4 bg-[#0052CC] text-white rounded-2xl font-bold hover:bg-[#0052CC]/90 transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       确认并进入工作台
                     </button>

@@ -489,7 +489,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
                 }
                 setShowCollaborativeSharing(true);
               }}
-              className={`px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`px-6 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95 shadow-sm hover:shadow-md flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <Share2 size={16} /> 协作分享
             </button>
@@ -1064,7 +1064,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
 
               {activeRightTab !== 'resource-center' && (
                 <div className="p-6 border-t border-slate-100 bg-slate-50/50">
-                  <button className="w-full py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2">
+                  <button className="w-full py-3 bg-[#0052CC] text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 hover:bg-[#0052CC]/90 transition-all active:scale-95 flex items-center justify-center gap-2">
                     <Download size={18} />
                     导出分析报告
                   </button>
@@ -1123,7 +1123,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
                           setIsToolInstalled(true);
                           // In a real app, this would trigger a download
                         }}
-                        className="w-full py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                        className="w-full py-3 bg-[#0052CC] text-white rounded-xl font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95 shadow-lg shadow-blue-500/20"
                       >
                         立即下载安装包
                       </button>
@@ -1380,7 +1380,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmDialog(null)}
-                  className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50"
+                  className="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
                 >
                   取消
                 </button>
@@ -1389,7 +1389,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
                     confirmDialog.onConfirm();
                     setConfirmDialog(null);
                   }}
-                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20"
+                  className="flex-1 px-4 py-2 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                 >
                   确定
                 </button>
@@ -1444,7 +1444,7 @@ const FileProductionView = ({ onBack, isPaused, onShare }: { onBack: () => void,
               return;
             }
           }}
-          className={`px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`px-6 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95 shadow-sm hover:shadow-md ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           导出标书
         </button>
@@ -2563,7 +2563,7 @@ const ResourceCenterView = ({ onBack, isPaused, insights, setInsights }: { onBac
                   </div>
                   <button 
                     onClick={handleAddInsight}
-                    className="px-6 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                    className="px-6 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95 shadow-lg shadow-blue-500/20"
                   >
                     发布
                   </button>
@@ -3357,7 +3357,7 @@ const ArchiveRegisterView = ({ onBack, isPaused }: { onBack: () => void, isPause
           </button>
           <button 
             onClick={onBack} 
-            className="px-8 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+            className="px-8 py-2.5 bg-[#0052CC] text-white rounded-xl font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95 shadow-lg shadow-blue-500/20"
           >
             保存全部
           </button>
@@ -4101,7 +4101,7 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
                     <div className="flex gap-4 pt-4">
                       <button 
                         onClick={applyChanges}
-                        className="flex-1 py-4 bg-primary text-white rounded-2xl font-black shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                        className="flex-1 py-4 bg-[#0052CC] text-white rounded-2xl font-black shadow-lg shadow-blue-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 flex items-center justify-center gap-2"
                       >
                         <Check size={20} /> 确认并替换更新
                       </button>
@@ -4552,7 +4552,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                 }
                 setIsEditing(true);
               }}
-              className={`px-4 py-2 border border-primary text-primary rounded-lg text-sm font-bold hover:bg-primary/5 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`px-4 py-2 border border-[#0052CC] text-[#0052CC] rounded-xl text-sm font-bold hover:bg-[#0052CC]/5 transition-all active:scale-95 flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <Edit3 size={16} />
               修改记录
@@ -4566,7 +4566,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                 }
                 handleSave();
               }}
-              className={`px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`px-4 py-2 bg-[#0052CC] text-white rounded-xl text-sm font-bold shadow-md shadow-blue-500/20 hover:bg-[#0052CC]/90 transition-all active:scale-95 flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <Check size={16} />
               保存全部
@@ -4827,7 +4827,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
                             <span className="text-[10px] text-slate-400">已选 {tenderPersonnel.length} 人</span>
                             <button 
                               onClick={() => setShowPersonnelDropdown(false)}
-                              className="px-4 py-1.5 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/90 transition-all shadow-sm"
+                              className="px-4 py-1.5 bg-[#0052CC] text-white rounded-xl text-xs font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95 shadow-sm"
                             >
                               完成
                             </button>
@@ -5510,7 +5510,7 @@ const AnnotationView = ({ onBack, isPaused }: { onBack: () => void, isPaused: bo
           <button className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2">
             <Download size={14} /> 导出批注
           </button>
-          <button className="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20">
+          <button className="px-3 py-1.5 bg-[#0052CC] text-white rounded-xl text-xs font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-blue-500/20">
             <Share2 size={14} /> 协作分享
           </button>
         </div>

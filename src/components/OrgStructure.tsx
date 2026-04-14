@@ -500,28 +500,28 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-          <span className="w-1.5 h-6 bg-primary rounded-full"></span>
+          <span className="w-1.5 h-6 bg-[#0052CC] rounded-full"></span>
           组织架构管理
         </h3>
         <div className="flex gap-3">
           <button 
             onClick={handleResetData}
-            className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-slate-600 transition-colors"
+            className="flex items-center justify-center size-10 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-95"
             title="重置数据"
           >
-            <RefreshCw size={16} />
+            <RefreshCw size={18} />
           </button>
           {activeSubTab === 'dept' && (
             <>
               <button 
                 onClick={handleAddDept}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
+                className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm hover:shadow-md active:scale-95"
               >
                 <FolderPlus size={16} /> 新增部门
               </button>
               <button 
                 onClick={handleAddUser}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+                className="flex items-center gap-2 px-6 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all shadow-sm hover:shadow-md active:scale-95"
               >
                 <UserPlus size={16} /> 新增人员
               </button>
@@ -534,7 +534,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                 setRoleForm({ name: '', desc: '查看自己创建的数据' });
                 setShowRoleModal(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all shadow-sm hover:shadow-md active:scale-95"
             >
               <Shield size={16} /> 新增角色
             </button>
@@ -559,7 +559,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
             {activeSubTab === tab.id && (
               <motion.div 
                 layoutId="activeSubTab"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0052CC]"
               />
             )}
           </button>
@@ -599,15 +599,15 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                         </div>
                         <button 
                           onClick={() => setSelectedDeptId(dept.id)}
-                          className={`flex-1 flex items-center justify-between px-3 py-2.5 rounded-lg transition-all text-left ${
-                            selectedDeptId === dept.id ? 'bg-primary/5 text-primary' : 'hover:bg-slate-50 text-slate-700'
+                          className={`flex-1 flex items-center justify-between px-3 py-2.5 rounded-xl transition-all text-left ${
+                            selectedDeptId === dept.id ? 'bg-blue-50 text-[#0052CC]' : 'hover:bg-slate-50 text-slate-700'
                           }`}
                         >
                           <div className="flex items-center gap-2">
-                            <Building size={16} className={selectedDeptId === dept.id ? 'text-primary' : 'text-slate-400'} />
+                            <Building size={16} className={selectedDeptId === dept.id ? 'text-[#0052CC]' : 'text-slate-400'} />
                             <span className="text-sm font-medium">{dept.name}</span>
                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                              selectedDeptId === dept.id ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'
+                              selectedDeptId === dept.id ? 'bg-blue-100 text-[#0052CC]' : 'bg-slate-100 text-slate-400'
                             }`}>
                               {dept.count}
                             </span>
@@ -617,7 +617,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleEditDept(dept); }}
-                          className="p-1 text-slate-400 hover:text-primary hover:bg-white rounded shadow-sm"
+                          className="p-1 text-slate-400 hover:text-[#0052CC] hover:bg-white rounded shadow-sm"
                         >
                           <Edit2 size={12} />
                         </button>
@@ -668,7 +668,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                       />
                     </div>
                     {selectedDeptId && (
-                      <div className="flex items-center gap-2 px-2 py-1 bg-primary/10 text-primary rounded-md text-xs font-bold">
+                      <div className="flex items-center gap-2 px-2 py-1 bg-[#0052CC]/10 text-[#0052CC] rounded-md text-xs font-bold">
                         {departments.find(d => d.id === selectedDeptId)?.name}
                         <button onClick={() => setSelectedDeptId(null)}><X size={12} /></button>
                       </div>
@@ -734,7 +734,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/5 text-primary text-[10px] font-bold border border-primary/10">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-[#0052CC]/5 text-[#0052CC] text-[10px] font-bold border border-[#0052CC]/10">
                             {roles.find(r => r.id === user.roleId)?.name}
                           </span>
                         </td>
@@ -760,7 +760,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                           <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button 
                               onClick={() => handleEditUser(user)}
-                              className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                              className="p-2 text-slate-400 hover:text-[#0052CC] hover:bg-[#0052CC]/5 rounded-lg transition-colors"
                               title="编辑"
                             >
                               <Edit2 size={14} />
@@ -808,7 +808,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                 <div key={role.id} className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                      <div className="size-10 bg-[#0052CC]/10 rounded-xl flex items-center justify-center text-[#0052CC]">
                         <Shield size={20} />
                       </div>
                       <h4 className="text-lg font-bold text-slate-900">{role.name}</h4>
@@ -820,7 +820,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                           setRoleForm({ name: role.name, desc: role.desc });
                           setShowRoleModal(true);
                         }}
-                        className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-[#0052CC] hover:bg-[#0052CC]/5 rounded-lg transition-colors"
                         title="编辑"
                       >
                         <Edit2 size={16} />
@@ -873,7 +873,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                         key={role.id}
                         onClick={() => setSelectedRoleId(role.id)}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all text-left ${
-                          selectedRoleId === role.id ? 'bg-primary text-white shadow-md' : 'hover:bg-slate-100 text-slate-600'
+                          selectedRoleId === role.id ? 'bg-[#0052CC] text-white shadow-md' : 'hover:bg-slate-100 text-slate-600'
                         }`}
                       >
                         <span className="text-sm font-bold">{role.name}</span>
@@ -894,7 +894,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                     </div>
                     <button 
                       onClick={() => alert('权限配置已保存')}
-                      className="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/90 shadow-md shadow-primary/20"
+                      className="px-4 py-2 bg-[#0052CC] text-white rounded-lg text-xs font-bold hover:bg-[#0052CC]/90 shadow-md shadow-blue-500/20"
                     >
                       保存配置
                     </button>
@@ -923,7 +923,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                                   checked={permissions[selectedRoleId]?.[module.id]?.view || false}
                                   onChange={(e) => handlePermissionChange(module.id, 'view', e.target.checked)}
                                 />
-                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0052CC]"></div>
                               </label>
                             </td>
                             <td className="px-8 py-5 text-center">
@@ -934,7 +934,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                                   checked={permissions[selectedRoleId]?.[module.id]?.edit || false}
                                   onChange={(e) => handlePermissionChange(module.id, 'edit', e.target.checked)}
                                 />
-                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0052CC]"></div>
                               </label>
                             </td>
                           </tr>
@@ -978,13 +978,13 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
               <div className="flex gap-3 mt-8">
                 <button 
                   onClick={() => setShowDeptModal(false)}
-                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50"
+                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
                 >
                   取消
                 </button>
                 <button 
                   onClick={handleSaveDept}
-                  className="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20"
+                  className="flex-1 px-4 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                 >
                   确定
                 </button>
@@ -1167,7 +1167,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                     {editingUser && (
                       <button 
                         onClick={handleResetPassword}
-                        className="text-[10px] font-bold text-primary hover:bg-primary/5 px-2 py-1 rounded-md transition-colors flex items-center gap-1"
+                        className="text-[10px] font-bold text-[#0052CC] hover:bg-[#0052CC]/5 px-2 py-1 rounded-md transition-colors flex items-center gap-1"
                       >
                         <Key size={10} /> 重置密码
                       </button>
@@ -1178,13 +1178,13 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
               <div className="flex gap-3 mt-8">
                 <button 
                   onClick={() => setShowUserModal(false)}
-                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50"
+                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
                 >
                   取消
                 </button>
                 <button 
                   onClick={handleSaveUser}
-                  className="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20"
+                  className="flex-1 px-4 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                 >
                   确定
                 </button>
@@ -1258,13 +1258,13 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                     setShowRoleModal(false);
                     setEditingRole(null);
                   }}
-                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-white"
+                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-white transition-all active:scale-95"
                 >
                   取消
                 </button>
                 <button 
                   onClick={handleSaveRole}
-                  className="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20"
+                  className="flex-1 px-4 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                 >
                   确定
                 </button>
@@ -1304,7 +1304,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmDialog(null)}
-                  className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50"
+                  className="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
                 >
                   取消
                 </button>
@@ -1313,7 +1313,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                     confirmDialog.onConfirm();
                     setConfirmDialog(null);
                   }}
-                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20"
+                  className="flex-1 px-4 py-2 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                 >
                   确定
                 </button>

@@ -27,6 +27,7 @@ import {
   Edit2,
   Trash2,
   User,
+  Image,
   Handshake,
   HeartPulse,
   Paperclip,
@@ -59,6 +60,18 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
   const [personnelMode, setPersonnelMode] = useState<'add' | 'edit'>('add');
   const [personnelTab, setPersonnelTab] = useState('basic');
   const [showPerformanceDetail, setShowPerformanceDetail] = useState(false);
+  const [showQualificationDetail, setShowQualificationDetail] = useState(false);
+  const [editingQualificationIndex, setEditingQualificationIndex] = useState<number | null>(null);
+  const [qualificationFormData, setQualificationFormData] = useState<any>({
+    employer: '上线运维测试有限公司',
+    name: '',
+    registrationNumber: '',
+    qualificationSequence: '',
+    startDate: '',
+    endDate: '',
+    sequences: [] as any[],
+    attachments: [] as any[]
+  });
   const [editingPerformanceIndex, setEditingPerformanceIndex] = useState<number | null>(null);
   const [performanceDetailTab, setPerformanceDetailTab] = useState('notification');
   const [performanceFormData, setPerformanceFormData] = useState<any>({
@@ -72,6 +85,19 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
     amountUnit: '元',
     winningDate: '',
     constructionLocation: '',
+    contractAmount: '',
+    settlementAmount: '',
+    contractPeriod: '',
+    signingDate: '',
+    actualPerformancePeriod: '',
+    completionAcceptanceLeader: '',
+    completionFilingNumber: '',
+    actualCost: '',
+    actualArea: '',
+    otherEngineeringFeatures: '',
+    projectQuality: '',
+    actualCommencementDate: '',
+    actualCompletionDate: '',
     attachments: {
       notification: [] as any[],
       contract: [] as any[],
@@ -319,10 +345,10 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
 
       {/* Action Buttons */}
       <div className="flex gap-2 ml-auto">
-        <button className="px-8 py-2 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-sm hover:shadow-md transition-all">
+        <button className="px-8 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-sm hover:shadow-md transition-all active:scale-95">
           查询
         </button>
-        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+        <button className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm hover:shadow-md active:scale-95">
           <Filter size={16} /> 重置
         </button>
       </div>
@@ -1073,9 +1099,9 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                                     setEditingPerformanceIndex(null);
                                     setShowPerformanceDetail(true);
                                   }}
-                                  className="flex items-center gap-2 px-4 py-2 bg-[#0052CC] text-white rounded text-xs font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95"
+                                  className="flex items-center gap-2 px-6 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95 shadow-sm hover:shadow-md"
                                 >
-                                  <Plus size={14} /> 新增业绩
+                                  <Plus size={16} /> 新增业绩
                                 </button>
                                 <button 
                                   onClick={() => {
@@ -1085,9 +1111,9 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                                       setSelectedItems(new Set());
                                     }
                                   }}
-                                  className="flex items-center gap-2 px-4 py-2 bg-white text-[#0052CC] border border-[#0052CC] rounded text-xs font-bold hover:bg-blue-50 transition-all active:scale-95"
+                                  className="flex items-center gap-2 px-6 py-2.5 bg-white text-[#0052CC] border border-[#0052CC] rounded-xl text-sm font-bold hover:bg-blue-50 transition-all active:scale-95 shadow-sm hover:shadow-md"
                                 >
-                                  <Trash2 size={14} /> 删除投标业绩
+                                  <Trash2 size={16} /> 删除投标业绩
                                 </button>
                               </div>
 
@@ -1119,11 +1145,11 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
 
                                 {/* Action Buttons */}
                                 <div className="flex items-center gap-2">
-                                  <button className="px-8 py-2 bg-[#0052CC] text-white rounded-lg text-xs font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95">
+                                  <button className="px-8 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95 shadow-sm hover:shadow-md">
                                     查询
                                   </button>
-                                  <button className="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-50 transition-all active:scale-95 flex items-center gap-2">
-                                    <Filter size={14} />
+                                  <button className="px-6 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+                                    <Filter size={16} />
                                     重置
                                   </button>
                                 </div>
@@ -1215,7 +1241,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                               initial={{ opacity: 0, x: 20 }}
                               animate={{ opacity: 1, x: 0 }}
                               exit={{ opacity: 0, x: -20 }}
-                              className="flex flex-col min-h-full bg-slate-50 rounded-b-3xl"
+                              className="absolute inset-0 z-20 bg-white flex flex-col"
                             >
                               {/* Form Header */}
                               <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
@@ -1242,167 +1268,345 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                               </div>
 
                               {/* Form Content */}
-                              <div className="flex-1 flex">
-                                {/* Left: Upload */}
-                                <div className="w-48 bg-white border-r border-slate-200 p-6 flex flex-col items-center">
-                                  <div className="w-full aspect-square bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all group">
-                                    <Plus size={24} className="text-slate-300 group-hover:text-blue-500" />
-                                    <span className="text-xs font-bold text-slate-400 group-hover:text-blue-600">上传图片</span>
-                                  </div>
-                                  <div className="mt-6 space-y-2">
-                                    <h5 className="text-xs font-bold text-slate-900">证照照片要求</h5>
-                                    <p className="text-[10px] text-slate-400 leading-relaxed">
-                                      支持格式：jpg、jpeg、bmp、png<br />
-                                      文件大小上限：5M
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Middle: Preview */}
-                                <div className="flex-1 bg-slate-100/50 p-8 flex items-center justify-center relative">
-                                  <div className="flex flex-col items-center gap-4 text-slate-300">
-                                    <ImageIcon size={64} strokeWidth={1} />
-                                    <p className="text-sm font-medium">请上传证照图片</p>
+                              <div className="flex-1 flex overflow-y-auto custom-scrollbar">
+                                {/* Left: Upload Actions */}
+                                <div className="w-48 p-6 border-r border-slate-100 bg-white space-y-6 shrink-0">
+                                  <div className="space-y-4">
+                                    <div className="aspect-square border border-slate-200 border-dashed rounded-lg flex flex-col items-center justify-center bg-slate-50 group hover:border-blue-400 transition-colors cursor-pointer">
+                                      <Plus size={24} className="text-blue-600 mb-1" />
+                                      <span className="text-[11px] font-bold text-blue-600">上传图片</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <p className="text-xs font-bold text-slate-500">证照照片要求</p>
+                                      <div className="space-y-1">
+                                        <p className="text-[10px] text-slate-400 leading-relaxed">支持格式：jpg、jpeg、bmp、png</p>
+                                        <p className="text-[10px] text-slate-400 leading-relaxed">文件大小上限：5M</p>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
 
+                                {/* Center: Image Preview Area */}
+                                <div className="flex-1 bg-slate-50/30 flex items-center justify-center p-12">
+                                  <div className="w-full max-w-md aspect-[4/3] border border-slate-200 border-dashed rounded-xl bg-white flex flex-col items-center justify-center text-slate-300">
+                                    <Image size={64} className="mb-4 opacity-20" />
+                                    <p className="text-xs font-bold text-slate-400">请上传证照照片</p>
+                                  </div>
+                                </div>
                                 {/* Right: Fields */}
-                                <div className="w-96 bg-white border-l border-slate-200 p-6">
-                                <div className="space-y-4">
-                                  <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                                      <span className="text-red-500">*</span> 标段（包）名称
-                                    </label>
-                                    <input 
-                                      type="text"
-                                      placeholder="请输入"
-                                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                                      value={performanceFormData.packageName}
-                                      onChange={(e) => setPerformanceFormData({...performanceFormData, packageName: e.target.value})}
-                                    />
-                                  </div>
-                                  <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                                      <span className="text-red-500">*</span> 标段（包）编号
-                                    </label>
-                                    <input 
-                                      type="text"
-                                      placeholder="请输入"
-                                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                                      value={performanceFormData.packageCode}
-                                      onChange={(e) => setPerformanceFormData({...performanceFormData, packageCode: e.target.value})}
-                                    />
-                                  </div>
-                                  <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-slate-500">交易甲方</label>
-                                    <input 
-                                      type="text"
-                                      placeholder="请输入"
-                                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                                      value={performanceFormData.client}
-                                      onChange={(e) => setPerformanceFormData({...performanceFormData, client: e.target.value})}
-                                    />
-                                  </div>
-                                  <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-slate-500">交易甲方联系人/电话</label>
-                                    <input 
-                                      type="text"
-                                      placeholder="请输入"
-                                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                                      value={performanceFormData.clientContact}
-                                      onChange={(e) => setPerformanceFormData({...performanceFormData, clientContact: e.target.value})}
-                                    />
-                                  </div>
-                                  <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                                      <span className="text-red-500">*</span> 项目负责人
-                                    </label>
-                                    <input 
-                                      type="text"
-                                      placeholder="请输入"
-                                      className="w-full px-4 py-2 bg-slate-100 border border-slate-200 rounded-xl text-sm outline-none text-slate-500"
-                                      value={performanceFormData.projectLeader}
-                                      onChange={(e) => setPerformanceFormData({...performanceFormData, projectLeader: e.target.value})}
-                                    />
-                                  </div>
-                                  <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-slate-500">原项目负责人已不在公司</label>
-                                    <div className="flex items-center gap-6 pt-1">
-                                      <label className="flex items-center gap-2 cursor-pointer group">
-                                        <input 
-                                          type="radio" 
-                                          name="leaderLeft" 
-                                          className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
-                                          checked={performanceFormData.leaderLeftCompany === '是'}
-                                          onChange={() => setPerformanceFormData({...performanceFormData, leaderLeftCompany: '是'})}
-                                        />
-                                        <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">是</span>
-                                      </label>
-                                      <label className="flex items-center gap-2 cursor-pointer group">
-                                        <input 
-                                          type="radio" 
-                                          name="leaderLeft" 
-                                          className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
-                                          checked={performanceFormData.leaderLeftCompany === '否'}
-                                          onChange={() => setPerformanceFormData({...performanceFormData, leaderLeftCompany: '否'})}
-                                        />
-                                        <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">否</span>
-                                      </label>
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                      <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                                        <span className="text-red-500">*</span> 中标金额
-                                      </label>
-                                      <input 
-                                        type="text"
-                                        placeholder="请输入"
-                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                                        value={performanceFormData.winningAmount}
-                                        onChange={(e) => setPerformanceFormData({...performanceFormData, winningAmount: e.target.value})}
-                                      />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                      <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                                        <span className="text-red-500">*</span> 中标单位
-                                      </label>
-                                      <select 
-                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none"
-                                        value={performanceFormData.amountUnit}
-                                        onChange={(e) => setPerformanceFormData({...performanceFormData, amountUnit: e.target.value})}
-                                      >
-                                        <option value="元">元</option>
-                                        <option value="万元">万元</option>
-                                      </select>
-                                    </div>
-                                  </div>
-                                  <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-slate-500">中标时间</label>
-                                    <div className="relative">
-                                      <input 
-                                        type="date"
-                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                                        value={performanceFormData.winningDate}
-                                        onChange={(e) => setPerformanceFormData({...performanceFormData, winningDate: e.target.value})}
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-slate-500">建设地点</label>
-                                    <input 
-                                      type="text"
-                                      placeholder="请输入"
-                                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                                      value={performanceFormData.constructionLocation}
-                                      onChange={(e) => setPerformanceFormData({...performanceFormData, constructionLocation: e.target.value})}
-                                    />
+                                <div className="w-[420px] p-8 border-l border-slate-100 overflow-y-auto bg-white shrink-0">
+                                  <div className="space-y-6">
+                                    {performanceDetailTab === 'notification' ? (
+                                      <>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                                            <span className="text-red-500">*</span> 标段（包）名称
+                                          </label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={performanceFormData.packageName}
+                                            onChange={(e) => setPerformanceFormData({...performanceFormData, packageName: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                                            <span className="text-red-500">*</span> 标段（包）编号
+                                          </label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={performanceFormData.packageCode}
+                                            onChange={(e) => setPerformanceFormData({...performanceFormData, packageCode: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">交易甲方</label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={performanceFormData.client}
+                                            onChange={(e) => setPerformanceFormData({...performanceFormData, client: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">交易甲方联系人/电话</label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={performanceFormData.clientContact}
+                                            onChange={(e) => setPerformanceFormData({...performanceFormData, clientContact: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                                            <span className="text-red-500">*</span> 项目负责人
+                                          </label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入"
+                                            className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-lg text-xs outline-none text-slate-500 cursor-not-allowed"
+                                            value={performanceFormData.projectLeader}
+                                            readOnly
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">原项目负责人已不在公司</label>
+                                          <div className="flex items-center gap-6 pt-1">
+                                            <label className="flex items-center gap-2 cursor-pointer group">
+                                              <input 
+                                                type="radio" 
+                                                name="leaderLeft" 
+                                                className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
+                                                checked={performanceFormData.leaderLeftCompany === '是'}
+                                                onChange={() => setPerformanceFormData({...performanceFormData, leaderLeftCompany: '是'})}
+                                              />
+                                              <span className="text-xs text-slate-600 group-hover:text-slate-900 transition-colors">是</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer group">
+                                              <input 
+                                                type="radio" 
+                                                name="leaderLeft" 
+                                                className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
+                                                checked={performanceFormData.leaderLeftCompany === '否'}
+                                                onChange={() => setPerformanceFormData({...performanceFormData, leaderLeftCompany: '否'})}
+                                              />
+                                              <span className="text-xs text-slate-600 group-hover:text-slate-900 transition-colors">否</span>
+                                            </label>
+                                          </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                          <div className="space-y-2">
+                                            <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                                              <span className="text-red-500">*</span> 中标金额
+                                            </label>
+                                            <input 
+                                              type="text"
+                                              placeholder="请输入"
+                                              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                              value={performanceFormData.winningAmount}
+                                              onChange={(e) => setPerformanceFormData({...performanceFormData, winningAmount: e.target.value})}
+                                            />
+                                          </div>
+                                          <div className="space-y-2">
+                                            <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                                              <span className="text-red-500">*</span> 中标单位
+                                            </label>
+                                            <div className="relative">
+                                              <select 
+                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all appearance-none"
+                                                value={performanceFormData.amountUnit}
+                                                onChange={(e) => setPerformanceFormData({...performanceFormData, amountUnit: e.target.value})}
+                                              >
+                                                <option value="元">元</option>
+                                                <option value="万元">万元</option>
+                                              </select>
+                                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">中标时间</label>
+                                          <div className="relative">
+                                            <input 
+                                              type="date"
+                                              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                              value={performanceFormData.winningDate}
+                                              onChange={(e) => setPerformanceFormData({...performanceFormData, winningDate: e.target.value})}
+                                            />
+                                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
+                                          </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">建设地点</label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={performanceFormData.constructionLocation}
+                                            onChange={(e) => setPerformanceFormData({...performanceFormData, constructionLocation: e.target.value})}
+                                          />
+                                        </div>
+                                      </>
+                                    ) : performanceDetailTab === 'contract' ? (
+                                      <>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">合同金额（元）</label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={performanceFormData.contractAmount}
+                                            onChange={(e) => setPerformanceFormData({...performanceFormData, contractAmount: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">合同结算金额（元）</label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={performanceFormData.settlementAmount}
+                                            onChange={(e) => setPerformanceFormData({...performanceFormData, settlementAmount: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">合同期限</label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={performanceFormData.contractPeriod}
+                                            onChange={(e) => setPerformanceFormData({...performanceFormData, contractPeriod: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">合同签署时间</label>
+                                          <div className="relative">
+                                            <input 
+                                              type="date"
+                                              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                              value={performanceFormData.signingDate}
+                                              onChange={(e) => setPerformanceFormData({...performanceFormData, signingDate: e.target.value})}
+                                            />
+                                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
+                                          </div>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">原项目负责人已不在公司</label>
+                                          <div className="flex items-center gap-6 pt-1">
+                                            <label className="flex items-center gap-2 cursor-pointer group">
+                                              <input 
+                                                type="radio" 
+                                                name="leaderLeftCompletion" 
+                                                className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
+                                                checked={performanceFormData.leaderLeftCompany === '是'}
+                                                onChange={() => setPerformanceFormData({...performanceFormData, leaderLeftCompany: '是'})}
+                                              />
+                                              <span className="text-xs text-slate-600 group-hover:text-slate-900 transition-colors">是</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer group">
+                                              <input 
+                                                type="radio" 
+                                                name="leaderLeftCompletion" 
+                                                className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
+                                                checked={performanceFormData.leaderLeftCompany === '否'}
+                                                onChange={() => setPerformanceFormData({...performanceFormData, leaderLeftCompany: '否'})}
+                                              />
+                                              <span className="text-xs text-slate-600 group-hover:text-slate-900 transition-colors">否</span>
+                                            </label>
+                                          </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">实际履行期限</label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={performanceFormData.actualPerformancePeriod}
+                                            onChange={(e) => setPerformanceFormData({...performanceFormData, actualPerformancePeriod: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">竣工验收项目负责人</label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入/选择竣工验收项目负责人"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={performanceFormData.completionAcceptanceLeader}
+                                            onChange={(e) => setPerformanceFormData({...performanceFormData, completionAcceptanceLeader: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">竣工备案编号</label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={performanceFormData.completionFilingNumber}
+                                            onChange={(e) => setPerformanceFormData({...performanceFormData, completionFilingNumber: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                          <div className="space-y-2">
+                                            <label className="text-xs font-bold text-slate-500">实际造价（万元）</label>
+                                            <input 
+                                              type="text"
+                                              placeholder="请输入"
+                                              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                              value={performanceFormData.actualCost}
+                                              onChange={(e) => setPerformanceFormData({...performanceFormData, actualCost: e.target.value})}
+                                            />
+                                          </div>
+                                          <div className="space-y-2">
+                                            <label className="text-xs font-bold text-slate-500">实际面积（平方米）</label>
+                                            <input 
+                                              type="text"
+                                              placeholder="请输入"
+                                              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                              value={performanceFormData.actualArea}
+                                              onChange={(e) => setPerformanceFormData({...performanceFormData, actualArea: e.target.value})}
+                                            />
+                                          </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">其他工程特征指标</label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={performanceFormData.otherEngineeringFeatures}
+                                            onChange={(e) => setPerformanceFormData({...performanceFormData, otherEngineeringFeatures: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">工程质量</label>
+                                          <input 
+                                            type="text"
+                                            placeholder="请输入"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={performanceFormData.projectQuality}
+                                            onChange={(e) => setPerformanceFormData({...performanceFormData, projectQuality: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">实际开工日期</label>
+                                          <div className="relative">
+                                            <input 
+                                              type="date"
+                                              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                              value={performanceFormData.actualCommencementDate}
+                                              onChange={(e) => setPerformanceFormData({...performanceFormData, actualCommencementDate: e.target.value})}
+                                            />
+                                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
+                                          </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500">实际竣工验收日期</label>
+                                          <div className="relative">
+                                            <input 
+                                              type="date"
+                                              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                              value={performanceFormData.actualCompletionDate}
+                                              onChange={(e) => setPerformanceFormData({...performanceFormData, actualCompletionDate: e.target.value})}
+                                            />
+                                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
+                                          </div>
+                                        </div>
+                                      </>
+                                    )}
                                   </div>
                                 </div>
                               </div>
-                            </div>
 
-                            {/* Form Footer */}
+                              {/* Form Footer */}
                             <div className="bg-white border-t border-slate-200 px-6 py-4 flex items-center justify-center gap-4">
                               <button 
                                 onClick={() => {
@@ -1415,13 +1619,322 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                                   setPersonnelFormData({...personnelFormData, performance: newList});
                                   setShowPerformanceDetail(false);
                                 }}
-                                className="px-8 py-2 bg-[#0052CC] text-white rounded-lg text-sm font-bold hover:bg-[#0052CC]/90 transition-all shadow-sm"
+                                className="px-8 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all shadow-sm hover:shadow-md active:scale-95"
                               >
                                 保存
                               </button>
                               <button 
                                 onClick={() => setShowPerformanceDetail(false)}
-                                className="px-8 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all"
+                                className="px-8 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all shadow-sm hover:shadow-md active:scale-95"
+                              >
+                                取消
+                              </button>
+                            </div>
+                        </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
+
+                  {personnelTab === 'qualifications' && (
+                    <div className="flex flex-col h-full">
+                      <AnimatePresence mode="wait">
+                        {!showQualificationDetail ? (
+                          <motion.div 
+                            key="list"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="space-y-6 flex flex-col h-full"
+                          >
+
+                            <div className="mx-5 flex-1 overflow-hidden border border-slate-200 rounded-2xl bg-white">
+                              <table className="w-full text-left border-collapse">
+                                <thead>
+                                  <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                                    <th className="px-4 py-3 w-10 text-center">
+                                      <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                                    </th>
+                                    <th className="px-4 py-3">姓名</th>
+                                    <th className="px-4 py-3">资格序列</th>
+                                    <th className="px-4 py-3">有效期</th>
+                                    <th className="px-4 py-3">资格证书编号</th>
+                                    <th className="px-4 py-3 text-center">操作</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                  {(personnelFormData.qualifications || [])
+                                    .filter((q: any) => 
+                                      !qualificationSearch || 
+                                      q.personName?.toLowerCase().includes(qualificationSearch.toLowerCase()) ||
+                                      q.qualificationName?.toLowerCase().includes(qualificationSearch.toLowerCase())
+                                    )
+                                    .map((item: any, idx: number) => (
+                                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                                      <td className="px-4 py-3 text-center">
+                                        <input 
+                                          type="checkbox" 
+                                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                                          checked={item.selected}
+                                          onChange={(e) => {
+                                            const newList = [...personnelFormData.qualifications];
+                                            newList[idx].selected = e.target.checked;
+                                            setPersonnelFormData({...personnelFormData, qualifications: newList});
+                                          }}
+                                        />
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        <div className="flex items-center gap-2">
+                                          <div className="size-8 bg-slate-50 text-slate-400 rounded flex items-center justify-center shrink-0">
+                                            <User size={16} />
+                                          </div>
+                                          <span className="text-xs font-bold text-slate-700">{item.personName || '-'}</span>
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        <span className="text-xs font-bold text-blue-600">{item.qualificationName || '-'}</span>
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        <span className="text-xs text-slate-500">
+                                          {item.startDate || '-'} 至 {item.endDate || '-'}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        <span className="text-xs font-mono text-slate-500">{item.certificateNumber || '-'}</span>
+                                      </td>
+                                      <td className="px-4 py-3 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                          <button 
+                                            onClick={() => {
+                                              setQualificationFormData({
+                                                employer: '上线运维测试有限公司',
+                                                name: item.personName,
+                                                registrationNumber: item.certificateNumber,
+                                                qualificationSequence: item.qualificationName,
+                                                startDate: item.startDate,
+                                                endDate: item.endDate,
+                                                sequences: item.sequences || [],
+                                                attachments: item.attachments || []
+                                              });
+                                              setEditingQualificationIndex(idx);
+                                              setShowQualificationDetail(true);
+                                            }}
+                                            className="p-2 text-[#0052CC] hover:bg-blue-50 rounded-lg transition-all active:scale-90"
+                                            title="编辑"
+                                          >
+                                            <Edit2 size={16} />
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                  {(personnelFormData.qualifications || []).length === 0 && (
+                                    <tr>
+                                      <td colSpan={6} className="px-4 py-20 text-center">
+                                        <div className="flex flex-col items-center justify-center text-slate-400">
+                                          <ShieldCheck size={40} className="mb-2 opacity-20" />
+                                          <p className="text-sm font-medium">暂无职业资格信息</p>
+                                          <p className="text-xs opacity-60">点击上方“新增职业资格”按钮添加</p>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </motion.div>
+                        ) : (
+                          <motion.div 
+                            key="detail"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="flex flex-col h-full bg-white"
+                          >
+                            <div className="flex-1 overflow-y-auto">
+                              <div className="flex h-full">
+                                {/* Left: Image Upload Actions */}
+                                <div className="w-48 p-6 border-r border-slate-100 space-y-6">
+                                  <div className="space-y-4">
+                                    <div className="aspect-square border border-slate-200 border-dashed rounded-lg flex flex-col items-center justify-center bg-slate-50 group hover:border-blue-400 transition-colors cursor-pointer">
+                                      <Plus size={24} className="text-blue-600 mb-1" />
+                                      <span className="text-[11px] font-bold text-blue-600">上传图片</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <p className="text-xs font-bold text-slate-500">证照照片要求</p>
+                                      <div className="space-y-1">
+                                        <p className="text-[10px] text-slate-400 leading-relaxed">支持格式：jpg、jpeg、bmp、png</p>
+                                        <p className="text-[10px] text-slate-400 leading-relaxed">文件大小上限：5M</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Center: Image Preview Area */}
+                                <div className="flex-1 bg-slate-50/30 flex items-center justify-center p-12">
+                                  <div className="w-full max-w-md aspect-[4/3] border border-slate-200 border-dashed rounded-xl bg-white flex flex-col items-center justify-center text-slate-300">
+                                    <Image size={64} className="mb-4 opacity-20" />
+                                    <p className="text-xs font-bold text-slate-400">请上传证照照片</p>
+                                  </div>
+                                </div>
+
+                                {/* Right: Form Fields */}
+                                <div className="w-[420px] p-8 border-l border-slate-100 overflow-y-auto bg-white">
+                                  <div className="space-y-8">
+                                    <div className="flex items-center justify-between">
+                                      <h4 className="text-base font-bold text-slate-800">职业和注册证</h4>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                      <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                                          <span className="text-red-500">*</span> 聘用企业
+                                        </label>
+                                        <input 
+                                          type="text"
+                                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 outline-none cursor-not-allowed"
+                                          value={qualificationFormData.employer}
+                                          readOnly
+                                        />
+                                      </div>
+
+                                      <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                                          <span className="text-red-500">*</span> 姓名
+                                        </label>
+                                        <input 
+                                          type="text"
+                                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 outline-none cursor-not-allowed"
+                                          value={qualificationFormData.name}
+                                          readOnly
+                                        />
+                                      </div>
+
+                                      <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                                          <span className="text-red-500">*</span> 注册编号
+                                        </label>
+                                        <input 
+                                          type="text"
+                                          placeholder="请输入"
+                                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                          value={qualificationFormData.registrationNumber}
+                                          onChange={(e) => setQualificationFormData({...qualificationFormData, registrationNumber: e.target.value})}
+                                        />
+                                      </div>
+
+                                      <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500">资格序列</label>
+                                        <div className="relative">
+                                          <select 
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all appearance-none"
+                                            value={qualificationFormData.qualificationSequence}
+                                            onChange={(e) => setQualificationFormData({...qualificationFormData, qualificationSequence: e.target.value})}
+                                          >
+                                            <option value="">请选择</option>
+                                            <option value="一级建造师">一级建造师</option>
+                                            <option value="二级建造师">二级建造师</option>
+                                            <option value="高级工程师">高级工程师</option>
+                                          </select>
+                                          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                                        </div>
+                                      </div>
+
+                                      <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500">开始日期</label>
+                                        <div className="relative">
+                                          <input 
+                                            type="date"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={qualificationFormData.startDate}
+                                            onChange={(e) => setQualificationFormData({...qualificationFormData, startDate: e.target.value})}
+                                          />
+                                          <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
+                                        </div>
+                                      </div>
+
+                                      <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500">截止日期</label>
+                                        <div className="relative">
+                                          <input 
+                                            type="date"
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 transition-all"
+                                            value={qualificationFormData.endDate}
+                                            onChange={(e) => setQualificationFormData({...qualificationFormData, endDate: e.target.value})}
+                                          />
+                                          <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Sequence Table Section */}
+                                    <div className="space-y-4 pt-4">
+                                      <div className="flex justify-end">
+                                        <button className="px-3 py-1.5 bg-white text-blue-600 border border-blue-600 rounded text-[11px] font-medium hover:bg-blue-50 transition-all">
+                                          新增资格序列
+                                        </button>
+                                      </div>
+                                      <div className="border border-slate-100 rounded overflow-hidden">
+                                        <table className="w-full text-left border-collapse">
+                                          <thead>
+                                            <tr className="bg-[#F5F7FA] text-slate-600 text-[11px] font-bold border-b border-slate-100">
+                                              <th className="px-3 py-2.5 w-10">序</th>
+                                              <th className="px-3 py-2.5">资格序列</th>
+                                              <th className="px-3 py-2.5">开始日期</th>
+                                              <th className="px-3 py-2.5">截止日期</th>
+                                              <th className="px-3 py-2.5 text-center">操作</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-slate-50">
+                                            <tr className="text-[11px] text-slate-600">
+                                              <td className="px-3 py-2.5">1</td>
+                                              <td className="px-3 py-2.5">{qualificationFormData.qualificationSequence || '-'}</td>
+                                              <td className="px-3 py-2.5">{qualificationFormData.startDate || '-'}</td>
+                                              <td className="px-3 py-2.5">{qualificationFormData.endDate || '-'}</td>
+                                              <td className="px-3 py-2.5 text-center">
+                                                <button className="text-blue-600 hover:underline">编辑</button>
+                                              </td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Footer Actions */}
+                            <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-center gap-3 bg-slate-50/30">
+                              <button 
+                                onClick={() => {
+                                  const newQualification = {
+                                    personName: qualificationFormData.name,
+                                    qualificationName: qualificationFormData.qualificationSequence,
+                                    startDate: qualificationFormData.startDate,
+                                    endDate: qualificationFormData.endDate,
+                                    certificateNumber: qualificationFormData.registrationNumber,
+                                    selected: false,
+                                    isEditing: false
+                                  };
+
+                                  const newList = [...(personnelFormData.qualifications || [])];
+                                  if (editingQualificationIndex !== null) {
+                                    newList[editingQualificationIndex] = newQualification;
+                                  } else {
+                                    newList.push(newQualification);
+                                  }
+
+                                  setPersonnelFormData({...personnelFormData, qualifications: newList});
+                                  setShowQualificationDetail(false);
+                                }}
+                                className="px-10 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95 shadow-sm"
+                              >
+                                保存
+                              </button>
+                              <button 
+                                onClick={() => setShowQualificationDetail(false)}
+                                className="px-10 py-2.5 bg-white text-[#0052CC] border border-[#0052CC] rounded-xl text-sm font-bold hover:bg-blue-50 transition-all active:scale-95 shadow-sm"
                               >
                                 取消
                               </button>
@@ -1429,189 +1942,6 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                           </motion.div>
                         )}
                       </AnimatePresence>
-                    </div>
-                  )}
-
-                  {personnelTab === 'qualifications' && (
-                    <div className="space-y-6 flex flex-col h-full">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="relative flex-1 max-w-md">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                            <input 
-                              type="text"
-                              placeholder="搜索姓名、证书名称..."
-                              className="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
-                              value={qualificationSearch}
-                              onChange={(e) => setQualificationSearch(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => setPersonnelFormData({
-                            ...personnelFormData,
-                            qualifications: [...(personnelFormData.qualifications || []), { 
-                              personName: personnelFormData.name || '', 
-                              qualificationName: '', 
-                              startDate: '', 
-                              endDate: '', 
-                              certificateNumber: '',
-                              isEditing: true 
-                            }]
-                          })}
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-sm"
-                        >
-                          <Plus size={14} /> 新增资格
-                        </button>
-                      </div>
-
-                      <div className="flex-1 overflow-hidden border border-slate-200 rounded-2xl bg-white">
-                        <table className="w-full text-left border-collapse">
-                          <thead>
-                            <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
-                              <th className="px-4 py-3 w-12 text-center">序</th>
-                              <th className="px-4 py-3">姓名</th>
-                              <th className="px-4 py-3">资格序列</th>
-                              <th className="px-4 py-3">资格证书编号</th>
-                              <th className="px-4 py-3 text-right">操作</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {(personnelFormData.qualifications || [])
-                              .filter((q: any) => 
-                                !qualificationSearch || 
-                                q.personName?.toLowerCase().includes(qualificationSearch.toLowerCase()) ||
-                                q.qualificationName?.toLowerCase().includes(qualificationSearch.toLowerCase())
-                              )
-                              .map((item: any, idx: number) => (
-                              <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                                <td className="px-4 py-3 text-center text-xs text-slate-400">{idx + 1}</td>
-                                <td className="px-4 py-3">
-                                  {item.isEditing ? (
-                                    <input 
-                                      type="text"
-                                      className="w-full px-2 py-1 border border-slate-200 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none"
-                                      value={item.personName}
-                                      onChange={(e) => {
-                                        const newList = [...personnelFormData.qualifications];
-                                        newList[idx].personName = e.target.value;
-                                        setPersonnelFormData({...personnelFormData, qualifications: newList});
-                                      }}
-                                    />
-                                  ) : (
-                                    <span className="text-xs font-bold text-slate-700">{item.personName || '-'}</span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3">
-                                  {item.isEditing ? (
-                                    <div className="flex items-center gap-2">
-                                      <input 
-                                        type="text"
-                                        placeholder="证书名称"
-                                        className="flex-1 px-2 py-1 border border-slate-200 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none"
-                                        value={item.qualificationName}
-                                        onChange={(e) => {
-                                          const newList = [...personnelFormData.qualifications];
-                                          newList[idx].qualificationName = e.target.value;
-                                          setPersonnelFormData({...personnelFormData, qualifications: newList});
-                                        }}
-                                      />
-                                      <input 
-                                        type="date"
-                                        className="w-28 px-2 py-1 border border-slate-200 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none"
-                                        value={item.startDate}
-                                        onChange={(e) => {
-                                          const newList = [...personnelFormData.qualifications];
-                                          newList[idx].startDate = e.target.value;
-                                          setPersonnelFormData({...personnelFormData, qualifications: newList});
-                                        }}
-                                      />
-                                      <span className="text-slate-400">至</span>
-                                      <input 
-                                        type="date"
-                                        className="w-28 px-2 py-1 border border-slate-200 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none"
-                                        value={item.endDate}
-                                        onChange={(e) => {
-                                          const newList = [...personnelFormData.qualifications];
-                                          newList[idx].endDate = e.target.value;
-                                          setPersonnelFormData({...personnelFormData, qualifications: newList});
-                                        }}
-                                      />
-                                    </div>
-                                  ) : (
-                                    <span className="text-xs text-slate-600">
-                                      {item.qualificationName || '-'} 
-                                      {(item.startDate || item.endDate) && ` (${item.startDate || ''}至${item.endDate || ''})`}
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3">
-                                  {item.isEditing ? (
-                                    <input 
-                                      type="text"
-                                      className="w-full px-2 py-1 border border-slate-200 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none"
-                                      value={item.certificateNumber}
-                                      onChange={(e) => {
-                                        const newList = [...personnelFormData.qualifications];
-                                        newList[idx].certificateNumber = e.target.value;
-                                        setPersonnelFormData({...personnelFormData, qualifications: newList});
-                                      }}
-                                    />
-                                  ) : (
-                                    <span className="text-xs font-mono text-slate-500">{item.certificateNumber || '-'}</span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                  <div className="flex items-center justify-end gap-2">
-                                    {item.isEditing ? (
-                                      <button 
-                                        onClick={() => {
-                                          const newList = [...personnelFormData.qualifications];
-                                          newList[idx].isEditing = false;
-                                          setPersonnelFormData({...personnelFormData, qualifications: newList});
-                                        }}
-                                        className="text-blue-600 hover:underline text-[11px] font-bold"
-                                      >
-                                        保存
-                                      </button>
-                                    ) : (
-                                      <button 
-                                        onClick={() => {
-                                          const newList = [...personnelFormData.qualifications];
-                                          newList[idx].isEditing = true;
-                                          setPersonnelFormData({...personnelFormData, qualifications: newList});
-                                        }}
-                                        className="text-blue-600 hover:underline text-[11px] font-bold"
-                                      >
-                                        编辑
-                                      </button>
-                                    )}
-                                    <button 
-                                      onClick={() => {
-                                        const newList = personnelFormData.qualifications.filter((_: any, i: number) => i !== idx);
-                                        setPersonnelFormData({...personnelFormData, qualifications: newList});
-                                      }}
-                                      className="text-red-500 hover:underline text-[11px] font-bold"
-                                    >
-                                      删除
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                            {(personnelFormData.qualifications || []).length === 0 && (
-                              <tr>
-                                <td colSpan={5} className="px-4 py-20 text-center">
-                                  <div className="flex flex-col items-center justify-center text-slate-400">
-                                    <ShieldCheck size={40} className="mb-2 opacity-20" />
-                                    <p className="text-xs">暂无资格证书，点击右上角新增</p>
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -3092,7 +3422,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
                     setShowGenericForm(true);
                   }
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-[#0052CC] text-white rounded-lg text-sm font-bold hover:bg-[#0052CC]/90 shadow-sm transition-all"
+                className="flex items-center gap-2 px-6 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-sm hover:shadow-md transition-all active:scale-95"
               >
                 {activeTab === 'basic' ? (isEditingBasicInfo ? <CheckCircle2 size={16} /> : <Edit2 size={16} />) : <Plus size={16} />}
                 {sidePanel === 'certificates' ? '上传证照' : 
@@ -3108,7 +3438,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
               </button>
               
               {activeTab !== 'basic' && (
-                <button className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-50 transition-all ml-3">
+                <button className="flex items-center gap-2 px-6 py-2.5 bg-white border border-[#0052CC] text-[#0052CC] rounded-xl text-sm font-bold hover:bg-blue-50 transition-all ml-3 shadow-sm hover:shadow-md active:scale-95">
                   <Trash2 size={16} />
                   删除{tabs.find(t => t.id === activeTab)?.label.replace('新增', '')}
                 </button>

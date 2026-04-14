@@ -51,7 +51,9 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
   const [uploadRemarks, setUploadRemarks] = useState('');
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
+  const [detailSearchTerm, setDetailSearchTerm] = useState('');
   const [previewFile, setPreviewFile] = useState<{ url: string; type: string; name: string } | null>(null);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -189,9 +191,10 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
     }
   ]);
 
-  const filteredMaterials = activeCategory === '全部文档' 
+  const filteredMaterials = (activeCategory === '全部文档' 
     ? projectMaterials 
-    : projectMaterials.filter(m => m.type === activeCategory);
+    : projectMaterials.filter(m => m.type === activeCategory))
+    .filter(m => m.fileName.toLowerCase().includes(detailSearchTerm.toLowerCase()));
 
   const currentPageMaterials = filteredMaterials.slice((detailCurrentPage - 1) * detailPageSize, detailCurrentPage * detailPageSize);
 
@@ -288,7 +291,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
         </div>
         
         <div className="flex gap-2">
-          <button className="px-8 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 shadow-sm hover:shadow-md transition-all">
+          <button className="px-8 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-sm hover:shadow-md transition-all active:scale-95">
             查询
           </button>
           <button 
@@ -296,7 +299,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
               setSearchTerm('');
               setDateFilter('');
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all"
+            className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm hover:shadow-md active:scale-95"
           >
             <Filter size={16} /> 重置
           </button>
@@ -543,9 +546,9 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
               ) : (
                 <div className="flex items-center gap-1.5 overflow-hidden">
                   {isExpanded && hasChildren ? (
-                    <FolderOpen size={14} className="text-primary shrink-0" />
+                    <FolderOpen size={14} className={`${isActive ? 'text-primary' : 'text-slate-400'} shrink-0`} />
                   ) : (
-                    <Folder size={14} className="text-primary shrink-0" />
+                    <Folder size={14} className={`${isActive ? 'text-primary' : 'text-slate-400'} shrink-0`} />
                   )}
                   <span className={`truncate whitespace-nowrap ${level === 0 ? 'text-sm' : 'text-xs'}`}>
                     {node.name}
@@ -555,7 +558,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                       e.stopPropagation();
                       setEditingCatId(node.id);
                     }}
-                    className={`p-0.5 text-slate-400 hover:text-primary transition-all ${showActions ? 'opacity-100' : 'opacity-0'}`}
+                    className={`p-0.5 text-slate-400 hover:text-primary transition-all ${isActive && showActions ? 'opacity-100' : 'opacity-0'}`}
                     title="重命名"
                   >
                     <Edit3 size={12} />
@@ -722,7 +725,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeleteConfirmId(null)}
-                  className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50"
+                  className="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
                 >
                   取消
                 </button>
@@ -731,7 +734,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                     deleteCategory(deleteConfirmId);
                     setDeleteConfirmId(null);
                   }}
-                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20"
+                  className="flex-1 px-4 py-2 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                 >
                   确定
                 </button>
@@ -744,24 +747,37 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
       {/* Right Content */}
       <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
-          <h3 className="font-bold text-slate-900 flex items-center gap-2">
-            <FolderOpen className="text-primary" size={20} />
-            {activeCategory}
-          </h3>
+          <div className="flex items-center gap-6 flex-1">
+            <h3 className="font-bold text-slate-900 flex items-center gap-2 shrink-0">
+              <FolderOpen className="text-primary" size={20} />
+              {activeCategory}
+            </h3>
+            
+            <div className="max-w-xs w-full relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+              <input 
+                type="text" 
+                placeholder="搜索文档名称..."
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+                value={detailSearchTerm}
+                onChange={(e) => setDetailSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
           <div className="flex items-center gap-3">
             <button 
               onClick={handleOpenAddModal}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm hover:shadow-md active:scale-95 ${
                 isPaused 
                   ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                  : 'bg-primary text-white hover:bg-primary/90 shadow-primary/10'
+                  : 'bg-[#0052CC] text-white hover:bg-[#0052CC]/90 shadow-blue-500/10'
               }`}
             >
-              <Plus size={14} />
+              <Plus size={16} />
               上传材料
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-50 transition-all">
-              <Trash2 size={14} />
+            <button className="flex items-center gap-2 px-6 py-2.5 bg-white border border-[#0052CC] text-[#0052CC] rounded-xl text-sm font-bold hover:bg-blue-50 transition-all shadow-sm hover:shadow-md active:scale-95">
+              <Trash2 size={16} />
               删除资料
             </button>
             <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all">
@@ -792,7 +808,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                 <th className="px-6 py-4">类型</th>
                 <th className="px-6 py-4">大小</th>
                 <th className="px-6 py-4">上传人</th>
-                <th className="px-6 py-4">上传日期</th>
+                <th className="px-6 py-4">最后更新日期</th>
                 <th className="px-6 py-4 text-right">操作</th>
               </tr>
             </thead>
@@ -912,17 +928,57 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs font-bold text-slate-500 ml-1 uppercase">材料类型</label>
-                          <select 
-                            value={uploadType}
-                            onChange={(e) => setUploadType(e.target.value)}
-                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
-                          >
-                            <option>技术材料</option>
-                            <option>商务材料</option>
-                            <option>资质文件</option>
-                            <option>补充说明</option>
-                            <option>其他</option>
-                          </select>
+                          <div className="relative">
+                            <div 
+                              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 flex items-center justify-between cursor-pointer hover:border-primary/50 transition-all shadow-sm"
+                              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                            >
+                              <span>{uploadType}</span>
+                              <ChevronDown size={16} className={`text-slate-400 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+                            </div>
+                            
+                            {showCategoryDropdown && (
+                              <>
+                                <div className="fixed inset-0 z-[60]" onClick={() => setShowCategoryDropdown(false)} />
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-[70] max-h-60 overflow-y-auto py-2 animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
+                                  {(() => {
+                                    const renderNodes = (nodes: CategoryNode[], level = 0) => {
+                                      return nodes.map(node => {
+                                        const isLeaf = node.children.length === 0;
+                                        return (
+                                          <div key={node.id}>
+                                            <div 
+                                              className={`px-4 py-2.5 text-sm flex items-center gap-2 transition-colors ${
+                                                isLeaf 
+                                                  ? `cursor-pointer hover:bg-slate-50 ${uploadType === node.name ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}` 
+                                                  : 'cursor-default text-slate-400 font-medium bg-slate-50/30'
+                                              }`}
+                                              style={{ paddingLeft: `${level * 20 + 16}px` }}
+                                              onClick={() => {
+                                                if (isLeaf) {
+                                                  setUploadType(node.name);
+                                                  setShowCategoryDropdown(false);
+                                                }
+                                              }}
+                                            >
+                                              {node.children.length > 0 ? (
+                                                <FolderOpen size={14} className="text-slate-400 shrink-0" />
+                                              ) : (
+                                                <Folder size={14} className="text-primary/60 shrink-0" />
+                                              )}
+                                              <span className="truncate">{node.name}</span>
+                                            </div>
+                                            {node.children.length > 0 && renderNodes(node.children, level + 1)}
+                                          </div>
+                                        );
+                                      });
+                                    };
+                                    return renderNodes(categories);
+                                  })()}
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
 

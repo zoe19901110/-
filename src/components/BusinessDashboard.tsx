@@ -12,6 +12,7 @@ interface Project {
   bidOpeningTime: string;
   status: string;
   deposit: string;
+  tenderControlPrice?: string;
   [key: string]: any;
 }
 
@@ -330,6 +331,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">项目编号</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">项目名称</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">招标人</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">招标控制价</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">项目进度</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">开标时间</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">操作</th>
@@ -345,6 +347,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
                     <td className="px-6 py-4 text-xs text-slate-500 font-mono">{project.code}</td>
                     <td className="px-6 py-4 text-xs font-bold text-slate-700 group-hover:text-primary transition-colors">{project.name}</td>
                     <td className="px-6 py-4 text-xs text-slate-600">{project.tenderer}</td>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-600 font-mono">{project.tenderControlPrice || '-'}</td>
                     <td className="px-6 py-4">
                       <div className="w-32">
                         <div className="flex items-center justify-between mb-1.5">
