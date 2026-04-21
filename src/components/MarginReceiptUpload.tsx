@@ -74,25 +74,12 @@ const MarginReceiptUpload: React.FC<MarginReceiptUploadProps> = ({ onBack, isPau
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      className="p-8 space-y-10"
     >
-      {/* Header aligned to the left */}
-      <div className="flex items-center gap-4 mb-6">
-        <button 
-          onClick={onBack}
-          className="p-2 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2 group"
-        >
-          <ChevronLeft size={20} className="text-slate-400 group-hover:text-primary transition-colors" />
-          <div className="w-1 h-5 bg-primary rounded-full"></div>
-          <h2 className="text-lg font-bold text-slate-800">保证金回执上传</h2>
-        </button>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-8 space-y-10">
-            {/* Form Fields - Matching SecurityDepositManagement style */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 ml-1">缴纳金额 <span className="text-red-500">*</span></label>
+      {/* Form Fields - Matching SecurityDepositManagement style */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-slate-500 ml-1">缴纳金额 <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <input 
                     type="text" 
@@ -264,21 +251,19 @@ const MarginReceiptUpload: React.FC<MarginReceiptUploadProps> = ({ onBack, isPau
                 取消
               </button>
             </div>
-          </div>
           
-          {/* Warning Box */}
-          <div className="bg-amber-50 p-6 flex items-start gap-4 border-t border-amber-100 mt-auto">
-            <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={20} />
-            <div>
-              <h4 className="font-bold text-amber-800 mb-1 text-sm">注意事项</h4>
-              <ul className="text-sm text-amber-700 space-y-1 list-disc list-inside">
-                <li>请确保上传的回执清晰可见，包含付款方、收款方、金额及交易时间等关键信息。</li>
-                <li>如采用电子保函形式，请上传完整的保函文件。</li>
-                <li>缴纳金额必须与招标文件要求完全一致。</li>
-              </ul>
+            {/* Warning Box */}
+            <div className="bg-amber-50 p-6 flex items-start gap-4 border-t border-amber-100 mt-auto">
+              <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={20} />
+              <div>
+                <h4 className="font-bold text-amber-800 mb-1 text-sm">注意事项</h4>
+                <ul className="text-sm text-amber-700 space-y-1 list-disc list-inside">
+                  <li>请确保上传的回执清晰可见，包含付款方、收款方、金额及交易时间等关键信息。</li>
+                  <li>如采用电子保函形式，请上传完整的保函文件。</li>
+                  <li>缴纳金额必须与招标文件要求完全一致。</li>
+                </ul>
+              </div>
             </div>
-          </div>
-      </div>
     </motion.div>
   );
 };

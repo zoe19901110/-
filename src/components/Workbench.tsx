@@ -85,6 +85,7 @@ import {
   File,
   FileText as FileTextIcon,
   Image as ImageIcon,
+  FileCheck,
   Tag,
   CheckSquare
 } from 'lucide-react';
@@ -109,7 +110,7 @@ interface Attachment {
   size: string;
   type: 'pdf' | 'image';
   date: string;
-  category?: '中标通知书' | '合同' | '其他材料' | '开标记录' | '投标文件';
+  category?: '中标通知书' | '合同' | '其他材料' | '开标记录' | '投标文件' | '招标文件' | '答疑文件' | '验收报告';
 }
 
 const ParsingReportView = ({ onBack, projectData, isPaused }: { onBack: () => void, projectData: any, isPaused: boolean }) => (
@@ -182,7 +183,44 @@ const Workbench: React.FC<WorkbenchProps> = ({
   }, [currentPhase]);
 
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showMarginUploadModal, setShowMarginUploadModal] = useState(false);
+  const [showArchivingModal, setShowArchivingModal] = useState(false);
+  const [showAttachmentsModal, setShowAttachmentsModal] = useState(false);
   const [showDocDropdown, setShowDocDropdown] = useState(false);
+  
+  // Archiving States
+  const [openingRecords, setOpeningRecords] = useState([
+    { units: '某某建设集团有限公司', price: 12105000, rank: '1', isWinner: true, isSelf: true },
+    { units: '中建某局有限公司', price: 12500000, rank: '2', isWinner: false, isSelf: false },
+    { units: '省建工集团', price: 12800000, rank: '3', isWinner: false, isSelf: false },
+  ]);
+  const [winningRecords, setWinningRecords] = useState([
+    { unit: '某某建设集团有限公司', amount: 12105000, date: '2024-03-25', url: 'http://ggzy.example.com/...' },
+  ]);
+  const [contractRecords, setContractRecords] = useState([
+    { id: 'HT-2024-001', name: '城市基础设施施工合同', date: '2024-04-05', amount: 11800000, owner: '陈经理', duration: '30', status: '履行中', fulfillmentDate: '2024-04-10', expectedCompletionDate: '2024-05-10' },
+  ]);
+  const [contractAttachments, setContractAttachments] = useState<Attachment[]>([
+    { id: '1', name: '中标通知书.pdf', size: '1.2MB', type: 'pdf', date: '2024-03-25', category: '中标通知书' },
+    { id: '2', name: '施工合同扫描件.jpg', size: '2.4MB', type: 'image', date: '2024-04-05', category: '合同' },
+  ]);
+  const [openingRecordFiles, setOpeningRecordFiles] = useState<Attachment[]>([
+    { id: 'orf-1', name: '开标记录表-20240320.pdf', size: '1.5MB', type: 'pdf', date: '2024-03-20', category: '开标记录' }
+  ]);
+  const [tenderFiles, setTenderFiles] = useState<Attachment[]>([
+    { id: '0', name: '投标文件_技术标.pdf', size: '4.5MB', type: 'pdf', date: '2024-03-15', category: '投标文件' },
+    { id: '01', name: '投标文件_商务标.pdf', size: '2.8MB', type: 'pdf', date: '2024-03-15', category: '投标文件' },
+  ]);
+  const [acceptanceReports, setAcceptanceReports] = useState<Attachment[]>([
+    { id: 'ar-1', name: '工程竣工验收报告-克东小区.pdf', size: '3.2MB', type: 'pdf', date: '2024-11-20', category: '验收报告' }
+  ]);
+  const [otherMaterialAttachments, setOtherMaterialAttachments] = useState<Record<string, Attachment[]>>({
+    'filing': [],
+    'other': []
+  });
+  const [unsuccessfulReason, setUnsuccessfulReason] = useState('投标报价略高于中标单位，且在技术方案的细节描述上不够详尽，未能充分体现我司在同类项目中的核心竞争优势。');
+  const [tenderPersonnel, setTenderPersonnel] = useState<string[]>(['陈经理', '王志强']);
+
   const [viewingDoc, setViewingDoc] = useState<string>('tender-doc');
   const [notifIndex, setNotifIndex] = useState(0);
 
@@ -658,12 +696,14 @@ const Workbench: React.FC<WorkbenchProps> = ({
                   handleProjectDataChange={handleProjectDataChange}
                   uploadedFiles={uploadedFiles}
                   setUploadedFiles={setUploadedFiles}
+                  otherMaterialAttachments={otherMaterialAttachments}
+                  setOtherMaterialAttachments={setOtherMaterialAttachments}
                   isPaused={isPaused}
                 />
               )}
               {currentPhase === 'production' && <ProductionPhase onNavigate={handleStartProduction} onSelect={setSelectedCard} isPaused={isPaused} />}
-              {currentPhase === 'inspection' && <InspectionPhase onNavigate={(view) => setSubView(view)} onSelect={setSelectedCard} isPaused={isPaused} />}
-              {currentPhase === 'archiving' && <ArchivingPhase onNavigate={() => setSubView('archive-register')} isPaused={isPaused} />}
+              {currentPhase === 'inspection' && <InspectionPhase onUploadMargin={() => setShowMarginUploadModal(true)} onSelect={setSelectedCard} isPaused={isPaused} />}
+              {currentPhase === 'archiving' && <ArchivingPhase onOpenArchiving={() => setShowArchivingModal(true)} onOpenAttachments={() => setShowAttachmentsModal(true)} isPaused={isPaused} />}
             </div>
           ) : (
             <>
@@ -1364,6 +1404,47 @@ const Workbench: React.FC<WorkbenchProps> = ({
           <CollaborativeSharingModal onClose={() => setShowCollaborativeSharing(false)} />
         )}
       </AnimatePresence>
+
+      <MarginReceiptUploadModal 
+        isOpen={showMarginUploadModal} 
+        onClose={() => setShowMarginUploadModal(false)} 
+        projectData={projectData}
+        isPaused={isPaused}
+      />
+
+      <ArchivingManagementModal
+        isOpen={showArchivingModal}
+        onClose={() => setShowArchivingModal(false)}
+        isPaused={isPaused}
+        openingRecords={openingRecords}
+        setOpeningRecords={setOpeningRecords}
+        winningRecords={winningRecords}
+        setWinningRecords={setWinningRecords}
+        contractRecords={contractRecords}
+        setContractRecords={setContractRecords}
+        contractAttachments={contractAttachments}
+        setContractAttachments={setContractAttachments}
+        openingRecordFiles={openingRecordFiles}
+        setOpeningRecordFiles={setOpeningRecordFiles}
+        tenderFiles={tenderFiles}
+        setTenderFiles={setTenderFiles}
+        acceptanceReports={acceptanceReports}
+        setAcceptanceReports={setAcceptanceReports}
+        unsuccessfulReason={unsuccessfulReason}
+        setUnsuccessfulReason={setUnsuccessfulReason}
+        tenderPersonnel={tenderPersonnel}
+        setTenderPersonnel={setTenderPersonnel}
+      />
+
+      <ProjectAttachmentsModal
+        isOpen={showAttachmentsModal}
+        onClose={() => setShowAttachmentsModal(false)}
+        uploadedFiles={uploadedFiles}
+        tenderFiles={tenderFiles}
+        openingRecordFiles={openingRecordFiles}
+        contractAttachments={contractAttachments}
+        acceptanceReports={acceptanceReports}
+      />
 
       {/* Confirm Dialog */}
       <AnimatePresence>
@@ -3367,7 +3448,21 @@ const ArchiveRegisterView = ({ onBack, isPaused }: { onBack: () => void, isPause
   );
 };
 
-const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRightTab, initialProjectData, isTenderUploaded, projectData, handleProjectDataChange, uploadedFiles, setUploadedFiles, isPaused }: { 
+const PreparationPhase = ({ 
+  onNavigate, 
+  onSelect, 
+  setActiveRightTab, 
+  activeRightTab, 
+  initialProjectData, 
+  isTenderUploaded, 
+  projectData, 
+  handleProjectDataChange, 
+  uploadedFiles, 
+  setUploadedFiles, 
+  otherMaterialAttachments,
+  setOtherMaterialAttachments,
+  isPaused 
+}: { 
   onNavigate: (view: SubView) => void, 
   onSelect: (id: string | null) => void,
   setActiveRightTab: (id: string | null) => void,
@@ -3378,6 +3473,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
   handleProjectDataChange: (field: string, value: string) => void,
   uploadedFiles: Record<string, boolean>,
   setUploadedFiles: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
+  otherMaterialAttachments: Record<string, Attachment[]>,
+  setOtherMaterialAttachments: React.Dispatch<React.SetStateAction<Record<string, Attachment[]>>>,
   isPaused: boolean
 }) => {
   const [isParsed, setIsParsed] = useState(!!initialProjectData);
@@ -3387,6 +3484,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
   const [showQualificationResult, setShowQualificationResult] = useState(false);
   const [showParsingPage, setShowParsingPage] = useState(false);
   const [clarificationRounds, setClarificationRounds] = useState<number>(0);
+  
+  const [activeOtherMaterial, setActiveOtherMaterial] = useState<{ id: string; label: string } | null>(null);
   
   // New states for upload parsing
   const [activeUpload, setActiveUpload] = useState<{ id: string; label: string } | null>(null);
@@ -3802,11 +3901,13 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
         </div>
 
         <div className="pt-8 border-t border-slate-100">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <UploadCloud size={20} className="text-primary" />
-              准备阶段文件上传
-            </h3>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-4">
+              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <UploadCloud size={20} className="text-primary" />
+                准备阶段文件上传
+              </h3>
+            </div>
             <button 
               onClick={() => {
                 if (isPaused) {
@@ -3822,6 +3923,13 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
             </button>
           </div>
           
+          <div className="mb-6">
+            <p className="text-xs font-bold text-red-500 flex items-center gap-1.5">
+              <AlertCircle size={14} />
+              请注意，招标和答疑文件上传后无法修改
+            </p>
+          </div>
+          
           <div className="space-y-8">
             {/* Base Documents Group */}
             <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
@@ -3832,12 +3940,17 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
               <div className="grid grid-cols-3 gap-4">
                 {baseCategories.map((cat) => {
                   const isUploaded = uploadedFiles[cat.id] || (cat.id === 'tender-doc' && isTenderUploaded);
+                  const isLocked = isUploaded && cat.id === 'tender-doc';
                   return (
                     <div 
                       key={cat.id} 
                       onClick={() => {
                         if (isPaused) {
                           alert('此项目已暂停');
+                          return;
+                        }
+                        if (isLocked) {
+                          alert('招标文件上传后无法修改');
                           return;
                         }
                         if (!isUploaded) {
@@ -3853,23 +3966,28 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
                         isUploaded 
                           ? 'bg-blue-50/50 border-blue-200 hover:border-blue-300' 
                           : 'bg-white border-slate-100 hover:border-primary/30 hover:shadow-md'
-                      } ${isPaused ? 'opacity-60 grayscale-[0.5]' : ''}`}
+                      } ${isPaused || isLocked ? 'opacity-60' : ''}`}
                     >
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className={`size-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${
-                          isUploaded ? 'bg-blue-100 text-blue-600' : `${cat.bg} ${cat.color}`
-                        }`}>
-                          {isUploaded ? <CheckCircle2 size={20} /> : <cat.icon size={20} />}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`size-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${
+                            isUploaded ? 'bg-blue-100 text-blue-600' : `${cat.bg} ${cat.color}`
+                          }`}>
+                            {isUploaded ? <CheckCircle2 size={20} /> : <cat.icon size={20} />}
+                          </div>
+                          <span className="text-sm font-black text-slate-700">{cat.label}</span>
                         </div>
-                        <span className="text-sm font-black text-slate-700">{cat.label}</span>
+                        {isLocked && <Lock size={14} className="text-slate-300" />}
                       </div>
                       <div className="flex items-center justify-between">
                         <span className={`text-[10px] font-medium ${isUploaded ? 'text-blue-500' : 'text-slate-400'}`}>
                           {isUploaded ? '已上传文件' : '未上传文件'}
                         </span>
-                        <button className={`text-[10px] font-black hover:underline ${isUploaded ? 'text-blue-600' : 'text-primary'}`}>
-                          {isUploaded ? '重新上传' : '点击上传'}
-                        </button>
+                        {!isLocked && (
+                          <button className={`text-[10px] font-black hover:underline ${isUploaded ? 'text-blue-600' : 'text-primary'}`}>
+                            {isUploaded ? '重新上传' : '点击上传'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -3903,12 +4021,17 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
                     { id: `clar-price-${index}`, label: '答疑控制价', icon: Receipt, color: 'text-amber-600', bg: 'bg-amber-100' },
                   ].map((cat) => {
                     const isUploaded = uploadedFiles[cat.id];
+                    const isLocked = isUploaded && cat.label === '答疑文件';
                     return (
                       <div 
                         key={cat.id} 
                         onClick={() => {
                           if (isPaused) {
                             alert('此项目已暂停');
+                            return;
+                          }
+                          if (isLocked) {
+                            alert('答疑文件上传后无法修改');
                             return;
                           }
                           if (!isUploaded) {
@@ -3921,23 +4044,28 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
                           isUploaded 
                             ? 'bg-purple-100/50 border-purple-200 hover:border-purple-300' 
                             : 'bg-white border-purple-100/50 hover:border-purple-300 hover:shadow-md'
-                        } ${isPaused ? 'opacity-60 grayscale-[0.5]' : ''}`}
+                        } ${isPaused || isLocked ? 'opacity-60' : ''}`}
                       >
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className={`size-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${
-                            isUploaded ? 'bg-purple-200 text-purple-700' : `${cat.bg} ${cat.color}`
-                          }`}>
-                            {isUploaded ? <CheckCircle2 size={20} /> : <cat.icon size={20} />}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`size-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${
+                              isUploaded ? 'bg-purple-200 text-purple-700' : `${cat.bg} ${cat.color}`
+                            }`}>
+                              {isUploaded ? <CheckCircle2 size={20} /> : <cat.icon size={20} />}
+                            </div>
+                            <span className="text-sm font-black text-slate-700">{cat.label}</span>
                           </div>
-                          <span className="text-sm font-black text-slate-700">{cat.label}</span>
+                          {isLocked && <Lock size={14} className="text-slate-300" />}
                         </div>
                         <div className="flex items-center justify-between">
                           <span className={`text-[10px] font-medium ${isUploaded ? 'text-purple-600' : 'text-slate-400'}`}>
                             {isUploaded ? '已上传文件' : '未上传文件'}
                           </span>
-                          <button className={`text-[10px] font-black hover:underline ${isUploaded ? 'text-purple-600' : 'text-primary'}`}>
-                            {isUploaded ? '重新上传' : '点击上传'}
-                          </button>
+                          {!isLocked && (
+                            <button className={`text-[10px] font-black hover:underline ${isUploaded ? 'text-purple-600' : 'text-primary'}`}>
+                              {isUploaded ? '重新上传' : '点击上传'}
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -3954,7 +4082,8 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
               </h4>
               <div className="grid grid-cols-3 gap-4">
                 {otherCategories.map((cat) => {
-                  const isUploaded = uploadedFiles[cat.id];
+                  const attachments = otherMaterialAttachments[cat.id] || [];
+                  const isUploaded = attachments.length > 0;
                   return (
                     <div 
                       key={cat.id} 
@@ -3963,28 +4092,28 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
                           alert('此项目已暂停');
                           return;
                         }
-                        handleToggleUpload(cat.id);
+                        setActiveOtherMaterial(cat);
                       }}
                       className={`p-4 rounded-2xl border transition-all group cursor-pointer ${
                         isUploaded 
-                          ? 'bg-blue-50/50 border-blue-200 hover:border-blue-300' 
+                          ? 'bg-slate-100/50 border-slate-200 hover:border-slate-300' 
                           : 'bg-white border-slate-100 hover:border-primary/30 hover:shadow-md'
-                      } ${isPaused ? 'opacity-60 grayscale-[0.5]' : ''}`}
+                      } ${isPaused ? 'opacity-60' : ''}`}
                     >
                       <div className="flex items-center gap-3 mb-3">
                         <div className={`size-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${
-                          isUploaded ? 'bg-blue-100 text-blue-600' : `${cat.bg} ${cat.color}`
+                          isUploaded ? 'bg-slate-200 text-slate-600' : `${cat.bg} ${cat.color}`
                         }`}>
-                          {isUploaded ? <CheckCircle2 size={20} /> : <cat.icon size={20} />}
+                          {isUploaded ? <FileCheck size={20} /> : <cat.icon size={20} />}
                         </div>
                         <span className="text-sm font-black text-slate-700">{cat.label}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className={`text-[10px] font-medium ${isUploaded ? 'text-blue-500' : 'text-slate-400'}`}>
-                          {isUploaded ? '已上传文件' : '未上传文件'}
+                        <span className={`text-[10px] font-medium ${isUploaded ? 'text-slate-600' : 'text-slate-400'}`}>
+                          {isUploaded ? `已上传 ${attachments.length} 份文件` : '未上传文件'}
                         </span>
-                        <button className={`text-[10px] font-black hover:underline ${isUploaded ? 'text-blue-600' : 'text-primary'}`}>
-                          {isUploaded ? '重新上传' : '点击上传'}
+                        <button className={`text-[10px] font-black hover:underline ${isUploaded ? 'text-slate-700' : 'text-primary'}`}>
+                          {isUploaded ? '查看/管理' : '点击上传'}
                         </button>
                       </div>
                     </div>
@@ -3994,6 +4123,30 @@ const PreparationPhase = ({ onNavigate, onSelect, setActiveRightTab, activeRight
             </div>
           </div>
         </div>
+
+        <OtherMaterialsModal 
+          isOpen={!!activeOtherMaterial}
+          onClose={() => setActiveOtherMaterial(null)}
+          category={activeOtherMaterial}
+          attachments={activeOtherMaterial ? (otherMaterialAttachments[activeOtherMaterial.id] || []) : []}
+          onAdd={(file) => {
+            if (activeOtherMaterial) {
+              setOtherMaterialAttachments(prev => ({
+                ...prev,
+                [activeOtherMaterial.id]: [...(prev[activeOtherMaterial.id] || []), file]
+              }));
+            }
+          }}
+          onDelete={(id) => {
+            if (activeOtherMaterial) {
+              setOtherMaterialAttachments(prev => ({
+                ...prev,
+                [activeOtherMaterial.id]: prev[activeOtherMaterial.id].filter(a => a.id !== id)
+              }));
+            }
+          }}
+          isPaused={isPaused}
+        />
       </div>
 
       {/* Upload & Parsing Modal */}
@@ -4217,7 +4370,7 @@ const ProductionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: () =>
   );
 };
 
-const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: (view: SubView) => void, onSelect: (id: string | null) => void, isPaused: boolean }) => (
+const InspectionPhase = ({ onUploadMargin, onSelect, isPaused }: { onUploadMargin: () => void, onSelect: (id: string | null) => void, isPaused: boolean }) => (
   <div className="space-y-8 min-h-[600px]">
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
       <div className="bg-white border border-slate-200 rounded-xl p-8 hover:bg-primary hover:text-white hover:shadow-xl hover:shadow-primary/20 transition-all group cursor-pointer flex flex-col hover:-translate-y-1 duration-300">
@@ -4232,7 +4385,7 @@ const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: (view
               alert('此项目已暂停');
               return;
             }
-            onNavigate('margin-receipt');
+            onUploadMargin();
           }}
           className={`mt-auto w-full py-3.5 bg-white border border-slate-200 text-slate-700 group-hover:border-transparent group-hover:text-primary font-bold rounded-lg hover:bg-blue-50 transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
@@ -4341,37 +4494,79 @@ const InspectionPhase = ({ onNavigate, onSelect, isPaused }: { onNavigate: (view
   </div>
 );
 
-const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPaused: boolean }) => {
-  const [isEditing, setIsEditing] = useState(false);
+const ArchivingPhase = ({ onOpenArchiving, onOpenAttachments, isPaused }: { onOpenArchiving: () => void, onOpenAttachments: () => void, isPaused: boolean }) => (
+  <div className="space-y-8 min-h-[600px]">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
+      <div 
+        onClick={() => !isPaused && onOpenArchiving()}
+        className={`bg-white border border-slate-200 rounded-xl p-8 hover:bg-primary hover:text-white hover:shadow-xl hover:shadow-primary/20 transition-all group cursor-pointer flex flex-col hover:-translate-y-1 duration-300 ${isPaused ? 'opacity-70 grayscale' : ''}`}
+      >
+        <div className="p-3 rounded-lg w-fit mb-6 bg-blue-50 text-blue-600 group-hover:bg-white/10 group-hover:text-white transition-colors">
+          <ClipboardList size={24} />
+        </div>
+        <h4 className="text-xl font-bold mb-3">投标/开标记录管理</h4>
+        <p className="text-slate-400 group-hover:text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem] transition-colors">管理项目的开标详情、中标状态及合同归档信息。</p>
+        <button 
+          className="mt-auto w-full py-3.5 bg-white border border-slate-200 text-slate-700 group-hover:border-transparent group-hover:text-primary font-bold rounded-lg hover:bg-blue-50 transition-all"
+        >
+          查看/修改记录
+        </button>
+      </div>
+
+      <div 
+        onClick={() => !isPaused && onOpenAttachments()}
+        className={`bg-white border border-slate-200 rounded-xl p-8 hover:bg-primary hover:text-white hover:shadow-xl hover:shadow-primary/20 transition-all group cursor-pointer flex flex-col hover:-translate-y-1 duration-300 ${isPaused ? 'opacity-70 grayscale' : ''}`}
+      >
+        <div className="p-3 rounded-lg w-fit mb-6 bg-indigo-50 text-indigo-600 group-hover:bg-white/10 group-hover:text-white transition-colors">
+          <FileCheck size={24} />
+        </div>
+        <h4 className="text-xl font-bold mb-3">项目附件信息归档</h4>
+        <p className="text-slate-400 group-hover:text-blue-100 text-sm mb-10 leading-relaxed min-h-[4.5rem] transition-colors">集中查看并归档项目过程中的所有核心附件资料。</p>
+        <button 
+          className="mt-auto w-full py-3.5 bg-white border border-slate-200 text-slate-700 group-hover:border-transparent group-hover:text-primary font-bold rounded-lg hover:bg-blue-50 transition-all"
+        >
+          所有附件归档
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const ArchivingManagement = React.forwardRef(({ 
+  isPaused, 
+  openingRecords, 
+  setOpeningRecords, 
+  winningRecords, 
+  setWinningRecords,
+  contractRecords,
+  setContractRecords,
+  contractAttachments,
+  setContractAttachments,
+  openingRecordFiles,
+  setOpeningRecordFiles,
+  tenderFiles,
+  setTenderFiles,
+  acceptanceReports,
+  setAcceptanceReports,
+  unsuccessfulReason,
+  setUnsuccessfulReason,
+  tenderPersonnel,
+  setTenderPersonnel,
+  onBack,
+  isEditing,
+  setIsEditing
+}: any, ref) => {
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
-  const [openingRecords, setOpeningRecords] = useState([
-    { units: '某某建设集团有限公司', price: 12105000, rank: '1', isWinner: true, isSelf: true },
-    { units: '中建某局有限公司', price: 12500000, rank: '2', isWinner: false, isSelf: false },
-    { units: '省建工集团', price: 12800000, rank: '3', isWinner: false, isSelf: false },
-  ]);
-  const [winningRecords, setWinningRecords] = useState([
-    { unit: '某某建设集团有限公司', amount: 12105000, date: '2024-03-25', url: 'http://ggzy.example.com/...' },
-  ]);
-  const [contractRecords, setContractRecords] = useState([
-    { id: 'HT-2024-001', name: '城市基础设施施工合同', date: '2024-04-05', amount: 11800000, owner: '陈经理', duration: '30', status: '履行中', fulfillmentDate: '2024-04-10', expectedCompletionDate: '2024-05-10' },
-  ]);
-  const [contractAttachments, setContractAttachments] = useState<Attachment[]>([
-    { id: '1', name: '中标通知书.pdf', size: '1.2MB', type: 'pdf', date: '2024-03-25', category: '中标通知书' },
-    { id: '2', name: '施工合同扫描件.jpg', size: '2.4MB', type: 'image', date: '2024-04-05', category: '合同' },
-  ]);
-  const [openingRecordFiles, setOpeningRecordFiles] = useState<Attachment[]>([
-    { id: 'orf-1', name: '开标记录表-20240320.pdf', size: '1.5MB', type: 'pdf', date: '2024-03-20', category: '开标记录' }
-  ]);
-  const [tenderFiles, setTenderFiles] = useState<Attachment[]>([
-    { id: '0', name: '投标文件_技术标.pdf', size: '4.5MB', type: 'pdf', date: '2024-03-15', category: '投标文件' },
-    { id: '01', name: '投标文件_商务标.pdf', size: '2.8MB', type: 'pdf', date: '2024-03-15', category: '投标文件' },
-  ]);
-  const [unsuccessfulReason, setUnsuccessfulReason] = useState('投标报价略高于中标单位，且在技术方案的细节描述上不够详尽，未能充分体现我司在同类项目中的核心竞争优势。');
-  const [tenderPersonnel, setTenderPersonnel] = useState<string[]>(['陈经理', '王志强']);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
   const [showPersonnelDropdown, setShowPersonnelDropdown] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  React.useImperativeHandle(ref, () => ({
+    handleSave: () => {
+      handleSave();
+    }
+  }));
 
   const departments = React.useMemo(() => {
     const depts = new Set<string>();
@@ -4419,6 +4614,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
 
     setIsEditing(false);
     setHasAttemptedSave(false);
+    alert('保存并更新成功！');
   };
 
   const formatCurrency = (value: number | string) => {
@@ -4529,51 +4725,22 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
       <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm">
         <div className="space-y-10 pb-10">
           <div className="flex items-center justify-end">
-        <div className="flex gap-3">
-          <button 
-            onClick={() => {
-              if (isPaused) {
-                alert('此项目已暂停');
-                return;
-              }
-              handleExport();
-            }}
-            className={`px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            <Download size={16} />
-            导出详情
-          </button>
-          {!isEditing ? (
-            <button 
-              onClick={() => {
-                if (isPaused) {
-                  alert('此项目已暂停');
-                  return;
-                }
-                setIsEditing(true);
-              }}
-              className={`px-4 py-2 border border-[#0052CC] text-[#0052CC] rounded-xl text-sm font-bold hover:bg-[#0052CC]/5 transition-all active:scale-95 flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <Edit3 size={16} />
-              修改记录
-            </button>
-          ) : (
-            <button 
-              onClick={() => {
-                if (isPaused) {
-                  alert('此项目已暂停');
-                  return;
-                }
-                handleSave();
-              }}
-              className={`px-4 py-2 bg-[#0052CC] text-white rounded-xl text-sm font-bold shadow-md shadow-blue-500/20 hover:bg-[#0052CC]/90 transition-all active:scale-95 flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <Check size={16} />
-              保存全部
-            </button>
-          )}
-        </div>
-      </div>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => {
+                  if (isPaused) {
+                    alert('此项目已暂停');
+                    return;
+                  }
+                  handleExport();
+                }}
+                className={`px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Download size={16} />
+                导出详情
+              </button>
+            </div>
+          </div>
 
       <div className="space-y-8">
         {/* Tender Documents Section - Moved here to match Tender Management layout */}
@@ -5467,7 +5634,7 @@ const ArchivingPhase = ({ onNavigate, isPaused }: { onNavigate: () => void, isPa
       </div>
     </div>
   );
-};
+});
 
 interface Reply { id: string; author: string; content: string; time: string; }
 interface Annotation { id: string; author: string; role: string; time: string; content: string; replies: Reply[]; location: string; }
@@ -5854,5 +6021,405 @@ const RiskView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean 
     </div>
   </div>
 );
+
+const MarginReceiptUploadModal = ({ isOpen, onClose, projectData, isPaused }: { isOpen: boolean, onClose: () => void, projectData: any, isPaused: boolean }) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[150] overflow-y-auto bg-black/50 backdrop-blur-sm">
+          <div className="min-h-screen px-4 py-8 flex items-center justify-center">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-[1000px] max-h-[90vh] flex flex-col overflow-hidden"
+            >
+              <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white">
+                    <Wallet size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">保证金回执上传</h3>
+                </div>
+                <button 
+                  onClick={onClose}
+                  className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                >
+                  <X size={20} className="text-slate-400" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <MarginReceiptUpload onBack={onClose} isPaused={isPaused} projectData={projectData} />
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const ProjectAttachmentsModal = ({ 
+  isOpen, 
+  onClose, 
+  uploadedFiles, 
+  tenderFiles, 
+  openingRecordFiles, 
+  contractAttachments,
+  acceptanceReports
+}: { 
+  isOpen: boolean, 
+  onClose: () => void, 
+  uploadedFiles: Record<string, boolean>,
+  tenderFiles: Attachment[],
+  openingRecordFiles: Attachment[],
+  contractAttachments: Attachment[],
+  acceptanceReports: Attachment[]
+}) => {
+  const categories = [
+    { 
+      label: '招标文件', 
+      icon: <FileText size={20} />, 
+      files: (uploadedFiles['tender-doc'] || true) ? [
+        { name: 'XX高速公路施工招标文件.pdf', size: '12.5MB', date: '2024-03-01' }
+      ] : [] 
+    },
+    { 
+      label: '答疑文件', 
+      icon: <FileSearch size={20} />, 
+      files: Object.keys(uploadedFiles).filter(k => k.startsWith('clar-doc-')).length > 0 ? [
+        { name: '项目答疑纪要及补遗文件(一).pdf', size: '2.4MB', date: '2024-03-08' }
+      ] : []
+    },
+    { label: '投标文件', icon: <Paperclip size={20} />, files: tenderFiles },
+    { label: '开标记录', icon: <FileCheck size={20} />, files: openingRecordFiles },
+    { 
+      label: '中标通知书', 
+      icon: <Award size={20} />, 
+      files: contractAttachments.filter(a => a.category === '中标通知书') 
+    },
+    { 
+      label: '合同', 
+      icon: <History size={20} />, 
+      files: contractAttachments.filter(a => a.category === '合同') 
+    },
+    { label: '竣工报告', icon: <ClipboardCheck size={20} />, files: acceptanceReports },
+  ];
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[150] overflow-y-auto bg-black/50 backdrop-blur-sm">
+          <div className="min-h-screen px-4 py-8 flex items-center justify-center">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-[850px] max-h-[90vh] flex flex-col overflow-hidden"
+            >
+              <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="size-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
+                    <FileCheck size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">项目全周期附件归档</h3>
+                </div>
+                <button 
+                  onClick={onClose}
+                  className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                >
+                  <X size={20} className="text-slate-400" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+                <div className="flex flex-col gap-8 w-full max-w-4xl mx-auto">
+                  {categories.map((cat, idx) => (
+                    <div key={idx} className="space-y-4 relative">
+                      <div className="flex items-center gap-3 pb-2 border-b border-slate-100 relative bg-white">
+                        <div>
+                          <h4 className="font-bold text-slate-900 leading-none">{idx + 1}、{cat.label}</h4>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        {cat.files.length > 0 ? (
+                          cat.files.map((file: any, fidx: number) => (
+                            <div key={fidx} className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between group hover:bg-white hover:shadow-md transition-all">
+                              <div className="flex items-center gap-3">
+                                <div className="size-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                  <FileText size={20} />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold text-slate-900">{file.name}</p>
+                                  <p className="text-[10px] text-slate-400 font-mono italic">{file.size} • {file.date}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors" title="查看">
+                                  <Eye size={16} />
+                                </button>
+                                <button className="p-2 hover:bg-slate-100 text-slate-400 rounded-lg transition-colors" title="下载">
+                                  <Download size={16} />
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="py-8 bg-slate-50/50 rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center gap-2">
+                            <Frown size={32} className="text-slate-200" />
+                            <p className="text-sm text-slate-300 font-medium">未上传附件</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end shrink-0">
+                <button 
+                  onClick={() => {
+                    alert('正在准备导出所有附件资料...');
+                  }}
+                  className="px-10 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all active:scale-95 shadow-lg shadow-blue-200 flex items-center gap-2"
+                >
+                  <Download size={16} />
+                  一键导出归档
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const ArchivingManagementModal = ({ isOpen, onClose, ...props }: any) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const archivingRef = React.useRef<any>(null);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[150] overflow-y-auto bg-black/50 backdrop-blur-sm">
+          <div className="min-h-screen px-4 py-8 flex items-center justify-center">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-slate-50 rounded-3xl shadow-2xl w-full max-w-[1200px] h-[90vh] flex flex-col overflow-hidden"
+            >
+              <div className="px-8 py-6 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
+                    <ClipboardList size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">投标/开标记录管理</h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.1em]">Tender & Opening Record Management</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={onClose}
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                >
+                  <X size={20} className="text-slate-400" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <div className="p-8">
+                  <ArchivingManagement 
+                    {...props} 
+                    ref={archivingRef}
+                    isEditing={isEditing}
+                    setIsEditing={setIsEditing}
+                    onBack={onClose} 
+                  />
+                </div>
+              </div>
+              
+              <div className="p-6 border-t border-slate-200 bg-white flex shrink-0 gap-4">
+                <button 
+                  onClick={() => {
+                    if (isEditing) {
+                      archivingRef.current?.handleSave();
+                    } else {
+                      setIsEditing(true);
+                    }
+                  }}
+                  className="flex-1 py-3 bg-[#0052d9] text-white rounded-xl font-bold hover:bg-[#0052d9]/90 transition-all active:scale-95 shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
+                >
+                  {isEditing ? <Check size={18} /> : <Edit3 size={18} />}
+                  {isEditing ? '保存修改' : '修改记录'}
+                </button>
+                <button 
+                  onClick={onClose}
+                  className="px-10 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-all active:scale-95 shadow-sm"
+                >
+                  取消
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const OtherMaterialsModal = ({ 
+  isOpen, 
+  onClose, 
+  category, 
+  attachments, 
+  onAdd, 
+  onDelete,
+  isPaused
+}: { 
+  isOpen: boolean, 
+  onClose: () => void, 
+  category: any, 
+  attachments: Attachment[], 
+  onAdd: (file: Attachment) => void,
+  onDelete: (id: string) => void,
+  isPaused: boolean
+}) => {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleUpload = () => {
+    if (isPaused) return;
+    setIsUploading(true);
+    setTimeout(() => {
+      const newFile: Attachment = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: `补充材料_${new Date().getTime()}.pdf`,
+        size: '1.5MB',
+        type: 'pdf',
+        date: new Date().toISOString().split('T')[0],
+      };
+      onAdd(newFile);
+      setIsUploading(false);
+    }, 1500);
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[200] overflow-y-auto bg-black/50 backdrop-blur-sm">
+          <div className="min-h-screen px-4 py-8 flex items-center justify-center">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-[800px] max-h-[80vh] flex flex-col overflow-hidden"
+            >
+              <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="size-10 bg-slate-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-100">
+                    <FolderOpen size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">{category?.label} - 附件管理</h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">{category?.label} Attachments Management</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={onClose}
+                  className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                >
+                  <X size={20} className="text-slate-400" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+                <div className="flex flex-col gap-6">
+                  {/* Upload Dropzone */}
+                  {!isPaused && (
+                    <div 
+                      onClick={handleUpload}
+                      className={`h-40 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer group ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
+                    >
+                      {isUploading ? (
+                        <>
+                          <RefreshCw size={40} className="text-primary animate-spin" />
+                          <p className="text-sm font-bold text-primary">正在上传中...</p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="size-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:scale-110 group-hover:text-primary transition-all">
+                            <Upload size={24} />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-slate-700">点击或拖拽文件到这里上传</p>
+                            <p className="text-[10px] text-slate-400 mt-1">支持多份文件，PDF、Word、图片等格式</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Files List */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      已上传文件 ({attachments.length})
+                    </h4>
+                    {attachments.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3">
+                        {attachments.map((file) => (
+                          <div key={file.id} className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between group hover:bg-white hover:shadow-md transition-all">
+                            <div className="flex items-center gap-3">
+                              <div className="size-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                <FileText size={20} />
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-slate-900">{file.name}</p>
+                                <p className="text-[10px] text-slate-400 font-mono italic">{file.size} • {file.date}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors" title="查看">
+                                <Eye size={16} />
+                              </button>
+                              {!isPaused && (
+                                <button 
+                                  onClick={() => onDelete(file.id)}
+                                  className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors" 
+                                  title="删除"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-12 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 flex flex-col items-center justify-center gap-3">
+                        <Frown size={40} className="text-slate-200" />
+                        <p className="text-sm text-slate-300 font-medium font-black italic">暂无上传材料</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end shrink-0">
+                <button 
+                  onClick={onClose}
+                  className="px-8 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
+                >
+                  关闭
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
 
 export default Workbench;
