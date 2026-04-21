@@ -162,6 +162,13 @@ export default function App() {
     }
   };
 
+  const handleAddEnterprise = (name: string) => {
+    const newId = (enterprises.length + 1).toString();
+    const newEnterprise = { id: newId, name, status: '已加入' };
+    setEnterprises(prev => [...prev, newEnterprise]);
+    return newId;
+  };
+
   if (!isLoggedIn) {
     return <Login onLogin={handleLogin} />;
   }
@@ -187,6 +194,7 @@ export default function App() {
             setIsLoggedIn(false);
             localStorage.removeItem('isLoggedIn');
           }}
+          onAddEnterprise={handleAddEnterprise}
         />
         <main className="flex-1 overflow-y-auto p-8 [scrollbar-gutter:stable]">
           <div className="max-w-[1600px] mx-auto w-full">

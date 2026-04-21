@@ -16,6 +16,8 @@ import {
   Building2,
   QrCode,
   Monitor,
+  Eye,
+  EyeOff,
   ShieldCheck as ShieldIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -25,7 +27,7 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [view, setView] = useState<'login' | 'forgot' | 'select-enterprise'>('login');
+  const [view, setView] = useState<'login' | 'forgot' | 'select-enterprise' | 'register'>('login');
   const [loginType, setLoginType] = useState<'account' | 'phone'>('account');
   const [loginMode, setLoginMode] = useState<'form' | 'qr'>('form');
   const [selectedEnterprise, setSelectedEnterprise] = useState<string | null>(null);
@@ -41,6 +43,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [rememberPassword, setRememberPassword] = useState(false);
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
+
+  // Registration state
+  const [regPhone, setRegPhone] = useState('');
+  const [regCode, setRegCode] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [showRegPassword, setShowRegPassword] = useState(false);
+
   const [error, setError] = useState('');
   const [showError, setShowError] = useState(false);
   const [simulatedCode, setSimulatedCode] = useState<string | null>(null);
@@ -73,6 +82,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   const handleInitialLogin = () => {
+    if (!agreed) {
+      triggerError('请阅读并勾选同意服务条款和隐私政策');
+      return;
+    }
     if (loginType === 'account') {
       // Test credentials: 13800138000 / 888888
       if (username === '13800138000' && password === '888888') {
@@ -397,18 +410,36 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                               </label>
                             )}
                           </div>
-                          <button 
-                            onClick={() => setView('forgot')}
-                            className="text-sm text-primary font-bold hover:underline whitespace-nowrap"
-                          >
-                            忘记密码?
-                          </button>
+                          <div className="flex items-center gap-4">
+                            {selectionTab === 'personal' && (
+                              <button 
+                                onClick={() => setView('register')}
+                                className="text-sm text-primary font-bold hover:underline whitespace-nowrap"
+                              >
+                                立即注册
+                              </button>
+                            )}
+                            <button 
+                              onClick={() => setView('forgot')}
+                              className="text-sm text-primary font-bold hover:underline whitespace-nowrap"
+                            >
+                              忘记密码?
+                            </button>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="px-2 text-xs text-slate-400 whitespace-nowrap">
-                        登录视为您已阅读并同意 <span className="text-primary hover:underline cursor-pointer">服务条款</span> 和 <span className="text-primary hover:underline cursor-pointer">隐私政策</span>
-                      </div>
+                      <label className="px-2 text-xs text-slate-400 whitespace-nowrap flex items-center gap-2 cursor-pointer group">
+                        <input 
+                          type="checkbox" 
+                          checked={agreed}
+                          onChange={(e) => setAgreed(e.target.checked)}
+                          className="size-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                        />
+                        <span className="group-hover:text-slate-600 transition-colors">
+                          登录视为您已阅读并同意 <span className="text-primary hover:underline cursor-pointer">服务条款</span> 和 <span className="text-primary hover:underline cursor-pointer">隐私政策</span>
+                        </span>
+                      </label>
 
                       <button 
                         onClick={handleInitialLogin}
@@ -581,6 +612,83 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   >
                     确认重置
                   </button>
+                </div>
+              </motion.div>
+            ) : view === 'register' ? (
+              <motion.div 
+                key="register"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="w-full max-w-[440px] flex flex-col items-center"
+              >
+                <h2 className="text-4xl font-extrabold text-slate-900 mb-12 tracking-tight text-center whitespace-nowrap">
+                  个人用户注册
+                </h2>
+
+                <div className="space-y-6 w-full">
+                  <div>
+                    <input 
+                      type="text" 
+                      value={regPhone}
+                      onChange={(e) => setRegPhone(e.target.value)}
+                      placeholder="手机号"
+                      className="w-full px-6 py-5 bg-white border border-slate-200 rounded-[8px] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-lg font-medium"
+                    />
+                  </div>
+
+                  <div className="flex gap-0 border border-slate-200 rounded-[8px] overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
+                    <input 
+                      type="text" 
+                      value={regCode}
+                      onChange={(e) => setRegCode(e.target.value)}
+                      placeholder="请输入验证码"
+                      className="flex-1 px-6 py-5 bg-white outline-none text-lg font-medium"
+                    />
+                    <div className="w-px bg-slate-200 my-4"></div>
+                    <button 
+                      onClick={startCountdown}
+                      disabled={countdown > 0}
+                      className="px-6 bg-white text-primary font-bold hover:text-primary/80 disabled:text-slate-400 transition-colors whitespace-nowrap"
+                    >
+                      发送验证码
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <input 
+                      type={showRegPassword ? "text" : "password"}
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      placeholder="密码"
+                      className="w-full px-6 py-5 bg-white border border-slate-200 rounded-[8px] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-lg font-medium"
+                    />
+                    <button 
+                      onClick={() => setShowRegPassword(!showRegPassword)}
+                      className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      {showRegPassword ? <EyeOff size={24} /> : <Eye size={24} />}
+                    </button>
+                  </div>
+
+                  <button 
+                    onClick={() => {
+                      triggerError('注册成功，请登录');
+                      setView('login');
+                    }}
+                    className="w-full py-5 bg-primary text-white rounded-[8px] font-bold text-xl shadow-xl shadow-primary/20 hover:shadow-2xl hover:bg-primary/90 active:scale-[0.98] transition-all mt-4"
+                  >
+                    注册
+                  </button>
+
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="text-sm text-slate-500">
+                      注册即代表同意 <span className="text-primary cursor-pointer hover:underline">《用户协议》</span>
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      已有账号，<button onClick={() => setView('login')} className="text-primary font-bold hover:underline">立即登录</button>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             ) : (

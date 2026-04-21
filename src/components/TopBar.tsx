@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, ChevronDown, User, LogOut, Building2 } from 'lucide-react';
+import { Bell, ChevronDown, User, LogOut, Building2, Plus, X, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface TopBarProps {
   setActiveTab: (tab: string) => void;
@@ -7,11 +8,17 @@ interface TopBarProps {
   currentEnterprise: { id: string; name: string };
   setCurrentEnterprise: (enterprise: { id: string; name: string }) => void;
   onLogout: () => void;
+  onAddEnterprise?: (name: string) => string; // Returns the new ID
 }
 
-const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnterprise, setCurrentEnterprise, onLogout }) => {
+const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnterprise, setCurrentEnterprise, onLogout, onAddEnterprise }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showEntSelect, setShowEntSelect] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newEntName, setNewEntName] = useState('');
+  const [showSuccessPrompt, setShowSuccessPrompt] = useState(false);
+  const [newlyCreatedId, setNewlyCreatedId] = useState<string | null>(null);
+  
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,6 +39,36 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnter
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showDropdown]);
+
+  const handleAddEnterprise = () => {
+    if (!newEntName.trim()) return;
+    
+    if (onAddEnterprise) {
+      const newId = onAddEnterprise(newEntName);
+      setNewlyCreatedId(newId);
+      setIsAddModalOpen(false);
+      setShowSuccessPrompt(true);
+    }
+  };
+
+  const handleSwitchToNew = () => {
+    if (newlyCreatedId) {
+      const newEnt = enterprises.find(e => e.id === newlyCreatedId);
+      if (newEnt) {
+        setCurrentEnterprise(newEnt);
+      }
+    }
+    setShowSuccessPrompt(false);
+    setNewEntName('');
+    setNewlyCreatedId(null);
+    setShowDropdown(false);
+  };
+
+  const handleStayWithCurrent = () => {
+    setShowSuccessPrompt(false);
+    setNewEntName('');
+    setNewlyCreatedId(null);
+  };
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 sticky top-0 z-20">
@@ -63,7 +100,6 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnter
             <button 
               onClick={() => {
                 setShowDropdown(!showDropdown);
-                setShowEntSelect(false);
               }}
               className="flex items-center gap-2"
             >
@@ -99,48 +135,70 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnter
                 </div>
 
                 {/* Restore Enterprise Selection */}
+                {/* Enterprise Selection Dropdown Pattern */}
                 <div className="p-2">
                   <div className="flex items-center justify-between px-3 py-2">
                     <p className="text-xs font-bold text-slate-400 uppercase">切换企业</p>
-                    <button className="text-xs text-primary hover:text-primary/80 font-medium">新增企业</button>
+                    <button 
+                      onClick={() => setIsAddModalOpen(true)}
+                      className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                    >
+                      <Plus size={12} />
+                      新增企业
+                    </button>
                   </div>
                   
                   <div className="relative px-2">
-                    <button
-                      onClick={() => setShowEntSelect(!showEntSelect)}
-                      className="flex items-center justify-between w-full px-3 py-2 text-sm rounded-md bg-primary/10 text-primary font-bold"
+                    {/* Current Selection Display (Click to open list) */}
+                    <div
+                      className={`flex items-center justify-between w-full px-3 py-2 text-sm rounded-lg transition-all bg-primary/10 text-primary border border-primary/20 sticky top-0 z-10`}
                     >
-                      <div className="flex items-center gap-2 overflow-hidden">
-                        {currentEnterprise.id === 'personal' ? <User size={14} /> : <Building2 size={14} />}
-                        <span className="truncate">{currentEnterprise.name}</span>
+                      <div className={`flex items-center gap-2 overflow-hidden font-bold`}>
+                        <div className={`shrink-0 size-7 rounded-md flex items-center justify-center bg-primary text-white`}>
+                          {currentEnterprise.id === 'personal' ? <User size={14} /> : <Building2 size={14} />}
+                        </div>
+                        <span className="truncate text-xs">{currentEnterprise.name}</span>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs px-2 py-1 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
-                          切换
-                        </span>
-                      </div>
-                    </button>
+                      <button
+                        onClick={() => setShowEntSelect(!showEntSelect)}
+                        className="text-[10px] px-2 py-1 bg-primary text-white rounded-md hover:bg-primary/90 transition-all font-bold shrink-0 shadow-sm"
+                      >
+                        {showEntSelect ? '取消' : '切换'}
+                      </button>
+                    </div>
 
-                    {showEntSelect && (
-                      <div className="absolute left-2 right-2 mt-1 bg-white border border-slate-200 rounded-md shadow-lg z-40 py-1 max-h-60 overflow-y-auto">
-                        {enterprises.filter(ent => ent.id !== currentEnterprise.id).map((ent) => (
-                          <button
-                            key={ent.id}
-                            onClick={() => {
-                              setCurrentEnterprise(ent);
-                              setShowEntSelect(false);
-                            }}
-                            className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                          >
-                            {ent.id === 'personal' ? <User size={14} className="text-slate-400" /> : <Building2 size={14} className="text-slate-400" />}
-                            <span className="truncate">{ent.name}</span>
-                          </button>
-                        ))}
-                        {enterprises.length <= 1 && (
-                          <p className="px-3 py-2 text-xs text-slate-400 italic">暂无其他企业</p>
-                        )}
-                      </div>
-                    )}
+                    {/* Dropdown list of OTHER enterprises */}
+                    <AnimatePresence>
+                      {showEntSelect && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10, height: 0 }}
+                          animate={{ opacity: 1, y: 0, height: 'auto' }}
+                          exit={{ opacity: 0, y: -10, height: 0 }}
+                          className="mt-1.5 space-y-1 bg-white border border-slate-100 rounded-lg shadow-inner overflow-hidden max-h-48 overflow-y-auto custom-scrollbar"
+                        >
+                          {enterprises.filter(ent => ent.id !== currentEnterprise.id).map((ent) => (
+                            <button
+                              key={ent.id}
+                              onClick={() => {
+                                setCurrentEnterprise(ent);
+                                setShowEntSelect(false);
+                                setShowDropdown(false);
+                              }}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors text-left group"
+                            >
+                              <div className="shrink-0 size-6 rounded-md bg-slate-100 text-slate-400 flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                {ent.id === 'personal' ? <User size={12} /> : <Building2 size={12} />}
+                              </div>
+                              <span className="truncate text-xs flex-1">{ent.name}</span>
+                              <div className="opacity-0 group-hover:opacity-100 text-[10px] text-primary font-bold transition-opacity">切换</div>
+                            </button>
+                          ))}
+                          {enterprises.length <= 1 && (
+                            <p className="px-4 py-3 text-xs text-slate-400 italic text-center">暂无其他企业</p>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
 
@@ -158,6 +216,105 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnter
           </div>
         </div>
       </div>
+
+      {/* Add Enterprise Modal */}
+      <AnimatePresence>
+        {isAddModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAddModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <h3 className="text-lg font-bold text-slate-900">新增企业</h3>
+                <button 
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">企业名称</label>
+                  <input 
+                    autoFocus
+                    type="text" 
+                    value={newEntName}
+                    onChange={(e) => setNewEntName(e.target.value)}
+                    placeholder="请输入新的企业名称"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-medium"
+                  />
+                </div>
+              </div>
+              <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex items-center gap-3">
+                <button 
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="flex-1 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={handleAddEnterprise}
+                  disabled={!newEntName.trim()}
+                  className="flex-1 py-3 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  确认新增
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Success Prompt */}
+        {showSuccessPrompt && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl p-8 text-center"
+            >
+              <div className="size-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle2 size={48} />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">新增成功</h3>
+              <p className="text-slate-500 mb-8 leading-relaxed">
+                企业 <span className="text-slate-900 font-bold">"{enterprises.find(e => e.id === newlyCreatedId)?.name}"</span> 已成功创建。<br/>是否立即切换到该企业？
+              </p>
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={handleSwitchToNew}
+                  className="w-full py-4 bg-primary text-white rounded-2xl font-bold text-base shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all"
+                >
+                  是，立即切换
+                </button>
+                <button 
+                  onClick={handleStayWithCurrent}
+                  className="w-full py-3 text-slate-400 font-bold text-sm hover:text-slate-600 transition-all"
+                >
+                  否，留在当前企业
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </header>
   );
 };
