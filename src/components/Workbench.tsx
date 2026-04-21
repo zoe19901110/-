@@ -681,7 +681,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
               {subView === 'inspection-detail' && <InspectionDetailView onBack={() => setSubView('main')} uploadedFiles={uploadedFiles} isPaused={isPaused} />}
               {subView === 'archive-register' && <ArchiveRegisterView onBack={() => setSubView('main')} isPaused={isPaused} />}
               {subView === 'parsing-report' && <ParsingReportView onBack={() => setSubView('main')} projectData={projectData} isPaused={isPaused} />}
-              {subView === 'margin-receipt' && <MarginReceiptUpload onBack={() => setSubView('main')} isPaused={isPaused} />}
+              {subView === 'margin-receipt' && <MarginReceiptUpload onBack={() => setSubView('main')} isPaused={isPaused} projectData={projectData} />}
               {subView === 'bid-parsing' && (
                 <BidParsing 
                   onBack={() => setSubView('main')} 

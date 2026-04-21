@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Pagination from './Pagination';
+import { useTableResizer } from '../hooks/useTableResizer';
 
 interface TenderProjectRegistrationProps {
   onEnterWorkbench?: (stage: string, data?: any) => void;
@@ -133,6 +134,16 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
   const [statusFilter, setStatusFilter] = useState('全部');
   const [dateFilter, setDateFilter] = useState('');
 
+  const { widths, onMouseDown } = useTableResizer([
+    250,    // 项目名称
+    150,    // 项目编号
+    150,    // 招标人
+    150,    // 招标代理
+    180,    // 开标时间
+    100,    // 状态
+    180     // 操作
+  ]);
+
   const handleEditProject = (project: any) => {
     setIsEditing(true);
     setEditingId(project.id);
@@ -213,58 +224,68 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
       animate={{ opacity: 1, x: 0 }}
       className="space-y-6"
     >
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+      {/* Summary Cards with Action Button */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Add Project Card Style Button */}
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="h-[160px] bg-gradient-to-br from-[#0052CC] to-[#0065FF] rounded-2xl p-6 flex flex-col justify-between items-start text-white shadow-lg shadow-blue-200/50 hover:shadow-blue-300/50 transition-all active:scale-[0.98] group"
+        >
+          <div className="size-10 bg-white/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Plus size={24} />
+          </div>
+          <span className="text-lg font-bold">新增项目登记</span>
+        </button>
+
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-[160px] flex flex-col justify-between group hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
             <span className="text-slate-500 text-sm font-medium">投标中项目</span>
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:scale-110 transition-transform">
               <Clock size={20} />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900">{projects.filter(p => p.status === '投标中').length} 个</h3>
-          <div className="mt-3 space-y-1.5">
-            <div className="flex items-center justify-between text-[10px]">
-              <span className="text-slate-400">7天内开标</span>
-              <span className="font-bold text-slate-600">3 个</span>
-            </div>
-            <div className="flex items-center justify-between text-[10px]">
-              <span className="text-slate-400">今日开标</span>
-              <span className="font-bold text-orange-600">1 个</span>
+          <div className="space-y-3">
+            <h3 className="text-2xl font-bold text-slate-900">{projects.filter(p => p.status === '投标中').length} 个</h3>
+            <div className="space-y-1.5 border-t border-slate-50 pt-2">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-slate-400">7天内开标</span>
+                <span className="font-bold text-slate-600">3 个</span>
+              </div>
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-slate-400">今日开标</span>
+                <span className="font-bold text-orange-600">1 个</span>
+              </div>
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-slate-500 text-sm font-medium">本月新增项目</span>
-            <div className="p-2 bg-orange-50 text-orange-600 rounded-lg">
+
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-[160px] flex flex-col justify-between group hover:shadow-md transition-shadow uppercase">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 text-sm font-medium uppercase">本月新增项目</span>
+            <div className="p-2 bg-orange-50 text-orange-600 rounded-lg group-hover:scale-110 transition-transform">
               <Plus size={20} />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900">8 个</h3>
-          <p className="text-xs text-slate-400 mt-2">较上月 +15%</p>
+          <div>
+            <h3 className="text-2xl font-bold text-slate-900">8 个</h3>
+            <p className="text-xs text-slate-400 mt-2">较上月 <span className="text-emerald-500 font-bold">+15%</span></p>
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-[160px] flex flex-col justify-between group hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
             <span className="text-slate-500 text-sm font-medium">本月投标成功</span>
-            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:scale-110 transition-transform">
               <CheckCircle2 size={20} />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900">3 个</h3>
-          <p className="text-xs text-slate-400 mt-2">成功率 37.5%</p>
+          <div>
+            <h3 className="text-2xl font-bold text-slate-900">3 个</h3>
+            <p className="text-xs text-slate-400 mt-2">成功率 <span className="text-primary font-bold">37.5%</span></p>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <button 
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-6 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all active:scale-95 shadow-sm hover:shadow-md"
-        >
-          <Plus size={20} />
-          新增项目登记
-        </button>
-      </div>
 
       {/* Filters & Search */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
@@ -324,58 +345,77 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
 
       {/* Project Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目名称</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目编号</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">招标人</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">招标代理</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">开标时间</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">状态</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {projects.filter(p => {
-              const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
-              const matchesStatus = statusFilter === '全部' || p.status === statusFilter;
-              const matchesDate = !dateFilter || p.bidOpeningTime.includes(dateFilter);
-              return matchesSearch && matchesStatus && matchesDate;
-            })
-            .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-            .map((project) => (
-              <tr key={project.id} className="hover:bg-slate-50/50 transition-colors group">
-                <td className="px-6 py-4">
-                  <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{project.name}</p>
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-500">
-                  {project.code}
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-600">
-                  {project.tenderer}
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-600">
-                  {project.agent}
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-slate-600">{project.bidOpeningTime}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
-                    project.status === '投标中' 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : project.status === '已完成' 
-                        ? 'bg-emerald-50 text-emerald-600' 
-                        : project.status === '放弃投标'
-                          ? 'bg-red-50 text-red-600'
-                          : 'bg-slate-50 text-slate-600'
-                  }`}>
-                    {project.status === '投标中' ? '投标中' : (project.status === '已完成' ? '已开标' : project.status)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-1">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse table-fixed">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                {[
+                  { label: '项目名称', key: 'name' },
+                  { label: '项目编号', key: 'code' },
+                  { label: '招标人', key: 'tenderer' },
+                  { label: '招标代理', key: 'agent' },
+                  { label: '开标时间', key: 'time' },
+                  { label: '状态', key: 'status' },
+                  { label: '操作', key: 'action', align: 'right' }
+                ].map((col, idx) => (
+                  <th 
+                    key={col.key} 
+                    style={{ width: widths[idx] }}
+                    className={`px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider relative group/th ${col.align === 'right' ? 'text-right' : ''}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="truncate">{col.label}</span>
+                    </div>
+                    {idx < 6 && (
+                      <div 
+                        onMouseDown={(e) => onMouseDown(idx, e)}
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
+                      />
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {projects.filter(p => {
+                const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
+                const matchesStatus = statusFilter === '全部' || p.status === statusFilter;
+                const matchesDate = !dateFilter || p.bidOpeningTime.includes(dateFilter);
+                return matchesSearch && matchesStatus && matchesDate;
+              })
+              .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+              .map((project) => (
+                <tr key={project.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4 overflow-hidden">
+                    <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm truncate" title={project.name}>{project.name}</p>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500 overflow-hidden">
+                    <div className="truncate" title={project.code}>{project.code}</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-600 overflow-hidden">
+                    <div className="truncate" title={project.tenderer}>{project.tenderer}</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-600 overflow-hidden">
+                    <div className="truncate" title={project.agent}>{project.agent}</div>
+                  </td>
+                  <td className="px-6 py-4 overflow-hidden">
+                    <span className="text-sm text-slate-600 truncate block" title={project.bidOpeningTime}>{project.bidOpeningTime}</span>
+                  </td>
+                  <td className="px-6 py-4 overflow-hidden">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold truncate ${
+                      project.status === '投标中' 
+                        ? 'bg-blue-50 text-blue-600' 
+                        : project.status === '已完成' 
+                          ? 'bg-emerald-50 text-emerald-600' 
+                          : project.status === '放弃投标'
+                            ? 'bg-red-50 text-red-600'
+                            : 'bg-slate-50 text-slate-600'
+                    }`}>
+                      {project.status === '投标中' ? '投标中' : (project.status === '已完成' ? '已开标' : project.status)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
                     <button 
                       onClick={() => {
                         if (project.status === '放弃投标') {
@@ -389,7 +429,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
                           isTenderUploaded: true 
                         });
                       }}
-                      className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 group/btn ${
+                      className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 group/btn whitespace-nowrap ${
                         project.status === '放弃投标' 
                           ? 'text-slate-300 cursor-not-allowed' 
                           : 'text-[#0052CC] hover:bg-[#0052CC]/5'
@@ -397,7 +437,7 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
                       title={project.status === '放弃投标' ? '此项目已暂停' : '进入工作台'}
                     >
                       <ExternalLink size={14} className={project.status === '放弃投标' ? '' : 'group-hover/btn:scale-110 transition-transform'} />
-                      <span className="text-xs font-bold">进入工作台</span>
+                      <span className="text-xs font-bold whitespace-nowrap">进入工作台</span>
                     </button>
                     
                     <div className="w-px h-4 bg-slate-200 mx-1" />
@@ -443,7 +483,8 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
             ))}
           </tbody>
         </table>
-        <Pagination 
+      </div>
+      <Pagination 
           currentPage={currentPage}
           totalPages={Math.ceil(projects.filter(p => {
             const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);

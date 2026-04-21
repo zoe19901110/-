@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Pagination from './Pagination';
+import { useTableResizer } from '../hooks/useTableResizer';
 
 interface OtherProjectMaterialsProps {
   currentEnterprise?: { id: string; name: string };
@@ -60,6 +61,25 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
   const [pageSize, setPageSize] = useState(10);
   const [detailCurrentPage, setDetailCurrentPage] = useState(1);
   const [detailPageSize, setDetailPageSize] = useState(10);
+
+  const { widths: projectWidths, onMouseDown: onProjectMouseDown } = useTableResizer([
+    'auto', // 项目名称
+    150,    // 项目编号
+    150,    // 招标人
+    100,    // 材料数量
+    150,    // 最后更新
+    150     // 操作
+  ]);
+
+  const { widths: materialWidths, onMouseDown: onMaterialMouseDown } = useTableResizer([
+    40,     // Checkbox
+    'auto', // 文件名
+    120,    // 类型
+    150,    // 上传日期
+    100,    // 大小
+    120,    // 上传人
+    150     // 操作
+  ]);
 
   const [projects, setProjects] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('全部文档');
@@ -309,15 +329,31 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
       {/* Project Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目名称</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目编号</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">招标人</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">材料数量</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">最后更新</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">操作</th>
+                {[
+                  { label: '项目名称', key: 'name' },
+                  { label: '项目编号', key: 'code' },
+                  { label: '招标人', key: 'tenderer' },
+                  { label: '材料数量', key: 'count', align: 'center' },
+                  { label: '最后更新', key: 'update' },
+                  { label: '操作', key: 'action', align: 'right' }
+                ].map((col, idx) => (
+                  <th 
+                    key={col.key} 
+                    style={{ width: projectWidths[idx] }}
+                    className={`px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider relative group/th ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : ''}`}
+                  >
+                    <span className="truncate">{col.label}</span>
+                    {idx < 5 && (
+                      <div 
+                        onMouseDown={(e) => onProjectMouseDown(idx, e)}
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
+                      />
+                    )}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -333,13 +369,13 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
 
                 return (
                   <tr key={project.id} className={`hover:bg-slate-50/50 transition-colors group ${isProjectPaused ? 'opacity-60' : ''}`}>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                    <td className="px-6 py-4 overflow-hidden">
+                      <div className="flex items-center gap-3 overflow-hidden">
                         <div className="size-8 bg-blue-50 text-primary rounded-lg flex items-center justify-center shrink-0">
                           <Briefcase size={16} />
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{project.name}</p>
+                        <div className="flex flex-col gap-1 overflow-hidden">
+                          <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm truncate" title={project.name}>{project.name}</p>
                           {isProjectPaused && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 w-fit">
                               已暂停
@@ -348,14 +384,20 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{project.code}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{project.tenderer}</td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">
+                    <td className="px-6 py-4 text-sm text-slate-500 overflow-hidden">
+                      <div className="truncate" title={project.code}>{project.code}</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600 overflow-hidden">
+                      <div className="truncate" title={project.tenderer}>{project.tenderer}</div>
+                    </td>
+                    <td className="px-6 py-4 text-center overflow-hidden">
+                      <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold truncate inline-block w-fit">
                         {project.materialCount}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{project.lastUpdate}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500 overflow-hidden">
+                      <div className="truncate" title={project.lastUpdate}>{project.lastUpdate}</div>
+                    </td>
                     <td className="px-6 py-4 text-right">
                       <button 
                         onClick={() => handleEnterDetail(project)}
@@ -788,28 +830,41 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
         </div>
 
         <div className="overflow-y-auto flex-1">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="bg-slate-50/50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-100">
-                <th className="px-6 py-4 w-10">
-                  <input 
-                    type="checkbox" 
-                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
-                    checked={isAllCurrentPageSelected}
-                    ref={input => {
-                      if (input) {
-                        input.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
-                      }
-                    }}
-                    onChange={handleSelectAll}
-                  />
-                </th>
-                <th className="px-6 py-4">文件名</th>
-                <th className="px-6 py-4">类型</th>
-                <th className="px-6 py-4">大小</th>
-                <th className="px-6 py-4">上传人</th>
-                <th className="px-6 py-4">最后更新日期</th>
-                <th className="px-6 py-4 text-right">操作</th>
+                {[
+                  { label: 'Checkbox', key: 'checkbox', type: 'checkbox' },
+                  { label: '文件名', key: 'name' },
+                  { label: '类型', key: 'type' },
+                  { label: '大小', key: 'size' },
+                  { label: '上传人', key: 'uploader' },
+                  { label: '最后更新日期', key: 'date' },
+                  { label: '操作', key: 'action', align: 'right' }
+                ].map((col, idx) => (
+                  <th 
+                    key={col.key} 
+                    style={{ width: materialWidths[idx] }}
+                    className={`px-6 py-4 relative group/th ${col.align === 'right' ? 'text-right' : ''}`}
+                  >
+                    {col.type === 'checkbox' ? (
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                        checked={isAllCurrentPageSelected}
+                        onChange={handleSelectAll}
+                      />
+                    ) : (
+                      <span className="truncate">{col.label}</span>
+                    )}
+                    {idx < 6 && (
+                      <div 
+                        onMouseDown={(e) => onMaterialMouseDown(idx, e)}
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
+                      />
+                    )}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -825,31 +880,35 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                       onChange={() => handleSelectMaterial(item.id)}
                     />
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="size-8 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                  <td className="px-6 py-4 overflow-hidden">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="size-8 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors shrink-0">
                         <FileText size={16} />
                       </div>
-                      <span className="text-sm font-bold text-slate-900 truncate max-w-xs" title={item.fileName}>
+                      <span className="text-sm font-bold text-slate-900 truncate" title={item.fileName}>
                         {item.fileName.includes('.') ? item.fileName.substring(0, item.fileName.lastIndexOf('.')) : item.fileName}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider">
+                  <td className="px-6 py-4 overflow-hidden">
+                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider truncate block w-fit" title={item.type}>
                       {item.type}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-xs text-slate-500">{item.size}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="size-6 bg-slate-200 rounded-full overflow-hidden">
-                        <img src={`https://i.pravatar.cc/100?u=${item.uploader}`} alt="uploader" />
+                  <td className="px-6 py-4 text-xs text-slate-500 overflow-hidden">
+                    <div className="truncate" title={item.size}>{item.size}</div>
+                  </td>
+                  <td className="px-6 py-4 overflow-hidden">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <div className="size-6 bg-slate-200 rounded-full overflow-hidden shrink-0">
+                        <img src={`https://i.pravatar.cc/100?u=${item.uploader}`} alt="uploader" className="size-full object-cover" />
                       </div>
-                      <span className="text-xs text-slate-600">{item.uploader}</span>
+                      <span className="text-xs text-slate-600 truncate">{item.uploader}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-xs text-slate-500">{item.uploadDate}</td>
+                  <td className="px-6 py-4 text-xs text-slate-500 overflow-hidden">
+                    <div className="truncate" title={item.uploadDate}>{item.uploadDate}</div>
+                  </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button 

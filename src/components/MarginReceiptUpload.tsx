@@ -7,27 +7,31 @@ import {
   Trash2,
   Eye,
   Paperclip,
-  ChevronDown
+  ChevronDown,
+  Image as ImageIcon
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface MarginReceiptUploadProps {
   onBack: () => void;
   isPaused?: boolean;
+  projectData?: any;
 }
 
-const marginTypes = [
-  { id: 'bank_transfer', name: '现金转账' },
-  { id: 'electronic_guarantee', name: '电子保函' },
-  { id: 'cash', name: '现金/支票' },
-  { id: 'other', name: '其他方式' }
-];
+const MarginReceiptUpload: React.FC<MarginReceiptUploadProps> = ({ onBack, isPaused = false, projectData }) => {
+  const [formData, setFormData] = useState({
+    amount: '',
+    type: '现金转账',
+    bank: '',
+    date: '',
+    remarks: '',
+    refundStatus: '待退还',
+    refundDate: '',
+    vouchers: [] as any[]
+  });
 
-const MarginReceiptUpload: React.FC<MarginReceiptUploadProps> = ({ onBack, isPaused = false }) => {
-  const [files, setFiles] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedType, setSelectedType] = useState<string>('bank_transfer');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -36,192 +40,244 @@ const MarginReceiptUpload: React.FC<MarginReceiptUploadProps> = ({ onBack, isPau
         size: (e.target.files[0].size / 1024 / 1024).toFixed(2) + ' MB',
         time: new Date().toLocaleString(),
         status: '上传成功',
-        type: marginTypes.find(t => t.id === selectedType)?.name
       };
       
       setIsUploading(true);
-      
-      // Simulate upload
       setTimeout(() => {
-        setFiles(prev => [...prev, newFile]);
+        setFormData(prev => ({
+          ...prev,
+          vouchers: [...prev.vouchers, newFile]
+        }));
         setIsUploading(false);
       }, 1000);
     }
   };
 
   const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFormData(prev => ({
+      ...prev,
+      vouchers: prev.vouchers.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSave = () => {
+    setHasAttemptedSave(true);
+    if (!formData.amount || !formData.type || !formData.bank || !formData.date || !formData.refundStatus) {
+      alert('请填写所有必填项');
+      return;
+    }
+    alert('提交成功');
+    onBack();
   };
 
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
     >
       {/* Header aligned to the left */}
       <div className="flex items-center gap-4 mb-6">
         <button 
           onClick={onBack}
-          className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2 group"
         >
-          <ChevronLeft size={20} />
+          <ChevronLeft size={20} className="text-slate-400 group-hover:text-primary transition-colors" />
+          <div className="w-1 h-5 bg-primary rounded-full"></div>
+          <h2 className="text-lg font-bold text-slate-800">保证金回执上传</h2>
         </button>
-        <div className="flex items-center gap-3">
-          <div className="w-1 h-6 bg-primary rounded-full"></div>
-          <h2 className="text-xl font-bold">保证金回执上传</h2>
-        </div>
       </div>
 
-      <div className="max-w-5xl mx-auto">
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-8">
-            
-            {/* Left-Right Form Layout */}
-            <div className="flex flex-col md:flex-row gap-12">
-              
-              {/* Left: Type Selection */}
-              <div className="w-full md:w-1/3 shrink-0">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  缴纳方式 <span className="text-red-500">*</span>
-                </label>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-8 space-y-10">
+            {/* Form Fields - Matching SecurityDepositManagement style */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 ml-1">缴纳金额 <span className="text-red-500">*</span></label>
                 <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => !isPaused && setIsDropdownOpen(!isDropdownOpen)}
+                  <input 
+                    type="text" 
+                    value={formData.amount}
                     disabled={isPaused}
-                    className={`w-full flex items-center justify-between px-4 py-2.5 bg-white border rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors ${
-                      isDropdownOpen ? 'border-primary' : 'border-slate-300'
-                    } ${isPaused ? 'opacity-50 cursor-not-allowed bg-slate-50' : 'hover:border-slate-400'}`}
-                  >
-                    <span className="text-slate-900">
-                      {marginTypes.find(t => t.id === selectedType)?.name || '请选择缴纳方式'}
-                    </span>
-                    <ChevronDown size={16} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
+                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                    className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !formData.amount ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'} ${isPaused ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`} 
+                    placeholder="¥ 0.00" 
+                  />
+                </div>
+              </div>
 
-                  {isDropdownOpen && !isPaused && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1">
-                      {marginTypes.map((type) => (
-                        <button
-                          key={type.id}
-                          onClick={() => {
-                            setSelectedType(type.id);
-                            setIsDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 transition-colors ${
-                            selectedType === type.id ? 'text-primary font-medium bg-blue-50/50' : 'text-slate-700'
-                          }`}
-                        >
-                          {type.name}
-                        </button>
-                      ))}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 ml-1">缴纳方式 <span className="text-red-500">*</span></label>
+                <select 
+                  value={formData.type}
+                  disabled={isPaused}
+                  onChange={(e) => setFormData({...formData, type: e.target.value})}
+                  className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !formData.type ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'} ${isPaused ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`}
+                >
+                  <option value="">请选择</option>
+                  <option>现金转账</option>
+                  <option>银行保函</option>
+                  <option>保险保函</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 ml-1">缴纳银行 <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    value={formData.bank}
+                    disabled={isPaused}
+                    onChange={(e) => setFormData({...formData, bank: e.target.value})}
+                    className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !formData.bank ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'} ${isPaused ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`} 
+                    placeholder="请输入缴纳银行名称" 
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 ml-1">缴纳时间 <span className="text-red-500">*</span></label>
+                <input 
+                  type="date" 
+                  value={formData.date}
+                  disabled={isPaused}
+                  onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !formData.date ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'} ${isPaused ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`} 
+                />
+              </div>
+
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 ml-1">退还状态 <span className="text-red-500">*</span></label>
+                <div className="flex gap-8 px-2 py-2">
+                  {['待退还', '已退还'].map((status) => (
+                    <label key={status} className={`flex items-center gap-2 cursor-pointer group ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                      <div className="relative flex items-center justify-center">
+                        <input
+                          type="radio"
+                          name="refundStatus"
+                          disabled={isPaused}
+                          checked={formData.refundStatus === status}
+                          onChange={() => setFormData({...formData, refundStatus: status})}
+                          className="sr-only"
+                        />
+                        <div className={`size-5 rounded-full border-2 transition-all ${formData.refundStatus === status ? 'border-primary bg-primary' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                          {formData.refundStatus === status && <div className="size-2 bg-white rounded-full" />}
+                        </div>
+                      </div>
+                      <span className={`text-sm font-bold transition-colors ${formData.refundStatus === status ? 'text-slate-900' : 'text-slate-500'}`}>
+                        {status}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {formData.refundStatus === '已退还' && (
+                <div className="md:col-span-2 space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 ml-1">退还时间 <span className="text-red-500">*</span></label>
+                  <input 
+                    type="date" 
+                    value={formData.refundDate}
+                    disabled={isPaused}
+                    onChange={(e) => setFormData({...formData, refundDate: e.target.value})}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" 
+                  />
+                </div>
+              )}
+
+              {/* Attachments */}
+              <div className="md:col-span-2 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <div className="flex items-center gap-2 text-slate-900 font-bold">
+                    <Paperclip size={18} className="text-primary" />
+                    <label className="text-sm">缴纳凭证附件 <span className="text-red-500">*</span></label>
+                  </div>
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      id="receipt-upload" 
+                      className="absolute inset-0 opacity-0 cursor-pointer" 
+                      accept=".pdf,image/*"
+                      disabled={isPaused || isUploading}
+                      onChange={handleFileUpload}
+                    />
+                    <button className={`px-4 py-2 bg-primary/10 text-primary rounded-lg text-xs font-bold hover:bg-primary/20 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                      <UploadCloud size={14} /> {isUploading ? '上传中...' : '上传附件'}
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-3">
+                  {formData.vouchers.map((v, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 group hover:border-primary/30 transition-all">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className={`size-10 rounded-lg flex items-center justify-center shrink-0 ${v.name.toLowerCase().endsWith('.pdf') ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
+                          {v.name.toLowerCase().endsWith('.pdf') ? <FileText size={20} /> : <ImageIcon size={20} />}
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-sm font-bold text-slate-900 truncate">{v.name}</p>
+                          <p className="text-[10px] text-slate-400">{v.size} • {v.time}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button className="p-2 text-slate-400 hover:text-primary transition-colors"><Eye size={16} /></button>
+                        <button onClick={() => removeFile(idx)} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {formData.vouchers.length === 0 && (
+                    <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                      <Paperclip size={32} className="text-slate-300 mb-2" />
+                      <p className="text-sm text-slate-400 font-medium">暂无附件</p>
+                      <p className="text-[10px] text-slate-400 mt-1">点击右上角按钮上传缴纳凭证</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Right: Attachment Section */}
-              <div className="w-full md:w-2/3">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Paperclip size={18} className="text-blue-500" />
-                    <h3 className="text-sm font-medium text-slate-900">
-                      缴纳凭证附件 <span className="text-red-500">*</span>
-                    </h3>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (isPaused) {
-                        alert('此项目已暂停');
-                        return;
-                      }
-                      document.getElementById('receipt-upload')?.click();
-                    }}
-                    disabled={isPaused || isUploading}
-                    className={`flex items-center gap-2 px-4 py-2 bg-blue-50 text-primary rounded-lg text-sm font-medium transition-colors ${
-                      isPaused ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-100'
-                    }`}
-                  >
-                    <UploadCloud size={16} />
-                    {isUploading ? '上传中...' : '上传附件'}
-                  </button>
-                  <input 
-                    type="file" 
-                    id="receipt-upload" 
-                    className="hidden" 
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={handleFileUpload}
-                    disabled={isPaused || isUploading}
-                  />
-                </div>
-
-                {files.length === 0 ? (
-                  <div className="border border-dashed border-slate-200 rounded-xl py-12 flex flex-col items-center justify-center bg-slate-50/50">
-                    <Paperclip size={32} className="text-slate-300 mb-3" />
-                    <p className="text-slate-500 text-sm mb-1">暂无附件</p>
-                    <p className="text-slate-400 text-xs">点击右上角按钮上传缴纳凭证</p>
-                  </div>
-                ) : (
-                  <div className="border border-slate-200 rounded-xl overflow-hidden">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
-                        <tr>
-                          <th className="px-4 py-3 font-medium">文件名称</th>
-                          <th className="px-4 py-3 font-medium w-24">大小</th>
-                          <th className="px-4 py-3 font-medium w-40">上传时间</th>
-                          <th className="px-4 py-3 font-medium w-24 text-right">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {files.map((file, index) => (
-                          <tr key={index} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-2">
-                                <FileText size={16} className="text-blue-500 shrink-0" />
-                                <span className="text-slate-700 truncate max-w-[150px] sm:max-w-[200px]">{file.name}</span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-slate-500">{file.size}</td>
-                            <td className="px-4 py-3 text-slate-500">{file.time}</td>
-                            <td className="px-4 py-3 text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <button className="p-1.5 text-slate-400 hover:text-primary rounded transition-colors" title="预览">
-                                  <Eye size={16} />
-                                </button>
-                                <button 
-                                  onClick={() => removeFile(index)}
-                                  className="p-1.5 text-slate-400 hover:text-red-500 rounded transition-colors" 
-                                  title="删除"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 ml-1">备注</label>
+                <textarea 
+                  value={formData.remarks}
+                  disabled={isPaused}
+                  onChange={(e) => setFormData({...formData, remarks: e.target.value})}
+                  rows={3}
+                  placeholder="请输入其他备注信息..."
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm resize-none"
+                />
               </div>
+            </div>
 
+            {/* Action Buttons */}
+            <div className="flex gap-4 pt-6">
+              <button 
+                onClick={handleSave}
+                disabled={isPaused}
+                className={`flex-1 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                确认提交
+              </button>
+              <button 
+                onClick={onBack}
+                className="px-10 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+              >
+                取消
+              </button>
             </div>
           </div>
           
           {/* Warning Box */}
-          <div className="bg-amber-50 p-6 flex items-start gap-4 border-t border-amber-100">
+          <div className="bg-amber-50 p-6 flex items-start gap-4 border-t border-amber-100 mt-auto">
             <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={20} />
             <div>
               <h4 className="font-bold text-amber-800 mb-1 text-sm">注意事项</h4>
               <ul className="text-sm text-amber-700 space-y-1 list-disc list-inside">
                 <li>请确保上传的回执清晰可见，包含付款方、收款方、金额及交易时间等关键信息。</li>
                 <li>如采用电子保函形式，请上传完整的保函文件。</li>
-                <li>保证金缴纳金额必须与招标文件要求完全一致。</li>
+                <li>缴纳金额必须与招标文件要求完全一致。</li>
               </ul>
             </div>
           </div>
-        </div>
       </div>
     </motion.div>
   );

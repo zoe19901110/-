@@ -26,7 +26,6 @@ interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   enterprises: { id: string; name: string }[];
-  setEnterprises: React.Dispatch<React.SetStateAction<{ id: string; name: string }[]>>;
   currentEnterprise: { id: string; name: string };
   setCurrentEnterprise: (enterprise: { id: string; name: string }) => void;
 }

@@ -98,6 +98,7 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveTab, enterprises, currentEnter
                   </button>
                 </div>
 
+                {/* Restore Enterprise Selection */}
                 <div className="p-2">
                   <div className="flex items-center justify-between px-3 py-2">
                     <p className="text-xs font-bold text-slate-400 uppercase">切换企业</p>

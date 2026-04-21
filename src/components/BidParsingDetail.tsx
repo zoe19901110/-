@@ -10,6 +10,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useTableResizer } from '../hooks/useTableResizer';
 
 interface BidParsingDetailProps {
   project: any;
@@ -21,6 +22,13 @@ interface BidParsingDetailProps {
 
 const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, onViewReport, currentEnterprise, isPaused = false }) => {
   const enterpriseName = currentEnterprise?.name || '杭州某某科技有限公司';
+
+  const { widths, onMouseDown } = useTableResizer([
+    'auto', // 文件名
+    180,    // 上传时间
+    120,    // 分析状态
+    150     // 操作
+  ]);
   
   // Initialize files based on project
   const [files, setFiles] = useState([
@@ -213,61 +221,81 @@ const BidParsingDetail: React.FC<BidParsingDetailProps> = ({ project, onBack, on
               <h3 className="text-lg font-bold">分析历史</h3>
               <button className="text-primary text-sm font-medium hover:underline">查看全部</button>
             </div>
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-slate-400 text-xs font-medium bg-slate-50/30">
-                  <th className="px-6 py-4">文件名</th>
-                  <th className="px-6 py-4">上传时间</th>
-                  <th className="px-6 py-4">分析状态</th>
-                  <th className="px-6 py-4 text-right">操作</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {files.map((file, i) => (
-                  <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <FileText className={file.type === 'pdf' ? 'text-red-500' : 'text-blue-500'} size={20} />
-                        <span className="text-sm font-medium">{file.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-sm text-slate-400">{file.time}</td>
-                    <td className="px-6 py-5">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${file.status === '已完成' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
-                        <span className={`size-1.5 rounded-full ${file.status === '已完成' ? 'bg-green-500' : 'bg-blue-500'}`}></span>
-                        {file.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5 text-right">
-                      <div className="flex justify-end gap-4">
-                        <button 
-                          onClick={() => {
-                            if (isPaused) {
-                              alert('此项目已暂停');
-                              return;
-                            }
-                          }}
-                          className={`text-sm font-bold transition-all ${isPaused ? 'text-slate-300 cursor-not-allowed' : 'text-primary hover:text-primary/80'}`}
-                        >
-                          查看
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (isPaused) {
-                              alert('此项目已暂停');
-                              return;
-                            }
-                          }}
-                          className={`text-sm font-bold transition-all ${isPaused ? 'text-slate-300 cursor-not-allowed' : 'text-slate-400 hover:text-red-500'}`}
-                        >
-                          删除
-                        </button>
-                      </div>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse table-fixed">
+                <thead>
+                  <tr className="text-slate-400 text-xs font-medium bg-slate-50/30 border-b border-slate-50">
+                    {[
+                      { label: '文件名', key: 'name' },
+                      { label: '上传时间', key: 'time' },
+                      { label: '分析状态', key: 'status' },
+                      { label: '操作', key: 'action', align: 'right' }
+                    ].map((col, idx) => (
+                      <th 
+                        key={col.key} 
+                        style={{ width: widths[idx] }}
+                        className={`px-6 py-4 relative group/th ${col.align === 'right' ? 'text-right' : ''}`}
+                      >
+                        <span className="truncate">{col.label}</span>
+                        {idx < 3 && (
+                          <div 
+                            onMouseDown={(e) => onMouseDown(idx, e)}
+                            className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
+                          />
+                        )}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {files.map((file, i) => (
+                    <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-6 py-5 overflow-hidden">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <FileText className={`${file.type === 'pdf' ? 'text-red-500' : 'text-blue-500'} shrink-0`} size={20} />
+                          <span className="text-sm font-medium truncate" title={file.name}>{file.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 text-sm text-slate-400 overflow-hidden">
+                        <div className="truncate" title={file.time}>{file.time}</div>
+                      </td>
+                      <td className="px-6 py-5 overflow-hidden">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${file.status === '已完成' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
+                          <span className={`size-1.5 rounded-full ${file.status === '已完成' ? 'bg-green-500' : 'bg-blue-500'}`}></span>
+                          {file.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5 text-right">
+                        <div className="flex justify-end gap-4">
+                          <button 
+                            onClick={() => {
+                              if (isPaused) {
+                                alert('此项目已暂停');
+                                return;
+                              }
+                            }}
+                            className={`text-sm font-bold transition-all shrink-0 ${isPaused ? 'text-slate-300 cursor-not-allowed' : 'text-primary hover:text-primary/80'}`}
+                          >
+                            查看
+                          </button>
+                          <button 
+                            onClick={() => {
+                              if (isPaused) {
+                                alert('此项目已暂停');
+                                return;
+                              }
+                            }}
+                            className={`text-sm font-bold transition-all shrink-0 ${isPaused ? 'text-slate-300 cursor-not-allowed' : 'text-slate-400 hover:text-red-500'}`}
+                          >
+                            删除
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

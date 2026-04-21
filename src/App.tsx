@@ -18,6 +18,7 @@ import Materials from './components/Materials';
 import Login from './components/Login';
 
 import { motion, AnimatePresence } from 'motion/react';
+import { User, Building2 } from 'lucide-react';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('isLoggedIn') === 'true');
@@ -171,16 +172,15 @@ export default function App() {
         <Sidebar 
           activeTab={activeTab} 
           setActiveTab={setActiveTab} 
-          enterprises={enterprises} 
-          setEnterprises={setEnterprises}
+          enterprises={enterprises}
           currentEnterprise={currentEnterprise}
           setCurrentEnterprise={setCurrentEnterprise}
         />
       )}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
         <TopBar 
           setActiveTab={setActiveTab} 
-          enterprises={enterprises} 
+          enterprises={enterprises}
           currentEnterprise={currentEnterprise}
           setCurrentEnterprise={setCurrentEnterprise}
           onLogout={() => {
@@ -206,6 +206,31 @@ export default function App() {
             <p>© 2026 招标管理智能分析系统 - 数字化招采效能提升系统</p>
           </footer>
         </main>
+
+        {/* Bottom Right Account Switcher */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <button
+            onClick={() => {
+              if (currentEnterprise.id === 'personal') {
+                // Switch to the first enterprise if available
+                const enterprise = enterprises.find(e => e.id !== 'personal') || enterprises[0];
+                setCurrentEnterprise(enterprise);
+              } else {
+                // Switch to personal
+                const personal = enterprises.find(e => e.id === 'personal');
+                if (personal) setCurrentEnterprise(personal);
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-full shadow-lg hover:shadow-xl hover:border-primary/30 transition-all group active:scale-95"
+          >
+            <div className={`size-8 rounded-full flex items-center justify-center transition-colors ${currentEnterprise.id === 'personal' ? 'bg-orange-50 text-orange-600' : 'bg-primary/10 text-primary'}`}>
+              {currentEnterprise.id === 'personal' ? <User size={16} /> : <Building2 size={16} />}
+            </div>
+            <span className="text-sm font-bold text-slate-600 group-hover:text-primary transition-colors">
+              {currentEnterprise.id === 'personal' ? '切换企业登录' : '切换个人登录'}
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Pagination from './Pagination';
+import { useTableResizer } from '../hooks/useTableResizer';
 
 interface TenderOpeningStatusManagementProps {
   currentEnterprise?: { id: string; name: string };
@@ -83,6 +84,15 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  const { widths, onMouseDown } = useTableResizer([
+    250,    // 项目名称
+    120,    // 开标日期
+    150,    // 投标报价
+    150,    // 单位数量
+    150,    // 合同履行状态
+    160     // 操作
+  ]);
 
   const departments = React.useMemo(() => {
     const depts = new Set<string>();
@@ -374,7 +384,7 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: '本月开标数', value: '12', icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: '已开标数量', value: '12', icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50' },
           { label: '中标项目', value: '6', icon: Trophy, color: 'text-emerald-600', bg: 'bg-emerald-50' },
           { label: '中标率', value: '50%', icon: BarChart3, color: 'text-primary', bg: 'bg-primary/10' },
           { label: '平均竞争对手', value: '6.5', icon: Users, color: 'text-orange-600', bg: 'bg-orange-50' },
@@ -462,96 +472,116 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
 
       {/* Records Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目名称</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">开标日期</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">投标报价（元）</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">单位数量</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">合同履行状态</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {records.filter(r => {
-              const matchesSearch = r.projectName.includes(searchTerm) || r.projectCode.includes(searchTerm);
-              const matchesDate = !dateFilter || r.openingDate.includes(dateFilter);
-              const matchesStatus = statusFilter === '全部' || r.result === statusFilter;
-              const matchesFulfillment = fulfillmentFilter === '全部' || r.fulfillmentStatus === fulfillmentFilter;
-              return matchesSearch && matchesDate && matchesStatus && matchesFulfillment;
-            })
-            .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-            .map((record) => (
-              <tr 
-                key={record.id} 
-                className="hover:bg-slate-50/50 transition-colors group"
-              >
-                <td className="px-6 py-4">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] text-slate-400`}>{record.projectCode}</span>
-                      {record.hasOpeningInfo && (
-                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                          record.result === '中标' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
-                        }`}>
-                          {record.result}
-                        </span>
-                      )}
-                      {projects.find(p => p.code === record.projectCode || p.name === record.projectName)?.status === '放弃投标' && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500">
-                          已暂停
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{record.projectName}</p>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-600">
-                  {record.openingDate}
-                </td>
-                <td className="px-6 py-4 text-sm font-bold text-slate-700">
-                  {record.hasOpeningInfo ? formatCurrency(record.bidPrice) : '--'}
-                </td>
-                <td className="px-6 py-4">
-                  {record.hasOpeningInfo ? (
-                    <div className="flex flex-col gap-1">
-                      <p className="text-sm text-slate-600">{record.competitors} 家单位</p>
-                      <p className="text-xs text-slate-400">排名: 第 {record.ranking} 名</p>
-                    </div>
-                  ) : '--'}
-                </td>
-                <td className="px-6 py-4">
-                  {record.hasOpeningInfo ? (
-                    <div className="flex flex-col gap-0.5">
-                      <p className="text-xs font-bold text-slate-600">
-                        {record.fulfillmentStatus}
-                      </p>
-                      {record.fulfillmentStatus === '履行中' && record.fulfillmentStartDate && (
-                        <p className="text-[10px] text-slate-400">开始: {record.fulfillmentStartDate}</p>
-                      )}
-                    </div>
-                  ) : '--'}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button 
-                    onClick={() => handleOpenModal(record)}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                      projects.find(p => p.code === record.projectCode || p.name === record.projectName)?.status === '放弃投标'
-                        ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                        : record.hasOpeningInfo 
-                          ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
-                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse table-fixed">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                {[
+                  { label: '项目名称', key: 'name' },
+                  { label: '开标日期', key: 'date' },
+                  { label: '投标报价（元）', key: 'price' },
+                  { label: '单位数量', key: 'units' },
+                  { label: '合同履行状态', key: 'status' },
+                  { label: '操作', key: 'action', align: 'right' }
+                ].map((col, idx) => (
+                  <th 
+                    key={col.key} 
+                    style={{ width: widths[idx] }}
+                    className={`px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider relative group/th ${col.align === 'right' ? 'text-right' : ''}`}
                   >
-                    {record.hasOpeningInfo ? <Edit3 size={14} /> : <Plus size={14} />}
-                    {record.hasOpeningInfo ? '修改记录' : '新增记录'}
-                  </button>
-                </td>
+                    <span className="truncate">{col.label}</span>
+                    {idx < 5 && (
+                      <div 
+                        onMouseDown={(e) => onMouseDown(idx, e)}
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
+                      />
+                    )}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {records.filter(r => {
+                const matchesSearch = r.projectName.includes(searchTerm) || r.projectCode.includes(searchTerm);
+                const matchesDate = !dateFilter || r.openingDate.includes(dateFilter);
+                const matchesStatus = statusFilter === '全部' || r.result === statusFilter;
+                const matchesFulfillment = fulfillmentFilter === '全部' || r.fulfillmentStatus === fulfillmentFilter;
+                return matchesSearch && matchesDate && matchesStatus && matchesFulfillment;
+              })
+              .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+              .map((record) => (
+                <tr 
+                  key={record.id} 
+                  className="hover:bg-slate-50/50 transition-colors group"
+                >
+                  <td className="px-6 py-4 overflow-hidden">
+                    <div className="flex flex-col gap-1 overflow-hidden">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className={`text-[10px] text-slate-400 shrink-0`}>{record.projectCode}</span>
+                        {record.hasOpeningInfo && (
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                            record.result === '中标' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                          }`}>
+                            {record.result}
+                          </span>
+                        )}
+                        {projects.find(p => p.code === record.projectCode || p.name === record.projectName)?.status === '放弃投标' && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 shrink-0">
+                            已暂停
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm truncate" title={record.projectName}>{record.projectName}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-600 overflow-hidden">
+                    <div className="truncate" title={record.openingDate}>{record.openingDate}</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-bold text-slate-700 overflow-hidden">
+                    <div className="truncate" title={record.hasOpeningInfo ? formatCurrency(record.bidPrice) : '--'}>
+                      {record.hasOpeningInfo ? formatCurrency(record.bidPrice) : '--'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 overflow-hidden">
+                    {record.hasOpeningInfo ? (
+                      <div className="flex flex-col gap-1 overflow-hidden">
+                        <p className="text-sm text-slate-600 truncate">{record.competitors} 家单位</p>
+                        <p className="text-xs text-slate-400 truncate">排名: 第 {record.ranking} 名</p>
+                      </div>
+                    ) : '--'}
+                  </td>
+                  <td className="px-6 py-4 overflow-hidden">
+                    {record.hasOpeningInfo ? (
+                      <div className="flex flex-col gap-0.5 overflow-hidden">
+                        <p className="text-xs font-bold text-slate-600 truncate">
+                          {record.fulfillmentStatus}
+                        </p>
+                        {record.fulfillmentStatus === '履行中' && record.fulfillmentStartDate && (
+                          <p className="text-[10px] text-slate-400 truncate">开始: {record.fulfillmentStartDate}</p>
+                        )}
+                      </div>
+                    ) : '--'}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button 
+                      onClick={() => handleOpenModal(record)}
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm whitespace-nowrap ${
+                        projects.find(p => p.code === record.projectCode || p.name === record.projectName)?.status === '放弃投标'
+                          ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                          : record.hasOpeningInfo 
+                            ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
+                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {record.hasOpeningInfo ? <Edit3 size={14} className="shrink-0" /> : <Plus size={14} className="shrink-0" />}
+                      {record.hasOpeningInfo ? '修改记录' : '新增记录'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       <Pagination 
         currentPage={currentPage}

@@ -30,6 +30,7 @@ import {
   Eye
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTableResizer } from '../hooks/useTableResizer';
 
 interface PostBidArchivingProps {
   currentEnterprise?: { id: string; name: string };
@@ -48,6 +49,42 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  const { widths, onMouseDown } = useTableResizer([
+    'auto', // 项目名称
+    120,    // 开标日期
+    150,    // 投标报价
+    120,    // 单位数量
+    150,    // 合同履行状态
+    120     // 操作
+  ]);
+
+  const { widths: openingWidths, onMouseDown: onOpeningMouseDown } = useTableResizer([
+    'auto', // 参标单位
+    180,    // 投标报价
+    100,    // 排名
+    100,    // 是否中标
+    100     // 是否本单位
+  ]);
+
+  const { widths: winningWidths, onMouseDown: onWinningMouseDown } = useTableResizer([
+    'auto', // 中标单位
+    180,    // 中标金额
+    150,    // 通知书日期
+    200     // 公示链接
+  ]);
+
+  const { widths: contractWidths, onMouseDown: onContractMouseDown } = useTableResizer([
+    220,    // 合同编号/名称
+    140,    // 签署日期
+    130,    // 合同金额
+    100,    // 负责人
+    80,     // 工期
+    140,    // 履行时间
+    140,    // 应当完成时间
+    110,    // 履行状态
+    60      // 操作
+  ]);
 
   const handleOpenModal = (record?: any) => {
     // Check if the project is paused
@@ -349,88 +386,108 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
 
       {/* Records Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目名称</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">开标日期</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">投标报价（元）</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">单位数量</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">合同履行状态</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {records.map((record) => (
-              <tr 
-                key={record.id} 
-                className="hover:bg-slate-50/50 transition-colors group"
-              >
-                <td className="px-6 py-4">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] text-slate-400`}>{record.projectCode}</span>
-                      {record.hasOpeningInfo && (
-                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                          record.result === '中标' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
-                        }`}>
-                          {record.result}
-                        </span>
-                      )}
-                      {projects.find(p => p.code === record.projectCode || p.name === record.projectName)?.status === '放弃投标' && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500">
-                          已暂停
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{record.projectName}</p>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-600">
-                  {record.openingDate}
-                </td>
-                <td className="px-6 py-4 text-sm font-bold text-slate-700">
-                  {record.hasOpeningInfo ? formatCurrency(record.bidPrice) : '--'}
-                </td>
-                <td className="px-6 py-4">
-                  {record.hasOpeningInfo ? (
-                    <div className="flex flex-col gap-1">
-                      <p className="text-sm text-slate-600">{record.competitors} 家单位</p>
-                      <p className="text-xs text-slate-400">排名: 第 {record.ranking} 名</p>
-                    </div>
-                  ) : '--'}
-                </td>
-                <td className="px-6 py-4">
-                  {record.hasOpeningInfo ? (
-                    <div className="flex flex-col gap-0.5">
-                      <p className="text-xs font-bold text-slate-600">
-                        {record.fulfillmentStatus}
-                      </p>
-                      {record.fulfillmentStatus === '履行中' && record.fulfillmentStartDate && (
-                        <p className="text-[10px] text-slate-400">开始: {record.fulfillmentStartDate}</p>
-                      )}
-                    </div>
-                  ) : '--'}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button 
-                    onClick={() => handleOpenModal(record)}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                      projects.find(p => p.code === record.projectCode || p.name === record.projectName)?.status === '放弃投标'
-                        ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                        : record.hasOpeningInfo 
-                          ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
-                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse table-fixed">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                {[
+                  { label: '项目名称', key: 'name' },
+                  { label: '开标日期', key: 'date' },
+                  { label: '投标报价（元）', key: 'price' },
+                  { label: '单位数量', key: 'units' },
+                  { label: '合同履行状态', key: 'status' },
+                  { label: '操作', key: 'action', align: 'right' }
+                ].map((col, idx) => (
+                  <th 
+                    key={col.key} 
+                    style={{ width: widths[idx] }}
+                    className={`px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider relative group/th ${col.align === 'right' ? 'text-right' : ''}`}
                   >
-                    {record.hasOpeningInfo ? <Edit3 size={14} /> : <Plus size={14} />}
-                    {record.hasOpeningInfo ? '修改记录' : '新增记录'}
-                  </button>
-                </td>
+                    <span className="truncate block">{col.label}</span>
+                    {idx < 5 && (
+                      <div 
+                        onMouseDown={(e) => onMouseDown(idx, e)}
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
+                      />
+                    )}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {records.map((record) => (
+                <tr 
+                  key={record.id} 
+                  className="hover:bg-slate-50/50 transition-colors group"
+                >
+                  <td className="px-6 py-4 overflow-hidden">
+                    <div className="flex flex-col gap-1 overflow-hidden">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className={`text-[10px] text-slate-400 shrink-0`}>{record.projectCode}</span>
+                        {record.hasOpeningInfo && (
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                            record.result === '中标' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                          }`}>
+                            {record.result}
+                          </span>
+                        )}
+                        {projects.find(p => p.code === record.projectCode || p.name === record.projectName)?.status === '放弃投标' && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 shrink-0">
+                            已暂停
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm truncate" title={record.projectName}>{record.projectName}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-600 overflow-hidden">
+                    <div className="truncate" title={record.openingDate}>{record.openingDate}</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-bold text-slate-700 overflow-hidden">
+                    <div className="truncate" title={record.hasOpeningInfo ? formatCurrency(record.bidPrice) : '--'}>
+                      {record.hasOpeningInfo ? formatCurrency(record.bidPrice) : '--'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 overflow-hidden">
+                    {record.hasOpeningInfo ? (
+                      <div className="flex flex-col gap-1 overflow-hidden">
+                        <p className="text-sm text-slate-600 truncate">{record.competitors} 家单位</p>
+                        <p className="text-xs text-slate-400 truncate">排名: 第 {record.ranking} 名</p>
+                      </div>
+                    ) : '--'}
+                  </td>
+                  <td className="px-6 py-4 overflow-hidden">
+                    {record.hasOpeningInfo ? (
+                      <div className="flex flex-col gap-0.5 overflow-hidden">
+                        <p className="text-xs font-bold text-slate-600 truncate">
+                          {record.fulfillmentStatus}
+                        </p>
+                        {record.fulfillmentStatus === '履行中' && record.fulfillmentStartDate && (
+                          <p className="text-[10px] text-slate-400 truncate">开始: {record.fulfillmentStartDate}</p>
+                        )}
+                      </div>
+                    ) : '--'}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button 
+                      onClick={() => handleOpenModal(record)}
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm shrink-0 ${
+                        projects.find(p => p.code === record.projectCode || p.name === record.projectName)?.status === '放弃投标'
+                          ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                          : record.hasOpeningInfo 
+                            ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
+                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {record.hasOpeningInfo ? <Edit3 size={14} /> : <Plus size={14} />}
+                      {record.hasOpeningInfo ? '修改记录' : '新增记录'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Add Modal */}
@@ -546,88 +603,112 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                           )}
                         </div>
                         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-                          <table className="w-full text-left border-collapse">
-                            <thead>
-                              <tr className="bg-slate-50 text-slate-500 text-[12px] font-bold border-b border-slate-200">
-                                <th className="px-6 py-4">参标单位 <span className="text-red-500">*</span></th>
-                                <th className="px-6 py-4">投标报价（元） <span className="text-red-500">*</span></th>
-                                <th className="px-6 py-4">排名 <span className="text-red-500">*</span></th>
-                                <th className="px-6 py-4 text-center">是否中标 <span className="text-red-500">*</span></th>
-                                <th className="px-6 py-4 text-center">是否本单位 <span className="text-red-500">*</span></th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                              {openingRecords.map((row, i) => (
-                                <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                                  <td className="px-6 py-4">
-                                    {isEditing ? (
-                                      <input 
-                                        value={row.units} 
-                                        onChange={(e) => updateOpening(i, 'units', e.target.value)}
-                                        className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors"
-                                      />
-                                    ) : (
-                                      <span className={`text-sm font-bold ${row.isWinner ? 'text-emerald-700' : 'text-slate-600'}`}>
-                                        {row.units || '--'}
-                                        {row.isSelf && <span className="ml-2 px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded text-[10px]">本单位</span>}
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse table-fixed">
+                              <thead>
+                                <tr className="bg-slate-50 text-slate-500 text-[12px] font-bold border-b border-slate-200">
+                                  {[
+                                    { label: '参标单位', key: 'units', required: true },
+                                    { label: '投标报价（元）', key: 'price', required: true },
+                                    { label: '排名', key: 'rank', required: true },
+                                    { label: '是否中标', key: 'isWinner', required: true, align: 'center' },
+                                    { label: '是否本单位', key: 'isSelf', required: true, align: 'center' }
+                                  ].map((col, idx) => (
+                                    <th 
+                                      key={col.key} 
+                                      style={{ width: openingWidths[idx] }}
+                                      className={`px-6 py-4 relative group/th ${col.align === 'center' ? 'text-center' : ''}`}
+                                    >
+                                      <span className="truncate block">
+                                        {col.label} {col.required && <span className="text-red-500">*</span>}
                                       </span>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    {isEditing ? (
-                                      <input 
-                                        type="number"
-                                        value={row.price} 
-                                        onChange={(e) => updateOpening(i, 'price', parseFloat(e.target.value) || 0)}
-                                        className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors"
-                                      />
-                                    ) : (
-                                      <span className="font-mono text-sm text-primary font-bold">{formatCurrency(row.price)}</span>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    {isEditing ? (
-                                      <input 
-                                        value={row.rank} 
-                                        onChange={(e) => updateOpening(i, 'rank', e.target.value)}
-                                        className="w-16 border border-slate-200 rounded px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors"
-                                      />
-                                    ) : (
-                                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.rank === '1' ? 'bg-yellow-50 text-yellow-600' : 'bg-slate-100 text-slate-500'}`}>
-                                        {row.rank ? `第${row.rank}名` : '--'}
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4 text-center">
-                                    {isEditing ? (
-                                      <input 
-                                        type="radio"
-                                        name="isWinner"
-                                        checked={row.isWinner}
-                                        onChange={() => updateOpening(i, 'isWinner', true)}
-                                        className="size-4 cursor-pointer"
-                                      />
-                                    ) : (
-                                      row.isWinner && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-bold">中标单位</span>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4 text-center">
-                                    {isEditing ? (
-                                      <input 
-                                        type="radio"
-                                        name="isSelf"
-                                        checked={row.isSelf}
-                                        onChange={() => updateOpening(i, 'isSelf', true)}
-                                        className="size-4 cursor-pointer"
-                                      />
-                                    ) : (
-                                      row.isSelf && <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-[10px] font-bold">是</span>
-                                    )}
-                                  </td>
+                                      {idx < 4 && (
+                                        <div 
+                                          onMouseDown={(e) => onOpeningMouseDown(idx, e)}
+                                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
+                                        />
+                                      )}
+                                    </th>
+                                  ))}
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                {openingRecords.map((row, i) => (
+                                  <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="px-6 py-4 overflow-hidden">
+                                      {isEditing ? (
+                                        <input 
+                                          value={row.units} 
+                                          onChange={(e) => updateOpening(i, 'units', e.target.value)}
+                                          className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors"
+                                        />
+                                      ) : (
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                          <span className={`text-sm font-bold truncate ${row.isWinner ? 'text-emerald-700' : 'text-slate-600'}`} title={row.units}>
+                                            {row.units || '--'}
+                                          </span>
+                                          {row.isSelf && <span className="shrink-0 px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded text-[10px]">本单位</span>}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4 overflow-hidden">
+                                      {isEditing ? (
+                                        <input 
+                                          type="number"
+                                          value={row.price} 
+                                          onChange={(e) => updateOpening(i, 'price', parseFloat(e.target.value) || 0)}
+                                          className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors"
+                                        />
+                                      ) : (
+                                        <div className="truncate font-mono text-sm text-primary font-bold" title={formatCurrency(row.price)}>
+                                          {formatCurrency(row.price)}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4 overflow-hidden">
+                                      {isEditing ? (
+                                        <input 
+                                          value={row.rank} 
+                                          onChange={(e) => updateOpening(i, 'rank', e.target.value)}
+                                          className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors"
+                                        />
+                                      ) : (
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${row.rank === '1' ? 'bg-yellow-50 text-yellow-600' : 'bg-slate-100 text-slate-500'}`}>
+                                          {row.rank ? `第${row.rank}名` : '--'}
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4 text-center overflow-hidden">
+                                      {isEditing ? (
+                                        <input 
+                                          type="radio"
+                                          name="isWinner"
+                                          checked={row.isWinner}
+                                          onChange={() => updateOpening(i, 'isWinner', true)}
+                                          className="size-4 cursor-pointer"
+                                        />
+                                      ) : (
+                                        row.isWinner && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-bold shrink-0">中标单位</span>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4 text-center overflow-hidden">
+                                      {isEditing ? (
+                                        <input 
+                                          type="radio"
+                                          name="isSelf"
+                                          checked={row.isSelf}
+                                          onChange={() => updateOpening(i, 'isSelf', true)}
+                                          className="size-4 cursor-pointer"
+                                        />
+                                      ) : (
+                                        row.isSelf && <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-[10px] font-bold shrink-0">是</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                         {/* Removed button from here */}
                       </div>
@@ -638,73 +719,91 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                           中标详情
                         </h5>
                         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-                          <table className="w-full text-left border-collapse">
-                            <thead>
-                              <tr className="bg-slate-50 text-slate-500 text-[12px] font-bold border-b border-slate-200">
-                                <th className="px-6 py-4">中标单位</th>
-                                <th className="px-6 py-4">中标金额（元）</th>
-                                <th className="px-6 py-4">通知书日期</th>
-                                <th className="px-6 py-4">公示链接</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                              {winningRecords.map((row, i) => (
-                                <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                                  <td className="px-6 py-4">
-                                    {isEditing ? (
-                                      <input 
-                                        value={row.unit} 
-                                        readOnly
-                                        className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"
-                                        placeholder="自动获取中标单位"
-                                      />
-                                    ) : (
-                                      <span className="font-bold text-slate-900 text-sm">{row.unit || '--'}</span>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    {isEditing ? (
-                                      <input 
-                                        type="number"
-                                        value={row.amount} 
-                                        readOnly
-                                        className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm bg-slate-50 text-slate-500 font-mono cursor-not-allowed"
-                                        placeholder="0.00"
-                                      />
-                                    ) : (
-                                      <span className="font-mono text-sm text-green-600 font-bold">{formatCurrency(row.amount)}</span>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    {isEditing ? (
-                                      <input 
-                                        type="date"
-                                        value={row.date} 
-                                        onChange={(e) => updateWinning(i, 'date', e.target.value)}
-                                        className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors"
-                                      />
-                                    ) : (
-                                      <span className="text-sm text-slate-600">{row.date || '--'}</span>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    {isEditing ? (
-                                      <input 
-                                        value={row.url} 
-                                        onChange={(e) => updateWinning(i, 'url', e.target.value)}
-                                        className="w-full border border-slate-200 rounded px-3 py-1.5 text-xs text-primary outline-none focus:border-primary transition-colors"
-                                        placeholder="http://..."
-                                      />
-                                    ) : (
-                                      <a href={row.url} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1">
-                                        查看公示 <ArrowRight size={12} />
-                                      </a>
-                                    )}
-                                  </td>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse table-fixed">
+                              <thead>
+                                <tr className="bg-slate-50 text-slate-500 text-[12px] font-bold border-b border-slate-200">
+                                  {[
+                                    { label: '中标单位', key: 'unit' },
+                                    { label: '中标金额（元）', key: 'amount' },
+                                    { label: '通知书日期', key: 'date' },
+                                    { label: '公示链接', key: 'url' }
+                                  ].map((col, idx) => (
+                                    <th 
+                                      key={col.key} 
+                                      style={{ width: winningWidths[idx] }}
+                                      className="px-6 py-4 relative group/th"
+                                    >
+                                      <span className="truncate block">{col.label}</span>
+                                      {idx < 3 && (
+                                        <div 
+                                          onMouseDown={(e) => onWinningMouseDown(idx, e)}
+                                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
+                                        />
+                                      )}
+                                    </th>
+                                  ))}
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                {winningRecords.map((row, i) => (
+                                  <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="px-6 py-4 overflow-hidden">
+                                      {isEditing ? (
+                                        <input 
+                                          value={row.unit} 
+                                          readOnly
+                                          className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"
+                                          placeholder="自动获取中标单位"
+                                        />
+                                      ) : (
+                                        <span className="font-bold text-slate-900 text-sm truncate block" title={row.unit}>{row.unit || '--'}</span>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4 overflow-hidden">
+                                      {isEditing ? (
+                                        <input 
+                                          type="number"
+                                          value={row.amount} 
+                                          readOnly
+                                          className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm bg-slate-50 text-slate-500 font-mono cursor-not-allowed"
+                                          placeholder="0.00"
+                                        />
+                                      ) : (
+                                        <span className="font-mono text-sm text-green-600 font-bold truncate block" title={formatCurrency(row.amount)}>{formatCurrency(row.amount)}</span>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4 overflow-hidden">
+                                      {isEditing ? (
+                                        <input 
+                                          type="date"
+                                          value={row.date} 
+                                          onChange={(e) => updateWinning(i, 'date', e.target.value)}
+                                          className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors"
+                                        />
+                                      ) : (
+                                        <span className="text-sm text-slate-600 truncate block" title={row.date}>{row.date || '--'}</span>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4 overflow-hidden">
+                                      {isEditing ? (
+                                        <input 
+                                          value={row.url} 
+                                          onChange={(e) => updateWinning(i, 'url', e.target.value)}
+                                          className="w-full border border-slate-200 rounded px-3 py-1.5 text-xs text-primary outline-none focus:border-primary transition-colors"
+                                          placeholder="http://..."
+                                        />
+                                      ) : (
+                                        <a href={row.url} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1 truncate block" title={row.url}>
+                                          查看公示 <ArrowRight size={12} className="shrink-0" />
+                                        </a>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       </div>
                     </section>
@@ -726,26 +825,42 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                         )}
                       </div>
                       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto custom-scrollbar">
-                        <table className="w-full text-left border-collapse min-w-[1100px]">
+                        <table className="w-full text-left border-collapse table-fixed min-w-[1100px]">
                           <thead>
                             <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
-                              <th className="px-3 py-3 min-w-[220px] whitespace-nowrap">合同编号/名称</th>
-                              <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">签署日期</th>
-                              <th className="px-3 py-3 min-w-[130px] whitespace-nowrap">合同金额（元）</th>
-                              <th className="px-3 py-3 min-w-[100px] whitespace-nowrap">负责人</th>
-                              <th className="px-3 py-3 min-w-[80px] whitespace-nowrap">工期（天）</th>
-                              <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">履行时间</th>
-                              <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">应当完成时间</th>
-                              <th className="px-3 py-3 min-w-[110px] whitespace-nowrap">履行状态</th>
-                              {isEditing && <th className="px-3 py-3 min-w-[60px] whitespace-nowrap text-right">操作</th>}
+                              {[
+                                { label: '合同编号/名称', key: 'name' },
+                                { label: '签署日期', key: 'date' },
+                                { label: '合同金额（元）', key: 'amount' },
+                                { label: '负责人', key: 'owner' },
+                                { label: '工期（天）', key: 'duration' },
+                                { label: '履行时间', key: 'fulfillmentDate' },
+                                { label: '应当完成时间', key: 'expectedCompletionDate' },
+                                { label: '履行状态', key: 'status' },
+                                ...(isEditing ? [{ label: '操作', key: 'action', align: 'right' }] : [])
+                              ].map((col, idx) => (
+                                <th 
+                                  key={col.key} 
+                                  style={{ width: contractWidths[idx] }}
+                                  className={`px-3 py-3 relative group/th ${col.align === 'right' ? 'text-right' : ''}`}
+                                >
+                                  <span className="truncate block">{col.label}</span>
+                                  {idx < (isEditing ? 8 : 7) && (
+                                    <div 
+                                      onMouseDown={(e) => onContractMouseDown(idx, e)}
+                                      className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
+                                    />
+                                  )}
+                                </th>
+                              ))}
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
                             {contractRecords.map((row, i) => (
                               <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="px-3 py-3">
+                                <td className="px-3 py-3 overflow-hidden">
                                   {isEditing ? (
-                                    <div className="space-y-1">
+                                    <div className="space-y-1 overflow-hidden">
                                       <input 
                                         value={row.name} 
                                         onChange={(e) => updateContract(i, 'name', e.target.value)}
@@ -760,13 +875,13 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                                       />
                                     </div>
                                   ) : (
-                                    <>
-                                      <p className="text-sm font-bold text-slate-900">{row.name || '--'}</p>
-                                      <p className="text-[10px] text-slate-400">{row.id || '--'}</p>
-                                    </>
+                                    <div className="overflow-hidden">
+                                      <p className="text-sm font-bold text-slate-900 truncate" title={row.name}>{row.name || '--'}</p>
+                                      <p className="text-[10px] text-slate-400 truncate" title={row.id}>{row.id || '--'}</p>
+                                    </div>
                                   )}
                                 </td>
-                                <td className="px-3 py-3">
+                                <td className="px-3 py-3 overflow-hidden">
                                   {isEditing ? (
                                     <input 
                                       type="date"
@@ -775,10 +890,10 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                                       className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
                                     />
                                   ) : (
-                                    <span className="text-sm text-slate-600">{row.date || '--'}</span>
+                                    <span className="text-sm text-slate-600 truncate block" title={row.date}>{row.date || '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-3 py-3">
+                                <td className="px-3 py-3 overflow-hidden">
                                   {isEditing ? (
                                     <input 
                                       type="number"
@@ -788,10 +903,10 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                                       placeholder="0.00"
                                     />
                                   ) : (
-                                    <span className="font-mono text-sm text-slate-900 font-bold">{formatCurrency(row.amount)}</span>
+                                    <span className="font-mono text-sm text-slate-900 font-bold truncate block" title={formatCurrency(row.amount)}>{formatCurrency(row.amount)}</span>
                                   )}
                                 </td>
-                                <td className="px-3 py-3">
+                                <td className="px-3 py-3 overflow-hidden">
                                   {isEditing ? (
                                     <input 
                                       value={row.owner} 
@@ -800,10 +915,10 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                                       placeholder="负责人"
                                     />
                                   ) : (
-                                    <span className="text-sm text-slate-600">{row.owner || '--'}</span>
+                                    <span className="text-sm text-slate-600 truncate block" title={row.owner}>{row.owner || '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-3 py-3">
+                                <td className="px-3 py-3 overflow-hidden">
                                   {isEditing ? (
                                     <input 
                                       type="number"
@@ -813,10 +928,10 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                                       placeholder="天数"
                                     />
                                   ) : (
-                                    <span className="text-sm text-slate-600">{row.duration ? `${row.duration}天` : '--'}</span>
+                                    <span className="text-sm text-slate-600 truncate block" title={row.duration ? `${row.duration}天` : '--'}>{row.duration ? `${row.duration}天` : '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-3 py-3">
+                                <td className="px-3 py-3 overflow-hidden">
                                   {isEditing ? (
                                     <input 
                                       type="date"
@@ -825,13 +940,13 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                                       className="w-full border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-primary"
                                     />
                                   ) : (
-                                    <span className="text-sm text-slate-600">{row.fulfillmentDate || '--'}</span>
+                                    <span className="text-sm text-slate-600 truncate block" title={row.fulfillmentDate}>{row.fulfillmentDate || '--'}</span>
                                   )}
                                 </td>
-                                <td className="px-3 py-3">
-                                  <span className="text-sm text-slate-600">{row.expectedCompletionDate || '--'}</span>
+                                <td className="px-3 py-3 overflow-hidden">
+                                  <span className="text-sm text-slate-600 truncate block" title={row.expectedCompletionDate}>{row.expectedCompletionDate || '--'}</span>
                                 </td>
-                                <td className="px-3 py-3">
+                                <td className="px-3 py-3 overflow-hidden">
                                   {isEditing ? (
                                     <select 
                                       value={row.status} 
@@ -845,13 +960,13 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                                       <option value="已终止">已终止</option>
                                     </select>
                                   ) : (
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold truncate block ${
                                       row.status === '已完成' ? 'bg-green-50 text-green-600' : 
                                       row.status === '已终止' ? 'bg-red-50 text-red-600' : 
                                       row.status === '逾期' ? 'bg-orange-50 text-orange-600' :
                                       row.status === '未开始' ? 'bg-slate-50 text-slate-500' :
                                       'bg-blue-50 text-blue-600'
-                                    }`}>
+                                    }`} title={row.status}>
                                       {row.status}
                                     </span>
                                   )}

@@ -14,6 +14,7 @@ import {
   FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTableResizer } from '../hooks/useTableResizer';
 
 interface Project {
   id: string;
@@ -35,6 +36,15 @@ interface BidParsingListProps {
 const BidParsingList: React.FC<BidParsingListProps> = ({ onEnterDetail, currentEnterprise, isPaused = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [confirmDialog, setConfirmDialog] = useState<{ message: string, onConfirm: () => void } | null>(null);
+
+  const { widths, onMouseDown } = useTableResizer([
+    250,    // 项目名称
+    150,    // 项目编号
+    200,    // 招标人
+    150,    // 更新时间
+    100,    // 状态
+    200     // 操作
+  ]);
   
   const [projects, setProjects] = useState<Project[]>([
     {
@@ -175,91 +185,109 @@ const BidParsingList: React.FC<BidParsingListProps> = ({ onEnterDetail, currentE
 
       {/* Project Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目名称</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目编号</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">招标人</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">更新时间</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">状态</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {projects.filter(p => p.name.includes(searchTerm) || p.code.includes(searchTerm)).map((project) => (
-              <tr key={project.id} className="hover:bg-slate-50/50 transition-colors group">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="size-8 bg-blue-50 text-primary rounded-lg flex items-center justify-center shrink-0">
-                      <Briefcase size={16} />
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{project.name}</p>
-                      {project.latestFile && (
-                        <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
-                          <FileText size={10} /> {project.latestFile}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-500">
-                  {project.code}
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-600">
-                  {project.tenderer}
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-400">
-                  {project.updateTime}
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    project.status === '已解析' ? 'bg-green-50 text-green-600' : 
-                    project.status === '解析中' ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'
-                  }`}>
-                    {project.status === '已解析' ? <CheckCircle2 size={10} /> : <Clock size={10} />}
-                    {project.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button 
-                      onClick={() => {
-                        if (isPaused) {
-                          alert('此项目已暂停');
-                          return;
-                        }
-                        onEnterDetail(project);
-                      }}
-                      className={`px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg transition-all text-xs font-bold flex items-center gap-1 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      <ExternalLink size={14} />
-                      开始解析
-                    </button>
-                    <button 
-                      onClick={() => {
-                        if (isPaused) {
-                          alert('此项目已暂停');
-                          return;
-                        }
-                      }}
-                      className={`p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(project.id)}
-                      className={`p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse table-fixed">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                {[
+                  { label: '项目名称', key: 'name' },
+                  { label: '项目编号', key: 'code' },
+                  { label: '招标人', key: 'tenderer' },
+                  { label: '更新时间', key: 'updateTime' },
+                  { label: '状态', key: 'status' },
+                  { label: '操作', key: 'action', align: 'right' }
+                ].map((col, idx) => (
+                  <th 
+                    key={col.key} 
+                    style={{ width: widths[idx] }}
+                    className={`px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider relative group/th ${col.align === 'right' ? 'text-right' : ''}`}
+                  >
+                    <span className="truncate">{col.label}</span>
+                    {idx < 5 && (
+                      <div 
+                        onMouseDown={(e) => onMouseDown(idx, e)}
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
+                      />
+                    )}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {projects.filter(p => p.name.includes(searchTerm) || p.code.includes(searchTerm)).map((project) => (
+                <tr key={project.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4 overflow-hidden">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="size-8 bg-blue-50 text-primary rounded-lg flex items-center justify-center shrink-0">
+                        <Briefcase size={16} />
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm truncate" title={project.name}>{project.name}</p>
+                        {project.latestFile && (
+                          <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1 truncate" title={project.latestFile}>
+                            <FileText size={10} className="shrink-0" /> {project.latestFile}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500 overflow-hidden">
+                    <div className="truncate" title={project.code}>{project.code}</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-600 overflow-hidden">
+                    <div className="truncate" title={project.tenderer}>{project.tenderer}</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-400 overflow-hidden">
+                    <div className="truncate" title={project.updateTime}>{project.updateTime}</div>
+                  </td>
+                  <td className="px-6 py-4 overflow-hidden">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                      project.status === '已解析' ? 'bg-green-50 text-green-600' : 
+                      project.status === '解析中' ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'
+                    }`}>
+                      {project.status === '已解析' ? <CheckCircle2 size={10} /> : <Clock size={10} />}
+                      {project.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => {
+                          if (isPaused) {
+                            alert('此项目已暂停');
+                            return;
+                          }
+                          onEnterDetail(project);
+                        }}
+                        className={`px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg transition-all text-xs font-bold flex items-center gap-1 shrink-0 whitespace-nowrap ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <ExternalLink size={14} className="shrink-0" />
+                        开始解析
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (isPaused) {
+                            alert('此项目已暂停');
+                            return;
+                          }
+                        }}
+                        className={`p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all shrink-0 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(project.id)}
+                        className={`p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all shrink-0 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       {/* Confirm Dialog */}
       <AnimatePresence>

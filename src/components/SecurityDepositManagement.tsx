@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Pagination from './Pagination';
+import { useTableResizer } from '../hooks/useTableResizer';
 
 interface SecurityDepositManagementProps {
   currentEnterprise?: { id: string; name: string };
@@ -48,6 +49,14 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  const { widths, onMouseDown } = useTableResizer([
+    250,    // 项目编号/名称
+    150,    // 金额/方式
+    200,    // 缴纳银行/日期
+    150,    // 退还状态
+    160     // 操作
+  ]);
 
   const [deposits, setDeposits] = useState<any[]>([
     {
@@ -106,56 +115,6 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
     vouchers: [] as string[]
   });
 
-  const [showBankDropdown, setShowBankDropdown] = useState(false);
-  const [bankSearchTerm, setBankSearchTerm] = useState('');
-
-  const BANKS = [
-    '中国工商银行',
-    '中国农业银行',
-    '中国银行',
-    '中国建设银行',
-    '交通银行',
-    '招商银行',
-    '中国邮政储蓄银行',
-    '中信银行',
-    '中国光大银行',
-    '华夏银行',
-    '中国民生银行',
-    '广发银行',
-    '平安银行',
-    '兴业银行',
-    '上海浦东发展银行',
-    '北京银行',
-    '上海银行',
-    '南京银行',
-    '宁波银行',
-    '杭州银行',
-    '江苏银行',
-    '徽商银行',
-    '成都银行',
-    '重庆银行',
-    '哈尔滨银行',
-    '盛京银行',
-    '大连银行',
-    '天津银行',
-    '河北银行',
-    '龙江银行',
-    '吉林银行',
-    '中原银行',
-    '江西银行',
-    '青岛银行',
-    '齐鲁银行',
-    '广州银行',
-    '东莞银行',
-    '桂林银行',
-    '长安银行',
-    '昆仑银行',
-  ];
-
-  const filteredBanks = BANKS.filter(bank => 
-    bank.toLowerCase().includes(bankSearchTerm.toLowerCase())
-  );
-
   const handleOpenModal = (deposit?: any) => {
     // Check if the project is paused
     const project = projects.find(p => p.code === deposit?.projectCode || p.name === deposit?.projectName);
@@ -194,8 +153,6 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
       setIsEditing(false);
     }
     setHasAttemptedSave(false);
-    setBankSearchTerm('');
-    setShowBankDropdown(false);
     setShowDepositModal(true);
   };
 
@@ -323,102 +280,122 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
 
       {/* Deposit Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">项目编号/名称</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">金额/方式</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">缴纳银行/日期</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">退还状态</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {deposits.filter(d => {
-              const matchesSearch = d.projectName.includes(searchTerm) || d.projectCode.includes(searchTerm) || d.bank.includes(searchTerm);
-              const matchesDate = !dateFilter || d.date.includes(dateFilter);
-              const matchesRefundStatus = refundStatusFilter === '全部' || d.refundStatus === refundStatusFilter;
-              return matchesSearch && matchesDate && matchesRefundStatus;
-            })
-            .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-            .map((deposit) => {
-              const project = projects.find(p => p.code === deposit.projectCode || p.name === deposit.projectName);
-              const isPaused = project?.status === '放弃投标';
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse table-fixed">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                {[
+                  { label: '项目编号/名称', key: 'project' },
+                  { label: '金额/方式', key: 'amount' },
+                  { label: '缴纳银行/日期', key: 'bank' },
+                  { label: '退还状态', key: 'refund' },
+                  { label: '操作', key: 'action', align: 'right' }
+                ].map((col, idx) => (
+                  <th 
+                    key={col.key} 
+                    style={{ width: widths[idx] }}
+                    className={`px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider relative group/th ${col.align === 'right' ? 'text-right' : ''}`}
+                  >
+                    <span className="truncate">{col.label}</span>
+                    {idx < 4 && (
+                      <div 
+                        onMouseDown={(e) => onMouseDown(idx, e)}
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
+                      />
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {deposits.filter(d => {
+                const matchesSearch = d.projectName.includes(searchTerm) || d.projectCode.includes(searchTerm) || d.bank.includes(searchTerm);
+                const matchesDate = !dateFilter || d.date.includes(dateFilter);
+                const matchesRefundStatus = refundStatusFilter === '全部' || d.refundStatus === refundStatusFilter;
+                return matchesSearch && matchesDate && matchesRefundStatus;
+              })
+              .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+              .map((deposit) => {
+                const project = projects.find(p => p.code === deposit.projectCode || p.name === deposit.projectName);
+                const isPaused = project?.status === '放弃投标';
 
-              return (
-                <tr key={deposit.id} className={`hover:bg-slate-50/50 transition-colors group ${isPaused ? 'opacity-60' : ''}`}>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-xs font-bold text-primary">{deposit.id}</p>
-                      {deposit.hasDepositInfo && (
-                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-50 text-green-600`}>
-                          {deposit.status}
-                        </span>
-                      )}
-                      {isPaused && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500">
-                          已暂停
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-bold text-slate-900 group-hover:text-primary transition-colors max-w-xs truncate">{deposit.projectName}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    {deposit.hasDepositInfo ? (
-                      <div className="space-y-1">
-                        <p className="text-sm font-bold text-slate-700">{deposit.amount}</p>
-                        <p className="text-xs text-slate-400">{deposit.type}</p>
-                      </div>
-                    ) : '--'}
-                  </td>
-                  <td className="px-6 py-4">
-                    {deposit.hasDepositInfo ? (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                          <Building2 size={14} className="text-slate-400" />
-                          {deposit.bank}
+                return (
+                  <tr key={deposit.id} className={`hover:bg-slate-50/50 transition-colors group ${isPaused ? 'opacity-60' : ''}`}>
+                    <td className="px-6 py-4 overflow-hidden">
+                      <div className="flex flex-col gap-1 overflow-hidden">
+                        <div className="flex items-center gap-2 mb-1 overflow-hidden">
+                          <p className="text-xs font-bold text-primary shrink-0">{deposit.id}</p>
+                          {deposit.hasDepositInfo && (
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-50 text-green-600 shrink-0`}>
+                              {deposit.status}
+                            </span>
+                          )}
+                          {isPaused && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 shrink-0">
+                              已暂停
+                            </span>
+                          )}
                         </div>
-                        <p className="text-xs text-slate-400">{deposit.date}</p>
+                        <p className="font-bold text-slate-900 group-hover:text-primary transition-colors truncate" title={deposit.projectName}>{deposit.projectName}</p>
                       </div>
-                    ) : '--'}
-                  </td>
-                  <td className="px-6 py-4">
-                    {deposit.hasDepositInfo ? (
-                      <div className="flex flex-col gap-1.5">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${
-                          deposit.refundStatus === '已退还' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'
-                        }`}>
-                          {deposit.refundStatus === '已退还' ? <CheckCircle2 size={10} /> : <Clock size={10} />}
-                          {deposit.refundStatus}
-                        </span>
-                        {deposit.refundStatus === '已退还' && deposit.refundDate && (
-                          <p className="text-[10px] text-slate-400">退还: {deposit.refundDate}</p>
-                        )}
+                    </td>
+                    <td className="px-6 py-4 overflow-hidden">
+                      {deposit.hasDepositInfo ? (
+                        <div className="space-y-1 overflow-hidden">
+                          <p className="text-sm font-bold text-slate-700 truncate" title={deposit.amount}>{deposit.amount}</p>
+                          <p className="text-xs text-slate-400 truncate" title={deposit.type}>{deposit.type}</p>
+                        </div>
+                      ) : '--'}
+                    </td>
+                    <td className="px-6 py-4 overflow-hidden">
+                      {deposit.hasDepositInfo ? (
+                        <div className="space-y-1 overflow-hidden">
+                          <div className="flex items-center gap-2 text-sm text-slate-600 overflow-hidden">
+                            <Building2 size={14} className="text-slate-400 shrink-0" />
+                            <span className="truncate" title={deposit.bank}>{deposit.bank}</span>
+                          </div>
+                          <p className="text-xs text-slate-400 truncate" title={deposit.date}>{deposit.date}</p>
+                        </div>
+                      ) : '--'}
+                    </td>
+                    <td className="px-6 py-4 overflow-hidden">
+                      {deposit.hasDepositInfo ? (
+                        <div className="flex flex-col gap-1.5 overflow-hidden">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold w-fit shrink-0 ${
+                            deposit.refundStatus === '已退还' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'
+                          }`}>
+                            {deposit.refundStatus === '已退还' ? <CheckCircle2 size={10} /> : <Clock size={10} />}
+                            {deposit.refundStatus}
+                          </span>
+                          {deposit.refundStatus === '已退还' && deposit.refundDate && (
+                            <p className="text-[10px] text-slate-400 truncate">退还: {deposit.refundDate}</p>
+                          )}
+                        </div>
+                      ) : '--'}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button 
+                          onClick={() => handleOpenModal(deposit)}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm whitespace-nowrap ${
+                            isPaused 
+                              ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                              : deposit.hasDepositInfo 
+                                ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
+                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          {deposit.hasDepositInfo ? <Edit3 size={14} className="shrink-0" /> : <Plus size={14} className="shrink-0" />}
+                          {deposit.hasDepositInfo ? '修改记录' : '新增记录'}
+                        </button>
                       </div>
-                    ) : '--'}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button 
-                        onClick={() => handleOpenModal(deposit)}
-                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                          isPaused 
-                            ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                            : deposit.hasDepositInfo 
-                              ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
-                              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                        }`}
-                      >
-                        {deposit.hasDepositInfo ? <Edit3 size={14} /> : <Plus size={14} />}
-                        {deposit.hasDepositInfo ? '修改记录' : '新增记录'}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
       <Pagination 
         currentPage={currentPage}
@@ -475,7 +452,7 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
                         </div>
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-500 ml-1">保证金金额 <span className="text-red-500">*</span></label>
+                        <label className="text-xs font-bold text-slate-500 ml-1">缴纳金额 <span className="text-red-500">*</span></label>
                         <div className="relative flex items-center">
                           <input 
                             type="text" 
@@ -511,78 +488,22 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
                           )}
                         </div>
                       </div>
-                      <div className="space-y-1.5 relative">
+                      <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 ml-1">缴纳银行 <span className="text-red-500">*</span></label>
                         <div className="relative flex items-center">
                           <input 
                             type="text" 
                             value={formData.bank}
-                            onFocus={() => setShowBankDropdown(true)}
-                            onChange={(e) => {
-                              setFormData({...formData, bank: e.target.value});
-                              setBankSearchTerm(e.target.value);
-                              setShowBankDropdown(true);
-                            }}
+                            onChange={(e) => setFormData({...formData, bank: e.target.value})}
                             className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !formData.bank ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'}`} 
-                            placeholder="请选择或搜索银行" 
+                            placeholder="请输入缴纳银行名称" 
                           />
-                          <div className="absolute right-4 flex items-center gap-2">
-                            {hasAttemptedSave && !formData.bank && (
+                          {hasAttemptedSave && !formData.bank && (
+                            <div className="absolute right-4 text-red-500">
                               <AlertCircle size={16} className="fill-red-500 text-white" />
-                            )}
-                            <ChevronDown 
-                              size={16} 
-                              className={`text-slate-400 transition-transform ${showBankDropdown ? 'rotate-180' : ''}`} 
-                            />
-                          </div>
-                        </div>
-
-                        {/* Bank Dropdown */}
-                        <AnimatePresence>
-                          {showBankDropdown && (
-                            <>
-                              <div 
-                                className="fixed inset-0 z-[60]" 
-                                onClick={() => setShowBankDropdown(false)} 
-                              />
-                              <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-[70] max-h-60 overflow-y-auto custom-scrollbar"
-                              >
-                                {filteredBanks.length > 0 ? (
-                                  filteredBanks.map((bank) => (
-                                    <button
-                                      key={bank}
-                                      type="button"
-                                      onClick={() => {
-                                        setFormData({...formData, bank});
-                                        setBankSearchTerm('');
-                                        setShowBankDropdown(false);
-                                      }}
-                                      className="w-full px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors border-b border-slate-50 last:border-0"
-                                    >
-                                      {bank}
-                                    </button>
-                                  ))
-                                ) : (
-                                  <div className="px-4 py-8 text-center text-slate-400">
-                                    <Search size={24} className="mx-auto mb-2 opacity-20" />
-                                    <p className="text-xs">未找到匹配的银行</p>
-                                    <button 
-                                      type="button"
-                                      onClick={() => setShowBankDropdown(false)}
-                                      className="mt-2 text-primary font-bold text-xs hover:underline"
-                                    >
-                                      直接使用输入内容
-                                    </button>
-                                  </div>
-                                )}
-                              </motion.div>
-                            </>
+                            </div>
                           )}
-                        </AnimatePresence>
+                        </div>
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 ml-1">缴纳时间 <span className="text-red-500">*</span></label>
