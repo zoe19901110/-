@@ -71,26 +71,33 @@ const MarginReceiptUpload: React.FC<MarginReceiptUploadProps> = ({ onBack, isPau
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="p-8 space-y-10"
-    >
-      {/* Form Fields - Matching SecurityDepositManagement style */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-500 ml-1">缴纳金额 <span className="text-red-500">*</span></label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    value={formData.amount}
-                    disabled={isPaused}
-                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                    className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !formData.amount ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'} ${isPaused ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`} 
-                    placeholder="¥ 0.00" 
-                  />
+    <div className="p-10 flex-1 flex flex-col overflow-hidden">
+      <div className="space-y-8 flex-1 overflow-y-auto pr-4 custom-scrollbar flex flex-col">
+        <div className="grid grid-cols-2 gap-6">
+          <div className="col-span-2 space-y-1.5">
+            <label className="text-xs font-bold text-slate-500 ml-1">关联投标项目</label>
+            <div className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 shadow-sm">
+              {projectData?.name || '未关联项目'}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-500 ml-1">缴纳金额 <span className="text-red-500">*</span></label>
+            <div className="relative flex items-center">
+              <input 
+                type="text" 
+                value={formData.amount}
+                disabled={isPaused}
+                onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !formData.amount ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'} ${isPaused ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`} 
+                placeholder="¥ 0.00" 
+              />
+              {hasAttemptedSave && !formData.amount && (
+                <div className="absolute right-4 text-red-500">
+                  <AlertTriangle size={16} className="fill-red-500 text-white" />
                 </div>
-              </div>
+              )}
+            </div>
+          </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 ml-1">缴纳方式 <span className="text-red-500">*</span></label>
@@ -132,7 +139,7 @@ const MarginReceiptUpload: React.FC<MarginReceiptUploadProps> = ({ onBack, isPau
                 />
               </div>
 
-              <div className="md:col-span-2 space-y-1.5">
+              <div className="col-span-2 space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 ml-1">退还状态 <span className="text-red-500">*</span></label>
                 <div className="flex gap-8 px-2 py-2">
                   {['待退还', '已退还'].map((status) => (
@@ -159,7 +166,7 @@ const MarginReceiptUpload: React.FC<MarginReceiptUploadProps> = ({ onBack, isPau
               </div>
 
               {formData.refundStatus === '已退还' && (
-                <div className="md:col-span-2 space-y-1.5">
+                <div className="col-span-2 space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 ml-1">退还时间 <span className="text-red-500">*</span></label>
                   <input 
                     type="date" 
@@ -172,7 +179,7 @@ const MarginReceiptUpload: React.FC<MarginReceiptUploadProps> = ({ onBack, isPau
               )}
 
               {/* Attachments */}
-              <div className="md:col-span-2 space-y-4">
+              <div className="col-span-2 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <div className="flex items-center gap-2 text-slate-900 font-bold">
                     <Paperclip size={18} className="text-primary" />
@@ -222,7 +229,7 @@ const MarginReceiptUpload: React.FC<MarginReceiptUploadProps> = ({ onBack, isPau
                 </div>
               </div>
 
-              <div className="md:col-span-2 space-y-1.5">
+              <div className="col-span-2 space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 ml-1">备注</label>
                 <textarea 
                   value={formData.remarks}
@@ -236,35 +243,22 @@ const MarginReceiptUpload: React.FC<MarginReceiptUploadProps> = ({ onBack, isPau
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-4 pt-6">
+            <div className="flex gap-4 pt-8 mt-auto shrink-0 sticky bottom-0 bg-white pb-2">
               <button 
-                onClick={handleSave}
-                disabled={isPaused}
-                className={`flex-1 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={handleSave} 
+                className="flex-1 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20"
               >
                 确认提交
               </button>
               <button 
-                onClick={onBack}
+                onClick={onBack} 
                 className="px-10 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all"
               >
                 取消
               </button>
             </div>
-          
-            {/* Warning Box */}
-            <div className="bg-amber-50 p-6 flex items-start gap-4 border-t border-amber-100 mt-auto">
-              <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={20} />
-              <div>
-                <h4 className="font-bold text-amber-800 mb-1 text-sm">注意事项</h4>
-                <ul className="text-sm text-amber-700 space-y-1 list-disc list-inside">
-                  <li>请确保上传的回执清晰可见，包含付款方、收款方、金额及交易时间等关键信息。</li>
-                  <li>如采用电子保函形式，请上传完整的保函文件。</li>
-                  <li>缴纳金额必须与招标文件要求完全一致。</li>
-                </ul>
-              </div>
-            </div>
-    </motion.div>
+        </div>
+      </div>
   );
 };
 

@@ -699,6 +699,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
                   otherMaterialAttachments={otherMaterialAttachments}
                   setOtherMaterialAttachments={setOtherMaterialAttachments}
                   isPaused={isPaused}
+                  setConfirmDialog={setConfirmDialog}
                 />
               )}
               {currentPhase === 'production' && <ProductionPhase onNavigate={handleStartProduction} onSelect={setSelectedCard} isPaused={isPaused} />}
@@ -3461,7 +3462,8 @@ const PreparationPhase = ({
   setUploadedFiles, 
   otherMaterialAttachments,
   setOtherMaterialAttachments,
-  isPaused 
+  isPaused,
+  setConfirmDialog
 }: { 
   onNavigate: (view: SubView) => void, 
   onSelect: (id: string | null) => void,
@@ -3475,7 +3477,8 @@ const PreparationPhase = ({
   setUploadedFiles: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
   otherMaterialAttachments: Record<string, Attachment[]>,
   setOtherMaterialAttachments: React.Dispatch<React.SetStateAction<Record<string, Attachment[]>>>,
-  isPaused: boolean
+  isPaused: boolean,
+  setConfirmDialog: (dialog: { message: string, onConfirm: () => void } | null) => void
 }) => {
   const [isParsed, setIsParsed] = useState(!!initialProjectData);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -3901,11 +3904,14 @@ const PreparationPhase = ({
         </div>
 
         <div className="pt-8 border-t border-slate-100">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
                 <UploadCloud size={20} className="text-primary" />
                 准备阶段文件上传
+                <span className="text-sm font-medium text-red-400 ml-1">
+                  (请注意，招标和答疑文件上传后无法修改)
+                </span>
               </h3>
             </div>
             <button 
@@ -3914,6 +3920,26 @@ const PreparationPhase = ({
                   alert('此项目已暂停');
                   return;
                 }
+                
+                // Check if the previous round's Q&A document has been uploaded
+                if (clarificationRounds > 0) {
+                  const prevRoundIndex = clarificationRounds - 1;
+                  if (!uploadedFiles[`clar-doc-${prevRoundIndex}`]) {
+                    setConfirmDialog({
+                      message: '请先上传当前环节的“答疑文件”，再添加下一次答疑环节。',
+                      onConfirm: () => {}
+                    });
+                    return;
+                  }
+                } else if (!isTenderUploaded) {
+                  // Additional check: Must upload tender doc before first Q&A round
+                  setConfirmDialog({
+                    message: '请先完成“招标文件”的上传，再添加答疑环节。',
+                    onConfirm: () => {}
+                  });
+                  return;
+                }
+                
                 setClarificationRounds(prev => prev + 1);
               }}
               className={`px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-xs font-bold hover:bg-primary/20 transition-all flex items-center gap-1.5 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -3921,13 +3947,6 @@ const PreparationPhase = ({
               <Plus size={14} />
               添加答疑环节
             </button>
-          </div>
-          
-          <div className="mb-6">
-            <p className="text-xs font-bold text-red-500 flex items-center gap-1.5">
-              <AlertCircle size={14} />
-              请注意，招标和答疑文件上传后无法修改
-            </p>
           </div>
           
           <div className="space-y-8">
@@ -4509,7 +4528,7 @@ const ArchivingPhase = ({ onOpenArchiving, onOpenAttachments, isPaused }: { onOp
         <button 
           className="mt-auto w-full py-3.5 bg-white border border-slate-200 text-slate-700 group-hover:border-transparent group-hover:text-primary font-bold rounded-lg hover:bg-blue-50 transition-all"
         >
-          查看/修改记录
+          查看/修改
         </button>
       </div>
 
@@ -4552,6 +4571,7 @@ const ArchivingManagement = React.forwardRef(({
   setUnsuccessfulReason,
   tenderPersonnel,
   setTenderPersonnel,
+  projectData,
   onBack,
   isEditing,
   setIsEditing
@@ -4565,6 +4585,9 @@ const ArchivingManagement = React.forwardRef(({
   React.useImperativeHandle(ref, () => ({
     handleSave: () => {
       handleSave();
+    },
+    handleExport: () => {
+      handleExport();
     }
   }));
 
@@ -4721,35 +4744,37 @@ const ArchivingManagement = React.forwardRef(({
   };
 
   return (
-    <div className="space-y-8 min-h-[600px]">
-      <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm">
-        <div className="space-y-10 pb-10">
-          <div className="flex items-center justify-end">
-            <div className="flex gap-3">
-              <button 
-                onClick={() => {
-                  if (isPaused) {
-                    alert('此项目已暂停');
-                    return;
-                  }
-                  handleExport();
-                }}
-                className={`px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all flex items-center gap-2 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <Download size={16} />
-                导出详情
-              </button>
-            </div>
+    <>
+      <div className="space-y-10">
+        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+        <div className="grid grid-cols-2 gap-8">
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">关联项目 <span className="text-red-500">*</span></p>
+            <p className="text-sm font-bold text-slate-900">{projectData?.name || '未知项目'}</p>
           </div>
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">开标日期 <span className="text-red-500">*</span></p>
+            <p className="text-sm font-bold text-slate-900">{projectData?.openingDate || '未知日期'}</p>
+          </div>
+        </div>
+      </div>
 
-      <div className="space-y-8">
+      <section className="space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-2 text-slate-900 font-bold">
+            <ClipboardList size={20} className="text-primary" />
+            <h4 className="text-lg">投标登记</h4>
+          </div>
+        </div>
+
+        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-10">
         {/* Tender Documents Section - Moved here to match Tender Management layout */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div className="flex items-center gap-2 text-slate-900 font-bold">
-              <Upload size={20} className="text-primary" />
-              <h4 className="text-lg">投标文件</h4>
-            </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Upload size={16} className="text-primary" />
+              投标文件
+            </h5>
             {isEditing && (
               <div className="relative">
                 <input 
@@ -4857,17 +4882,16 @@ const ArchivingManagement = React.forwardRef(({
               </button>
             </div>
           )}
-        </section>
+        </div>
 
-        {/* Tender Personnel Section */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div className="flex items-center gap-2 text-slate-900 font-bold">
-              <Users size={20} className="text-primary" />
-              <h4 className="text-lg">投标人员</h4>
-            </div>
+        <div className="space-y-4 border-t border-slate-100 pt-8">
+          <div className="flex items-center justify-between pb-4">
+            <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Users size={16} className="text-primary" />
+              参与人员
+            </h5>
           </div>
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+          <div className="bg-white rounded-2xl border border-slate-100 p-6">
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex flex-wrap items-center gap-2 flex-1">
                 {tenderPersonnel.length > 0 ? (
@@ -5007,15 +5031,25 @@ const ArchivingManagement = React.forwardRef(({
               )}
             </div>
           </div>
-        </section>
+        </div>
+        </div>
+      </section>
 
-        {/* Opening Records Section */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div className="flex items-center gap-2 text-slate-900 font-bold">
-              <ClipboardList size={20} className="text-primary" />
-              <h4 className="text-lg">开标详情</h4>
-            </div>
+      {/* Opening & Winning Records Section */}
+      <section className="space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-2 text-slate-900 font-bold">
+            <Trophy size={20} className="text-primary" />
+            <h4 className="text-lg">开标与中标记录</h4>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <ClipboardList size={16} className="text-slate-400" />
+              开标详情
+            </h5>
             {isEditing && (
               <button 
                 onClick={() => setOpeningRecords([...openingRecords, { units: '', price: 0, rank: '', isWinner: false, isSelf: false }])}
@@ -5026,8 +5060,8 @@ const ArchivingManagement = React.forwardRef(({
               </button>
             )}
           </div>
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <table className="w-full text-left border-collapse">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
                   <th className="px-6 py-4">参标单位 <span className="text-red-500">*</span></th>
@@ -5121,15 +5155,15 @@ const ArchivingManagement = React.forwardRef(({
               {/* Button moved to header */}
             </div>
           )}
-        </section>
+        </div>
 
         {/* Opening Record Attachments Section - New Feature */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div className="flex items-center gap-2 text-slate-900 font-bold">
-              <Paperclip size={20} className="text-primary" />
-              <h4 className="text-lg">开标记录附件</h4>
-            </div>
+        <div className="space-y-4 border-t border-slate-100 pt-8">
+          <div className="flex items-center justify-between pb-4">
+            <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Paperclip size={16} className="text-slate-400" />
+              开标记录附件
+            </h5>
             {isEditing && (
               <div className="relative">
                 <input 
@@ -5137,7 +5171,7 @@ const ArchivingManagement = React.forwardRef(({
                   multiple 
                   accept=".pdf,image/*"
                   disabled={isPaused}
-                  className={`absolute inset-0 opacity-0 ${isPaused ? 'cursor-not-allowed' : 'cursor-pointer'}`} 
+                  className={`absolute inset-0 opacity-0 ${isPaused ? 'cursor-not-allowed' : 'cursor-pointer'} z-10`} 
                   onChange={(e) => {
                     const files = e.target.files;
                     if (files) {
@@ -5158,7 +5192,7 @@ const ArchivingManagement = React.forwardRef(({
                 />
                 <button 
                   disabled={isPaused}
-                  className={`text-sm font-bold text-primary hover:underline flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 rounded-lg transition-colors ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`text-sm font-bold text-primary hover:underline flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 rounded-xl transition-colors ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <Plus size={16} /> 上传附件
                 </button>
@@ -5200,16 +5234,18 @@ const ArchivingManagement = React.forwardRef(({
               </div>
             )}
           </div>
-        </section>
+        </div>
 
         {/* Winning Records Section */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 text-slate-900 font-bold border-b border-slate-100 pb-4">
-            <Trophy size={20} className="text-primary" />
-            <h4 className="text-lg">中标详情</h4>
+        <div className="space-y-4 border-t border-slate-100 pt-8">
+          <div className="flex items-center gap-6">
+            <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Trophy size={16} className="text-emerald-500" />
+              中标详情
+            </h5>
           </div>
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <table className="w-full text-left border-collapse">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
                   <th className="px-6 py-4">中标单位</th>
@@ -5283,9 +5319,10 @@ const ArchivingManagement = React.forwardRef(({
               </tbody>
             </table>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Unsuccessful Bid Reason Analysis - Conditional */}
+      {/* Unsuccessful Bid Reason Analysis - Conditional */}
         {winningRecords.length > 0 && !openingRecords.find(r => r.isSelf)?.isWinner && (
           <section className="space-y-4">
             <div className="flex items-center gap-2 text-slate-900 font-bold border-b border-slate-100 pb-4">
@@ -5630,9 +5667,7 @@ const ArchivingManagement = React.forwardRef(({
           </div>
         )}
       </AnimatePresence>
-        </div>
-      </div>
-    </div>
+    </>
   );
 });
 
@@ -6197,7 +6232,7 @@ const ProjectAttachmentsModal = ({
 };
 
 const ArchivingManagementModal = ({ isOpen, onClose, ...props }: any) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
   const archivingRef = React.useRef<any>(null);
 
   return (
@@ -6209,28 +6244,40 @@ const ArchivingManagementModal = ({ isOpen, onClose, ...props }: any) => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-slate-50 rounded-3xl shadow-2xl w-full max-w-[1200px] h-[90vh] flex flex-col overflow-hidden"
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-[1300px] max-h-[90vh] flex flex-col overflow-hidden"
             >
-              <div className="px-8 py-6 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
+              <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
+                  <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white">
                     <ClipboardList size={24} />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-900">投标/开标记录管理</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.1em]">Tender & Opening Record Management</p>
-                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">投标/开标情况管理详情</h3>
                 </div>
-                <button 
-                  onClick={onClose}
-                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                >
-                  <X size={20} className="text-slate-400" />
-                </button>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => {
+                      if (props.isPaused) {
+                        alert('此项目已暂停');
+                        return;
+                      }
+                      archivingRef.current?.handleExport();
+                    }}
+                    className={`px-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-bold hover:bg-emerald-100 transition-all flex items-center gap-2 ${props.isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <Download size={16} />
+                    导出详情
+                  </button>
+                  <button 
+                    onClick={onClose}
+                    className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                  >
+                    <X size={20} className="text-slate-400" />
+                  </button>
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar">
-                <div className="p-8">
+              <div className="p-8 flex-1 flex flex-col overflow-hidden">
+                <div className="space-y-10 flex-1 overflow-y-auto pr-4 custom-scrollbar">
                   <ArchivingManagement 
                     {...props} 
                     ref={archivingRef}
@@ -6238,29 +6285,21 @@ const ArchivingManagementModal = ({ isOpen, onClose, ...props }: any) => {
                     setIsEditing={setIsEditing}
                     onBack={onClose} 
                   />
+                  <div className="flex gap-4 pt-8 shrink-0 bg-white">
+                    <button 
+                      onClick={() => archivingRef.current?.handleSave()}
+                      className="flex-1 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20"
+                    >
+                      修改保存
+                    </button>
+                    <button 
+                      onClick={onClose}
+                      className="px-10 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+                    >
+                      取消
+                    </button>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="p-6 border-t border-slate-200 bg-white flex shrink-0 gap-4">
-                <button 
-                  onClick={() => {
-                    if (isEditing) {
-                      archivingRef.current?.handleSave();
-                    } else {
-                      setIsEditing(true);
-                    }
-                  }}
-                  className="flex-1 py-3 bg-[#0052d9] text-white rounded-xl font-bold hover:bg-[#0052d9]/90 transition-all active:scale-95 shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
-                >
-                  {isEditing ? <Check size={18} /> : <Edit3 size={18} />}
-                  {isEditing ? '保存修改' : '修改记录'}
-                </button>
-                <button 
-                  onClick={onClose}
-                  className="px-10 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-all active:scale-95 shadow-sm"
-                >
-                  取消
-                </button>
               </div>
             </motion.div>
           </div>
@@ -6404,15 +6443,6 @@ const OtherMaterialsModal = ({
                     )}
                   </div>
                 </div>
-              </div>
-              
-              <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end shrink-0">
-                <button 
-                  onClick={onClose}
-                  className="px-8 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
-                >
-                  关闭
-                </button>
               </div>
             </motion.div>
           </div>

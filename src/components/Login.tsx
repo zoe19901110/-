@@ -200,9 +200,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 sm:p-6 overflow-auto">
-      <div className="bg-white rounded-[40px] shadow-2xl flex overflow-hidden w-[1020px] h-[720px] shrink-0">
+      <div className="bg-white rounded-[40px] shadow-2xl flex overflow-hidden w-[1060px] h-[720px] shrink-0">
         {/* Left Sidebar */}
-        <div className="w-[480px] bg-primary px-14 flex flex-col justify-center relative overflow-hidden shrink-0 hidden md:flex">
+        <div className="w-[520px] bg-primary px-14 flex flex-col justify-center relative overflow-hidden shrink-0 hidden md:flex">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10 pointer-events-none">
             <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-white blur-3xl" />
@@ -393,7 +393,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         )}
                       </div>
 
-                      <div className="flex flex-col gap-4 px-2">
+                      <div className="flex flex-col gap-2 px-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-6">
                             {loginType === 'account' && (
@@ -402,16 +402,21 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                                   type="checkbox" 
                                   checked={rememberPassword}
                                   onChange={(e) => setRememberPassword(e.target.checked)}
-                                  className="size-5 rounded border-slate-300 text-primary focus:ring-primary"
+                                  className="size-4 rounded border-slate-300 text-primary focus:ring-primary"
                                 />
                                 <span className="text-sm text-slate-500 group-hover:text-slate-700 transition-colors whitespace-nowrap">
                                   记住密码
                                 </span>
                               </label>
                             )}
+                            {loginType === 'phone' && selectionTab === 'personal' && (
+                              <span className="text-xs text-slate-400">
+                                未注册的手机号验证后将自动创建新账号
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center gap-4">
-                            {selectionTab === 'personal' && (
+                            {selectionTab === 'personal' && loginType === 'account' && (
                               <button 
                                 onClick={() => setView('register')}
                                 className="text-sm text-primary font-bold hover:underline whitespace-nowrap"
@@ -427,19 +432,19 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                             </button>
                           </div>
                         </div>
-                      </div>
 
-                      <label className="px-2 text-xs text-slate-400 whitespace-nowrap flex items-center gap-2 cursor-pointer group">
-                        <input 
-                          type="checkbox" 
-                          checked={agreed}
-                          onChange={(e) => setAgreed(e.target.checked)}
-                          className="size-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
-                        />
-                        <span className="group-hover:text-slate-600 transition-colors">
-                          登录视为您已阅读并同意 <span className="text-primary hover:underline cursor-pointer">服务条款</span> 和 <span className="text-primary hover:underline cursor-pointer">隐私政策</span>
-                        </span>
-                      </label>
+                        <label className="text-xs text-slate-400 whitespace-nowrap flex items-center gap-2 cursor-pointer group">
+                          <input 
+                            type="checkbox" 
+                            checked={agreed}
+                            onChange={(e) => setAgreed(e.target.checked)}
+                            className="size-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                          />
+                          <span className="group-hover:text-slate-600 transition-colors">
+                            登录视为您已阅读并同意 <span className="text-primary hover:underline cursor-pointer">服务条款</span> 和 <span className="text-primary hover:underline cursor-pointer">隐私政策</span>
+                          </span>
+                        </label>
+                      </div>
 
                       <button 
                         onClick={handleInitialLogin}
@@ -809,7 +814,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                           type="checkbox" 
                           checked={rememberDefault}
                           onChange={(e) => setRememberDefault(e.target.checked)}
-                          className="size-5 rounded border-slate-300 text-primary focus:ring-primary"
+                          className="size-4 rounded border-slate-300 text-primary focus:ring-primary"
                         />
                         <span className="text-sm text-slate-500 group-hover:text-slate-700 transition-colors whitespace-nowrap">
                           下次默认登录此企业

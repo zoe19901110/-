@@ -38,7 +38,8 @@ interface SecurityDepositManagementProps {
 
 const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ currentEnterprise, projects = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [refundStatusFilter, setRefundStatusFilter] = useState('全部');
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [selectedDeposit, setSelectedDeposit] = useState<any>(null);
@@ -237,13 +238,20 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
             />
           </div>
           
-          <div className="w-40 relative group">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1 group focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+            <Calendar className="text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
             <input 
               type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all text-slate-600 font-medium"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="bg-transparent border-none outline-none text-sm text-slate-600 font-medium py-1 w-32"
+            />
+            <span className="text-slate-400 text-xs">至</span>
+            <input 
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="bg-transparent border-none outline-none text-sm text-slate-600 font-medium py-1 w-32"
             />
           </div>
           
@@ -268,7 +276,8 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
           <button 
             onClick={() => {
               setSearchTerm('');
-              setDateFilter('');
+              setStartDate('');
+              setEndDate('');
               setRefundStatusFilter('全部');
             }}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all"
@@ -310,9 +319,10 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
             <tbody className="divide-y divide-slate-100">
               {deposits.filter(d => {
                 const matchesSearch = d.projectName.includes(searchTerm) || d.projectCode.includes(searchTerm) || d.bank.includes(searchTerm);
-                const matchesDate = !dateFilter || d.date.includes(dateFilter);
+                const matchesStartDate = !startDate || d.date >= startDate;
+                const matchesEndDate = !endDate || d.date <= endDate;
                 const matchesRefundStatus = refundStatusFilter === '全部' || d.refundStatus === refundStatusFilter;
-                return matchesSearch && matchesDate && matchesRefundStatus;
+                return matchesSearch && matchesStartDate && matchesEndDate && matchesRefundStatus;
               })
               .slice((currentPage - 1) * pageSize, currentPage * pageSize)
               .map((deposit) => {
@@ -401,18 +411,20 @@ const SecurityDepositManagement: React.FC<SecurityDepositManagementProps> = ({ c
         currentPage={currentPage}
         totalPages={Math.ceil(deposits.filter(d => {
           const matchesSearch = d.projectName.includes(searchTerm) || d.projectCode.includes(searchTerm) || d.bank.includes(searchTerm);
-          const matchesDate = !dateFilter || d.date.includes(dateFilter);
+          const matchesStartDate = !startDate || d.date >= startDate;
+          const matchesEndDate = !endDate || d.date <= endDate;
           const matchesRefundStatus = refundStatusFilter === '全部' || d.refundStatus === refundStatusFilter;
-          return matchesSearch && matchesDate && matchesRefundStatus;
+          return matchesSearch && matchesStartDate && matchesEndDate && matchesRefundStatus;
         }).length / pageSize)}
         pageSize={pageSize}
         onPageChange={setCurrentPage}
         onPageSizeChange={setPageSize}
         totalItems={deposits.filter(d => {
           const matchesSearch = d.projectName.includes(searchTerm) || d.projectCode.includes(searchTerm) || d.bank.includes(searchTerm);
-          const matchesDate = !dateFilter || d.date.includes(dateFilter);
+          const matchesStartDate = !startDate || d.date >= startDate;
+          const matchesEndDate = !endDate || d.date <= endDate;
           const matchesRefundStatus = refundStatusFilter === '全部' || d.refundStatus === refundStatusFilter;
-          return matchesSearch && matchesDate && matchesRefundStatus;
+          return matchesSearch && matchesStartDate && matchesEndDate && matchesRefundStatus;
         }).length}
       />
 
