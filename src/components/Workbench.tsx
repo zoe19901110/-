@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import BidParsing from './BidParsing';
 import MarginReceiptUpload from './MarginReceiptUpload';
 import { 
@@ -189,37 +190,37 @@ const Workbench: React.FC<WorkbenchProps> = ({
   const [showDocDropdown, setShowDocDropdown] = useState(false);
   
   // Archiving States
-  const [openingRecords, setOpeningRecords] = useState([
+  const [openingRecords, setOpeningRecords] = useLocalStorage('workbench_openingRecords', [
     { units: '某某建设集团有限公司', price: 12105000, rank: '1', isWinner: true, isSelf: true },
     { units: '中建某局有限公司', price: 12500000, rank: '2', isWinner: false, isSelf: false },
     { units: '省建工集团', price: 12800000, rank: '3', isWinner: false, isSelf: false },
   ]);
-  const [winningRecords, setWinningRecords] = useState([
+  const [winningRecords, setWinningRecords] = useLocalStorage('workbench_winningRecords', [
     { unit: '某某建设集团有限公司', amount: 12105000, date: '2024-03-25', url: 'http://ggzy.example.com/...' },
   ]);
-  const [contractRecords, setContractRecords] = useState([
+  const [contractRecords, setContractRecords] = useLocalStorage('workbench_contractRecords_main', [
     { id: 'HT-2024-001', name: '城市基础设施施工合同', date: '2024-04-05', amount: 11800000, owner: '陈经理', duration: '30', status: '履行中', fulfillmentDate: '2024-04-10', expectedCompletionDate: '2024-05-10' },
   ]);
-  const [contractAttachments, setContractAttachments] = useState<Attachment[]>([
+  const [contractAttachments, setContractAttachments] = useLocalStorage<Attachment[]>('workbench_contractAttachments_main', [
     { id: '1', name: '中标通知书.pdf', size: '1.2MB', type: 'pdf', date: '2024-03-25', category: '中标通知书' },
     { id: '2', name: '施工合同扫描件.jpg', size: '2.4MB', type: 'image', date: '2024-04-05', category: '合同' },
   ]);
-  const [openingRecordFiles, setOpeningRecordFiles] = useState<Attachment[]>([
+  const [openingRecordFiles, setOpeningRecordFiles] = useLocalStorage<Attachment[]>('workbench_openingRecordFiles', [
     { id: 'orf-1', name: '开标记录表-20240320.pdf', size: '1.5MB', type: 'pdf', date: '2024-03-20', category: '开标记录' }
   ]);
-  const [tenderFiles, setTenderFiles] = useState<Attachment[]>([
+  const [tenderFiles, setTenderFiles] = useLocalStorage<Attachment[]>('workbench_tenderFiles', [
     { id: '0', name: '投标文件_技术标.pdf', size: '4.5MB', type: 'pdf', date: '2024-03-15', category: '投标文件' },
     { id: '01', name: '投标文件_商务标.pdf', size: '2.8MB', type: 'pdf', date: '2024-03-15', category: '投标文件' },
   ]);
-  const [acceptanceReports, setAcceptanceReports] = useState<Attachment[]>([
+  const [acceptanceReports, setAcceptanceReports] = useLocalStorage<Attachment[]>('workbench_acceptanceReports', [
     { id: 'ar-1', name: '工程竣工验收报告-克东小区.pdf', size: '3.2MB', type: 'pdf', date: '2024-11-20', category: '验收报告' }
   ]);
-  const [otherMaterialAttachments, setOtherMaterialAttachments] = useState<Record<string, Attachment[]>>({
+  const [otherMaterialAttachments, setOtherMaterialAttachments] = useLocalStorage<Record<string, Attachment[]>>('workbench_otherMaterialAttachments', {
     'filing': [],
     'other': []
   });
-  const [unsuccessfulReason, setUnsuccessfulReason] = useState('投标报价略高于中标单位，且在技术方案的细节描述上不够详尽，未能充分体现我司在同类项目中的核心竞争优势。');
-  const [tenderPersonnel, setTenderPersonnel] = useState<string[]>(['陈经理', '王志强']);
+  const [unsuccessfulReason, setUnsuccessfulReason] = useLocalStorage('workbench_unsuccessfulReason', '投标报价略高于中标单位，且在技术方案的细节描述上不够详尽，未能充分体现我司在同类项目中的核心竞争优势。');
+  const [tenderPersonnel, setTenderPersonnel] = useLocalStorage<string[]>('workbench_tenderPersonnel', ['陈经理', '王志强']);
 
   const [viewingDoc, setViewingDoc] = useState<string>('tender-doc');
   const [notifIndex, setNotifIndex] = useState(0);
@@ -395,9 +396,6 @@ const Workbench: React.FC<WorkbenchProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-3 relative">
               <h2 className="text-2xl font-bold text-slate-900">{projectData.projectName}</h2>
-              <span className="ml-3 px-3 py-1 bg-slate-100 text-slate-600 rounded text-sm font-bold">
-                {projectData.status === '进行中' ? '进行中' : (projectData.status === '已完成' ? '已开标' : (projectData.status === '放弃投标' ? '放弃投标' : projectData.status))}
-              </span>
               
               <div className="relative flex items-center gap-0">
                 <button 
@@ -785,9 +783,9 @@ const Workbench: React.FC<WorkbenchProps> = ({
                       {activeRightTab === 'operation-log' && '操作日志'}
                     </h3>
                     <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
-                      {activeRightTab === 'material-market' ? 'Material Market' : 
-                       activeRightTab === 'resource-center' ? 'Resource Management' : 
-                       activeRightTab === 'operation-log' ? 'Operation Log' : 'Tender Document Analysis'}
+                      {activeRightTab === 'material-market' ? '素材市场' : 
+                       activeRightTab === 'resource-center' ? '资源管理' : 
+                       activeRightTab === 'operation-log' ? '操作日志' : '招标文件分析'}
                     </p>
                   </div>
                 </div>
@@ -2876,26 +2874,26 @@ const ResourceCenterView = ({ onBack, isPaused, insights, setInsights }: { onBac
 };
 
 const ArchiveRegisterView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boolean }) => {
-  const [openingRecords, setOpeningRecords] = useState([
+  const [openingRecords, setOpeningRecords] = useLocalStorage('workbench_archive_openingRecords', [
     { units: '中铁一局集团有限公司', price: 125608800, rank: '1', isWinner: true, isSelf: true },
     { units: '中建三局集团有限公司', price: 128905000, rank: '2', isWinner: false, isSelf: false },
     { units: '中交第二公路工程局有限公司', price: 131002000, rank: '3', isWinner: false, isSelf: false },
   ]);
 
-  const [contractRecords, setContractRecords] = useState([
+  const [contractRecords, setContractRecords] = useLocalStorage('workbench_archive_contractRecords', [
     { id: 'HT-2024-001', name: '某高速公路工程施工合同', date: '2024-03-15', amount: 125608800, owner: '张三', duration: '30', status: '履行中', fulfillmentDate: '2024-03-15', expectedCompletionDate: '2024-04-14' },
   ]);
 
-  const [bidFiles, setBidFiles] = useState([
+  const [bidFiles, setBidFiles] = useLocalStorage('workbench_archive_bidFiles', [
     { id: '1', name: '投标文件_技术标.pdf', size: '15.2MB', date: '2024-03-01' },
     { id: '2', name: '投标文件_商务标.pdf', size: '8.5MB', date: '2024-03-01' },
   ]);
 
-  const [openingFiles, setOpeningFiles] = useState([
+  const [openingFiles, setOpeningFiles] = useLocalStorage('workbench_archive_openingFiles', [
     { id: '1', name: '开标记录表.pdf', size: '2.1MB', date: '2024-03-10' },
   ]);
 
-  const [contractAttachments, setContractAttachments] = useState([
+  const [contractAttachments, setContractAttachments] = useLocalStorage('workbench_archive_contractAttachments', [
     { id: '1', name: '施工合同扫描件.pdf', size: '25.6MB', date: '2024-03-20', category: '合同' },
     { id: '2', name: '中标通知书.pdf', size: '1.2MB', date: '2024-03-12', category: '中标通知书' },
   ]);
@@ -5069,6 +5067,7 @@ const ArchivingManagement = React.forwardRef(({
                   <th className="px-6 py-4">排名 <span className="text-red-500">*</span></th>
                   <th className="px-6 py-4 text-center">是否中标 <span className="text-red-500">*</span></th>
                   <th className="px-6 py-4 text-center">是否本单位 <span className="text-red-500">*</span></th>
+                  {isEditing && <th className="px-6 py-4 text-center whitespace-nowrap">操作</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -5145,6 +5144,18 @@ const ArchivingManagement = React.forwardRef(({
                         row.isSelf && <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-[10px] font-bold">本单位</span>
                       )}
                     </td>
+                    {isEditing && (
+                      <td className="px-6 py-4 text-center">
+                        <button 
+                          onClick={() => setOpeningRecords(openingRecords.filter((_, idx) => idx !== i))}
+                          disabled={isPaused}
+                          className={`p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all ${isPaused ? 'cursor-not-allowed opacity-50' : ''}`}
+                          title="删除参标单位"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -5381,7 +5392,7 @@ const ArchivingManagement = React.forwardRef(({
                   <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">履行时间</th>
                   <th className="px-3 py-3 min-w-[140px] whitespace-nowrap">应当完成时间</th>
                   <th className="px-3 py-3 min-w-[110px] whitespace-nowrap">履行状态</th>
-                  {isEditing && <th className="px-3 py-3 min-w-[60px] whitespace-nowrap text-right">操作</th>}
+                  {isEditing && <th className="px-3 py-3 min-w-[60px] whitespace-nowrap text-center">操作</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -5509,11 +5520,11 @@ const ArchivingManagement = React.forwardRef(({
                       )}
                     </td>
                     {isEditing && (
-                      <td className="px-3 py-3 text-right">
+                      <td className="px-3 py-3 text-center">
                         <button 
                           onClick={() => deleteContract(i)}
                           disabled={isPaused}
-                          className={`p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all ${isPaused ? 'cursor-not-allowed' : ''}`}
+                          className={`p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all ${isPaused ? 'cursor-not-allowed opacity-50' : ''}`}
                           title="删除合同"
                         >
                           <Trash2 size={16} />
@@ -5898,7 +5909,7 @@ const KeyInfoView = ({ onBack, isPaused }: { onBack: () => void, isPaused: boole
               <p className="mb-4 underline decoration-indigo-300 decoration-2 underline-offset-4 bg-indigo-50/50">1. 项目名称：城市基础设施二期项目</p>
               <p className="mb-4 underline decoration-indigo-300 decoration-2 underline-offset-4 bg-indigo-50/50">2. 招标编号：BID-2023-00892</p>
               <p className="mb-4 underline decoration-indigo-300 decoration-2 underline-offset-4 bg-indigo-50/50">3. 预算金额：人民币壹仟贰佰伍拾万元整（¥12,500,000.00）</p>
-              <p className="mb-4 underline decoration-indigo-300 decoration-2 underline-offset-4 bg-indigo-50/50">4. 开标时间：2023年12月20日 09时30分</p>
+              <p className="mb-4 underline decoration-indigo-300 decoration-2 underline-offset-4 bg-indigo-50/50">4. 开标时间：2023-12-20 09:30</p>
               <p>...</p>
             </div>
           </div>

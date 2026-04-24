@@ -34,7 +34,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
   const stats = useMemo(() => {
     const filteredProjects = selectedYear === '全部' 
       ? projects 
-      : projects.filter(p => p.bidOpeningTime.startsWith(selectedYear));
+      : projects.filter(p => p.bidOpeningTime.includes(`${selectedYear}年`) || p.bidOpeningTime.startsWith(selectedYear));
 
     const totalCount = filteredProjects.length;
     const activeCount = filteredProjects.filter(p => p.status === '进行中').length;
@@ -58,7 +58,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
   const statusDistribution = useMemo(() => {
     const filteredProjects = selectedYear === '全部' 
       ? projects 
-      : projects.filter(p => p.bidOpeningTime.startsWith(selectedYear));
+      : projects.filter(p => p.bidOpeningTime.includes(`${selectedYear}年`) || p.bidOpeningTime.startsWith(selectedYear));
 
     const counts = {
       '进行中': 0,
@@ -93,15 +93,19 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ currentEnterprise
       const years = ['2025', '2026', '2027', '2028'];
       return years.map(y => ({
         name: y,
-        count: projects.filter(p => p.bidOpeningTime.startsWith(y)).length + (y === '2025' ? 5 : 0) // Mock 2025
+        count: projects.filter(p => p.bidOpeningTime.includes(`${y}年`) || p.bidOpeningTime.startsWith(y)).length + (y === '2025' ? 5 : 0) // Mock 2025
       }));
     } else {
       const year = trendSelectedYear === '全部' ? '2026' : trendSelectedYear;
-      const months = Array.from({ length: 12 }, (_, i) => `${year}-${(i + 1).toString().padStart(2, '0')}`);
-      return months.map(m => ({
-        name: m,
-        count: projects.filter(p => p.bidOpeningTime.startsWith(m)).length
-      }));
+      return Array.from({ length: 12 }, (_, i) => {
+        const monthNum = (i + 1).toString().padStart(2, '0');
+        const monthStrZH = `${year}年${monthNum}月`;
+        const monthStrISO = `${year}-${monthNum}`;
+        return {
+          name: `${i + 1}月`,
+          count: projects.filter(p => p.bidOpeningTime.includes(monthStrZH) || p.bidOpeningTime.startsWith(monthStrISO)).length
+        };
+      });
     }
   }, [projects, trendViewType, trendSelectedYear]);
 

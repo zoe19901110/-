@@ -38,7 +38,7 @@ const MarginReceiptUpload: React.FC<MarginReceiptUploadProps> = ({ onBack, isPau
       const newFile = {
         name: e.target.files[0].name,
         size: (e.target.files[0].size / 1024 / 1024).toFixed(2) + ' MB',
-        time: new Date().toLocaleString(),
+        time: new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-'),
         status: '上传成功',
       };
       

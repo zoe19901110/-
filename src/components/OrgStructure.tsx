@@ -18,7 +18,6 @@ import {
   Trash2,
   X,
   GripVertical,
-  RefreshCw,
   CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
@@ -68,6 +67,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
   // Modals
   const [showDeptModal, setShowDeptModal] = useState(false);
@@ -468,6 +468,20 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
       onConfirm: () => {
         const updatedUsers = users.filter(u => u.id !== id);
         setUsers(updatedUsers);
+        setSelectedUserIds(prev => prev.filter(selectedId => selectedId !== id));
+      }
+    });
+  };
+
+  const handleBulkDeleteUsers = () => {
+    if (selectedUserIds.length === 0) return;
+    setConfirmDialog({
+      message: `确定要将这 ${selectedUserIds.length} 名人员从企业中批量移除吗？移除后这些账号将无法登录且在企业中消失。`,
+      onConfirm: () => {
+        const updatedUsers = users.filter(u => !selectedUserIds.includes(u.id));
+        setUsers(updatedUsers);
+        setSelectedUserIds([]);
+        showToast('批量移除成功');
       }
     });
   };
@@ -485,48 +499,11 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
     return matchesEnterprise && matchesDept && matchesSearch;
   });
 
-  const handleResetData = () => {
-    setConfirmDialog({
-      message: '确定要重置所有组织架构数据吗？这将清除您手动添加的数据并恢复初始示例数据。',
-      onConfirm: () => {
-        localStorage.removeItem('users');
-        localStorage.removeItem('departments');
-        window.location.reload();
-      }
-    });
-  };
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-          <span className="w-1.5 h-6 bg-[#0052CC] rounded-full"></span>
-          组织架构管理
-        </h3>
+      <div className="flex items-center justify-end">
         <div className="flex gap-3">
-          <button 
-            onClick={handleResetData}
-            className="flex items-center justify-center size-10 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-95"
-            title="重置数据"
-          >
-            <RefreshCw size={18} />
-          </button>
-          {activeSubTab === 'dept' && (
-            <>
-              <button 
-                onClick={handleAddDept}
-                className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm hover:shadow-md active:scale-95"
-              >
-                <FolderPlus size={16} /> 新增部门
-              </button>
-              <button 
-                onClick={handleAddUser}
-                className="flex items-center gap-2 px-6 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 transition-all shadow-sm hover:shadow-md active:scale-95"
-              >
-                <UserPlus size={16} /> 新增人员
-              </button>
-            </>
-          )}
+          
           {activeSubTab === 'role' && (
             <button 
               onClick={() => {
@@ -574,12 +551,21 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden h-fit">
                 <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                   <h4 className="font-bold text-sm">部门列表</h4>
-                  <button 
-                    onClick={() => setSelectedDeptId(null)}
-                    className={`text-xs font-bold ${!selectedDeptId ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    全部
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setSelectedDeptId(null)}
+                      className={`text-xs font-bold ${!selectedDeptId ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}
+                    >
+                      全部
+                    </button>
+                    <button 
+                      onClick={handleAddDept}
+                      className="text-xs font-bold text-slate-500 hover:text-primary flex items-center gap-1 transition-colors"
+                      title="新增部门"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
                 </div>
                 <Reorder.Group 
                   axis="y" 
@@ -674,16 +660,44 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                       </div>
                     )}
                   </div>
-                  <div className="text-xs text-slate-400">
-                    共 <span className="font-bold text-slate-600">{filteredUsers.length}</span> 位成员
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs text-slate-400">
+                      共 <span className="font-bold text-slate-600">{filteredUsers.length}</span> 位成员
+                    </div>
+                    <button 
+                      onClick={handleAddUser}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0052CC] text-white rounded-lg text-xs font-bold hover:bg-[#0052CC]/90 transition-all shadow-sm"
+                    >
+                      <UserPlus size={14} /> 新增人员
+                    </button>
+                    <button
+                      onClick={handleBulkDeleteUsers}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border border-[#0052CC] text-[#0052CC] hover:bg-[#0052CC]/5"
+                      disabled={selectedUserIds.length === 0}
+                    >
+                      <Trash2 size={14} /> 删除人员 {selectedUserIds.length > 0 ? `(${selectedUserIds.length})` : ''}
+                    </button>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left whitespace-nowrap">
                     <thead>
                     <tr className="bg-slate-50/50 text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+                      <th className="px-6 py-4 w-10">
+                        <input 
+                          type="checkbox" 
+                          className="rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer"
+                          checked={filteredUsers.length > 0 && selectedUserIds.length === filteredUsers.length}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedUserIds(filteredUsers.map(u => u.id));
+                            } else {
+                              setSelectedUserIds([]);
+                            }
+                          }}
+                        />
+                      </th>
                       <th className="px-6 py-4">姓名</th>
-                      <th className="px-6 py-4">所属企业</th>
                       <th className="px-6 py-4">部门/职位</th>
                       <th className="px-6 py-4">系统角色</th>
                       <th className="px-6 py-4">联系方式/账号</th>
@@ -697,35 +711,26 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                       .map((user) => (
                       <tr key={user.id} className={`${user.id === highlightedUserId ? 'bg-primary/20' : 'hover:bg-slate-50/50'} transition-colors group`}>
                         <td className="px-6 py-4">
+                          <input 
+                            type="checkbox" 
+                            className="rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer"
+                            checked={selectedUserIds.includes(user.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedUserIds([...selectedUserIds, user.id]);
+                              } else {
+                                setSelectedUserIds(selectedUserIds.filter(id => id !== user.id));
+                              }
+                            }}
+                          />
+                        </td>
+                        <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="size-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold text-sm shadow-sm shrink-0">
                               {user.name.charAt(0)}
                             </div>
                             <span className="text-sm font-bold text-slate-900">{user.name}</span>
                           </div>
-                        </td>
-                        <td className="px-6 py-4 max-w-[200px]">
-                          {user.enterprises && user.enterprises.length > 0 ? (
-                            <div className="relative group/ent inline-flex items-center">
-                              <span className="truncate inline-block max-w-[180px] px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 cursor-help">
-                                {user.enterprises[0]}
-                                {user.enterprises.length > 1 && ' ...'}
-                              </span>
-                              {user.enterprises.length > 1 && (
-                                <div className="absolute left-0 bottom-full mb-2 hidden group-hover/ent:block w-max max-w-[250px] bg-white text-slate-700 text-xs rounded-lg p-3 shadow-xl border border-slate-200 z-10">
-                                  <div className="flex flex-col gap-1.5">
-                                    {user.enterprises.map((ent, idx) => (
-                                      <span key={idx} className="truncate">{ent}</span>
-                                    ))}
-                                  </div>
-                                  <div className="absolute left-4 top-full border-4 border-transparent border-t-white"></div>
-                                  <div className="absolute left-4 top-full border-4 border-transparent border-t-slate-200 -z-10 translate-y-[1px]"></div>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-slate-400 text-xs">--</span>
-                          )}
                         </td>
                         <td className="px-6 py-4 max-w-[200px]">
                           <div className="space-y-0.5">
@@ -757,7 +762,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                           </button>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex justify-end gap-1 transition-opacity">
                             <button 
                               onClick={() => handleEditUser(user)}
                               className="p-2 text-slate-400 hover:text-[#0052CC] hover:bg-[#0052CC]/5 rounded-lg transition-colors"
@@ -765,19 +770,12 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                             >
                               <Edit2 size={14} />
                             </button>
-                            <button 
-                              onClick={() => handleRemoveUser(user.id)}
-                              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                              title="移除企业"
-                            >
-                              <Trash2 size={14} />
-                            </button>
                           </div>
                         </td>
                       </tr>
                       )) : (
                         <tr>
-                          <td colSpan={5} className="px-6 py-20 text-center">
+                          <td colSpan={8} className="px-6 py-20 text-center">
                             <div className="flex flex-col items-center gap-2 text-slate-400">
                               <Users size={40} className="opacity-20" />
                               <p className="text-sm">暂无匹配人员</p>
@@ -813,7 +811,7 @@ const OrgStructure: React.FC<OrgStructureProps> = ({ enterprisesList, currentEnt
                       </div>
                       <h4 className="text-lg font-bold text-slate-900">{role.name}</h4>
                     </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 opacity-100 transition-opacity">
                       <button 
                         onClick={() => {
                           setEditingRole(role);

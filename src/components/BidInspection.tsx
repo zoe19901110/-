@@ -119,11 +119,11 @@ const BidInspection: React.FC<BidInspectionProps> = ({ currentEnterprise, upload
           </div>
           <div className="divide-y divide-slate-50">
             {[
-              { name: `${currentEnterprise?.name || '某'}金融中心二期总承包工程`, status: '进行中', time: '6小时前', deadline: '03/15 17:00', deadlineLabel: '投标截止', countdown: '剩3天', checkStatus: [1, 3, 0] },
-              { name: `${currentEnterprise?.name || '某'}轨道交通13号线土建工程`, status: '检查中', time: '1天前', deadline: '03/23 09:00', deadlineLabel: '投标截止', checkStatus: [1, 1, 3] },
-              { name: `${currentEnterprise?.name || '某'}枢纽配套设施建设项目`, status: '未开始', time: '2天前', deadline: '03/28 09:00', deadlineLabel: '投标截止', checkStatus: [0, 0, 0] },
-              { name: `${currentEnterprise?.name || '某'}机场三期扩建工程`, status: '已完成', time: '5天前', deadline: '03/14 10:00', deadlineLabel: '开标时间', checkStatus: [1, 1, 1] },
-              { name: `${currentEnterprise?.name || '某'}智慧城市基础设施项目`, status: '已开标', time: '2026/3/3', checkStatus: [1, 1, 1] },
+              { name: `${currentEnterprise?.name || '某'}金融中心二期总承包工程`, status: '进行中', time: '6小时前', deadline: '2026-03-15 17:00', deadlineLabel: '投标截止', countdown: '剩3天', checkStatus: [1, 3, 0] },
+              { name: `${currentEnterprise?.name || '某'}轨道交通13号线土建工程`, status: '检查中', time: '1天前', deadline: '2026-03-23 09:00', deadlineLabel: '投标截止', checkStatus: [1, 1, 3] },
+              { name: `${currentEnterprise?.name || '某'}枢纽配套设施建设项目`, status: '未开始', time: '2天前', deadline: '2026-03-28 09:00', deadlineLabel: '投标截止', checkStatus: [0, 0, 0] },
+              { name: `${currentEnterprise?.name || '某'}机场三期扩建工程`, status: '已完成', time: '5天前', deadline: '2026-03-14 10:00', deadlineLabel: '开标时间', checkStatus: [1, 1, 1] },
+              { name: `${currentEnterprise?.name || '某'}智慧城市基础设施项目`, status: '已开标', time: '2026-03-03', checkStatus: [1, 1, 1] },
             ].map((project, i) => {
               const globalProject = projects.find(p => p.name === project.name);
               const isPaused = globalProject?.status === '放弃投标';
@@ -216,9 +216,9 @@ const BidInspection: React.FC<BidInspectionProps> = ({ currentEnterprise, upload
             <div className="mt-8 space-y-4">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">最近检查完成</p>
               {[
-                { name: `${currentEnterprise?.name || '某'}金融中心二期总承包...`, date: '2026/3/13' },
-                { name: `${currentEnterprise?.name || '某'}轨道交通13号线土建工程`, date: '2026/3/12' },
-                { name: `${currentEnterprise?.name || '某'}机场三期扩建工程`, date: '2026/3/8' },
+                { name: `${currentEnterprise?.name || '某'}金融中心二期总承包...`, date: '2026-03-13' },
+                { name: `${currentEnterprise?.name || '某'}轨道交通13号线土建工程`, date: '2026-03-12' },
+                { name: `${currentEnterprise?.name || '某'}机场三期扩建工程`, date: '2026-03-08' },
               ].map((item, i) => (
                 <div key={i} className="flex items-center justify-between group cursor-pointer">
                   <div className="min-w-0 flex-1">

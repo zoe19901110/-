@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { 
   Plus, 
   Search, 
@@ -104,18 +105,18 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
 
   // Modal State
   const [isEditing, setIsEditing] = useState(true);
-  const [openingRecords, setOpeningRecords] = useState([
+  const [openingRecords, setOpeningRecords] = useLocalStorage('postBid_openingRecords', [
     { units: '某某建设集团有限公司', price: 12105000, rank: '1', isWinner: true, isSelf: true },
     { units: '中建某局有限公司', price: 12500000, rank: '2', isWinner: false, isSelf: false },
     { units: '省建工集团', price: 12800000, rank: '3', isWinner: false, isSelf: false },
   ]);
-  const [winningRecords, setWinningRecords] = useState([
+  const [winningRecords, setWinningRecords] = useLocalStorage('postBid_winningRecords', [
     { unit: '某某建设集团有限公司', amount: 12105000, date: '2026-03-25', url: 'http://ggzy.example.com/...' },
   ]);
-  const [contractRecords, setContractRecords] = useState([
+  const [contractRecords, setContractRecords] = useLocalStorage('postBid_contractRecords', [
     { id: 'HT-2026-001', name: '城市基础设施施工合同', date: '2026-04-05', amount: 11800000, owner: '陈经理', duration: '30', status: '履行中', fulfillmentDate: '2026-04-10', expectedCompletionDate: '2026-05-10' },
   ]);
-  const [contractAttachments, setContractAttachments] = useState<Attachment[]>([
+  const [contractAttachments, setContractAttachments] = useLocalStorage<Attachment[]>('postBid_contractAttachments', [
     { id: '1', name: '中标通知书.pdf', size: '1.2MB', type: 'pdf', date: '2026-03-25' },
     { id: '2', name: '施工合同扫描件.jpg', size: '2.4MB', type: 'image', date: '2026-04-05' },
   ]);
@@ -216,7 +217,7 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
     alert('详情数据已准备好导出（包含附件列表，模拟导出成功）');
   };
 
-  const [records, setRecords] = useState<any[]>([]);
+  const [records, setRecords] = useLocalStorage<any[]>('postBid_records', []);
 
   const formatCurrency = (value: number | string) => {
     if (typeof value === 'string') return value;
@@ -227,6 +228,8 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
   };
 
   React.useEffect(() => {
+    if (records.length > 0) return; // Only set rawRecords if empty
+
     const rawRecords = [
       {
         id: '1',
@@ -612,17 +615,18 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                                     { label: '投标报价（元）', key: 'price', required: true },
                                     { label: '排名', key: 'rank', required: true },
                                     { label: '是否中标', key: 'isWinner', required: true, align: 'center' },
-                                    { label: '是否本单位', key: 'isSelf', required: true, align: 'center' }
+                                    { label: '是否本单位', key: 'isSelf', required: true, align: 'center' },
+                                    ...(isEditing ? [{ label: '操作', key: 'action', align: 'center' }] : [])
                                   ].map((col, idx) => (
                                     <th 
                                       key={col.key} 
-                                      style={{ width: openingWidths[idx] }}
-                                      className={`px-6 py-4 relative group/th ${col.align === 'center' ? 'text-center' : ''}`}
+                                      style={col.key === 'action' ? { width: '80px' } : { width: openingWidths[idx] }}
+                                      className={`px-6 py-4 relative group/th ${col.align === 'center' ? 'text-center' : ''} ${col.key === 'action' ? 'whitespace-nowrap' : ''}`}
                                     >
                                       <span className="truncate block">
                                         {col.label} {col.required && <span className="text-red-500">*</span>}
                                       </span>
-                                      {idx < 4 && (
+                                      {idx < 4 && col.key !== 'action' && (
                                         <div 
                                           onMouseDown={(e) => onOpeningMouseDown(idx, e)}
                                           className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
@@ -704,6 +708,17 @@ const PostBidArchiving: React.FC<PostBidArchivingProps> = ({ currentEnterprise, 
                                         row.isSelf && <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-[10px] font-bold shrink-0">是</span>
                                       )}
                                     </td>
+                                    {isEditing && (
+                                      <td className="px-6 py-4 text-center">
+                                        <button 
+                                          onClick={() => setOpeningRecords(openingRecords.filter((_, idx) => idx !== i))}
+                                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                          title="删除参标单位"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </td>
+                                    )}
                                   </tr>
                                 ))}
                               </tbody>

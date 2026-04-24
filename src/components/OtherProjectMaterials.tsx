@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Plus, 
   Search, 
@@ -21,9 +21,10 @@ import {
   Trash2,
   MoreHorizontal,
   MoreVertical,
-  AlertCircle
+  AlertCircle,
+  GripVertical
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, Reorder } from 'motion/react';
 import Pagination from './Pagination';
 import { useTableResizer } from '../hooks/useTableResizer';
 
@@ -38,518 +39,68 @@ interface CategoryNode {
   children: CategoryNode[];
 }
 
-const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEnterprise, projects: allProjects = [] }) => {
-  const [view, setView] = useState<'projects' | 'detail'>('projects');
-  const [selectedProject, setSelectedProject] = useState<any>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null);
-  const [uploadFiles, setUploadFiles] = useState<{ file: File; name: string }[]>([]);
-  const [materialName, setMaterialName] = useState('');
-  const [uploadType, setUploadType] = useState('技术材料');
-  const [uploadRemarks, setUploadRemarks] = useState('');
-  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
-  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
-  const [detailSearchTerm, setDetailSearchTerm] = useState('');
-  const [previewFile, setPreviewFile] = useState<{ url: string; type: string; name: string } | null>(null);
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+interface CategoryItemProps {
+  node: CategoryNode;
+  level?: number;
+  activeCategory: string;
+  editingCatId: string | null;
+  setActiveCategory: (name: string) => void;
+  updateCategoryName: (id: string, newName: string) => void;
+  addSubCategory: (parentId: string, name: string) => void;
+  setDeleteConfirmId: (id: string | null) => void;
+  setEditingCatId: (id: string | null) => void;
+  onReorderItems: (items: CategoryNode[], parentId?: string) => void;
+  itemCountAtLevel: number;
+}
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [detailCurrentPage, setDetailCurrentPage] = useState(1);
-  const [detailPageSize, setDetailPageSize] = useState(10);
+const CategoryItem: React.FC<CategoryItemProps> = ({ 
+  node, 
+  level = 0, 
+  activeCategory, 
+  editingCatId, 
+  setActiveCategory, 
+  updateCategoryName, 
+  addSubCategory, 
+  setDeleteConfirmId,
+  setEditingCatId,
+  onReorderItems,
+  itemCountAtLevel
+}) => {
+  const isActive = activeCategory === node.name;
+  const isEditing = editingCatId === node.id;
+  const [showActions, setShowActions] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
 
-  const { widths: projectWidths, onMouseDown: onProjectMouseDown } = useTableResizer([
-    'auto', // 项目名称
-    150,    // 项目编号
-    150,    // 招标人
-    100,    // 材料数量
-    150,    // 最后更新
-    150     // 操作
-  ]);
+  const hasChildren = node.children.length > 0;
 
-  const { widths: materialWidths, onMouseDown: onMaterialMouseDown } = useTableResizer([
-    40,     // Checkbox
-    'auto', // 文件名
-    120,    // 类型
-    150,    // 上传日期
-    100,    // 大小
-    120,    // 上传人
-    150     // 操作
-  ]);
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
 
-  const [projects, setProjects] = useState<any[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string>('全部文档');
-  const [editingCatId, setEditingCatId] = useState<string | null>(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [categories, setCategories] = useState<CategoryNode[]>([
-    { id: 'cat-1', name: '技术材料', children: [] },
-    { id: 'cat-2', name: '商务材料', children: [] },
-    { id: 'cat-3', name: '新分类', children: [{ id: 'sub-1', name: '新子分类', children: [] }] }
-  ]);
-
-  const isPaused = allProjects.find(p => p.code === selectedProject?.code || p.name === selectedProject?.name)?.status === '放弃投标';
-
-  const handleOpenAddModal = () => {
-    if (isPaused) {
-      alert('此项目已暂停');
-      return;
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    if (contextMenu) {
+      window.addEventListener('click', handleClick);
+      window.addEventListener('contextmenu', handleClick);
     }
-    setModalMode('add');
-    setMaterialName('');
-    setUploadType('技术材料');
-    setUploadRemarks('');
-    setUploadFiles([]);
-    setHasAttemptedSave(false);
-    setShowAddModal(true);
-  };
-
-  const handleOpenEditModal = (item: any) => {
-    if (isPaused) {
-      alert('此项目已暂停');
-      return;
-    }
-    setModalMode('edit');
-    setEditingMaterialId(item.id);
-    
-    const nameWithoutExt = item.fileName.includes('.') 
-      ? item.fileName.substring(0, item.fileName.lastIndexOf('.')) 
-      : item.fileName;
-      
-    setMaterialName(nameWithoutExt);
-    setUploadType(item.type);
-    setUploadRemarks(''); 
-    
-    const mockFile = new File([""], item.fileName, { type: "application/octet-stream" });
-    const sizeMatch = item.size ? item.size.match(/[\d.]+/) : null;
-    const sizeInMB = sizeMatch ? parseFloat(sizeMatch[0]) : 0;
-    Object.defineProperty(mockFile, 'size', { value: sizeInMB * 1024 * 1024 });
-    
-    setUploadFiles([{ file: mockFile, name: nameWithoutExt }]);
-    setHasAttemptedSave(false);
-    setShowAddModal(true);
-  };
-
-  React.useEffect(() => {
-    setProjects([
-      {
-        id: '1',
-        name: `2026年智慧交通管理平台建设项目`,
-        code: 'ZB-2026-001',
-        tenderer: 'XX市交通运输局',
-        manager: '张伟',
-        materialCount: 5,
-        lastUpdate: '2026-03-15',
-        hasMaterials: true
-      },
-      {
-        id: '2',
-        name: `政务云扩容采购项目`,
-        code: 'ZB-2026-005',
-        tenderer: 'XX市大数据局',
-        manager: '李芳',
-        materialCount: 3,
-        lastUpdate: '2026-03-12',
-        hasMaterials: true
-      },
-      {
-        id: '3',
-        name: `城市绿化带自动灌溉系统`,
-        code: 'ZB-2026-008',
-        tenderer: 'XX市园林局',
-        manager: '王强',
-        materialCount: 0,
-        lastUpdate: '--',
-        hasMaterials: false
-      }
-    ]);
-  }, [currentEnterprise]);
-
-  const [projectMaterials, setProjectMaterials] = useState([
-    {
-      id: 'm1',
-      fileName: '技术方案初稿.pdf',
-      type: '技术材料',
-      uploadDate: '2026-03-15',
-      size: '4.2 MB',
-      uploader: '张伟'
-    },
-    {
-      id: 'm2',
-      fileName: '商务资质证明.zip',
-      type: '商务材料',
-      uploadDate: '2026-03-12',
-      size: '12.8 MB',
-      uploader: '李芳'
-    },
-    {
-      id: 'm3',
-      fileName: '施工组织设计.docx',
-      type: '技术材料',
-      uploadDate: '2026-03-16',
-      size: '2.5 MB',
-      uploader: '张伟'
-    },
-    {
-      id: 'm4',
-      fileName: '营业执照副本.jpg',
-      type: '商务材料',
-      uploadDate: '2026-03-10',
-      size: '1.2 MB',
-      uploader: '李芳'
-    },
-    {
-      id: 'm5',
-      fileName: '项目人员社保证明.pdf',
-      type: '新分类',
-      uploadDate: '2026-03-18',
-      size: '3.8 MB',
-      uploader: '王强'
-    }
-  ]);
-
-  const filteredMaterials = (activeCategory === '全部文档' 
-    ? projectMaterials 
-    : projectMaterials.filter(m => m.type === activeCategory))
-    .filter(m => m.fileName.toLowerCase().includes(detailSearchTerm.toLowerCase()));
-
-  const currentPageMaterials = filteredMaterials.slice((detailCurrentPage - 1) * detailPageSize, detailCurrentPage * detailPageSize);
-
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      const newSelected = new Set(selectedMaterials);
-      currentPageMaterials.forEach(item => newSelected.add(item.id));
-      setSelectedMaterials(Array.from(newSelected));
-    } else {
-      const newSelected = new Set(selectedMaterials);
-      currentPageMaterials.forEach(item => newSelected.delete(item.id));
-      setSelectedMaterials(Array.from(newSelected));
-    }
-  };
-
-  const handleSelectMaterial = (id: string) => {
-    if (selectedMaterials.includes(id)) {
-      setSelectedMaterials(selectedMaterials.filter(mId => mId !== id));
-    } else {
-      setSelectedMaterials([...selectedMaterials, id]);
-    }
-  };
-
-  const isAllCurrentPageSelected = currentPageMaterials.length > 0 && currentPageMaterials.every(item => selectedMaterials.includes(item.id));
-  const isSomeCurrentPageSelected = currentPageMaterials.some(item => selectedMaterials.includes(item.id));
-
-  const handleEnterDetail = (project: any) => {
-    setSelectedProject(project);
-    setView('detail');
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      const newFiles = Array.from(files).map((f: any) => ({
-        file: f,
-        name: f.name
-      }));
-      setUploadFiles([...uploadFiles, ...newFiles]);
-    }
-  };
-
-  const handleRemoveUploadFile = (index: number) => {
-    setUploadFiles(uploadFiles.filter((_, i) => i !== index));
-  };
-
-  const handleUpdateFileName = (index: number, newName: string) => {
-    const updated = [...uploadFiles];
-    updated[index].name = newName;
-    setUploadFiles(updated);
-  };
-
-  const handleUpload = () => {
-    setHasAttemptedSave(true);
-    if (!materialName.trim()) {
-      alert('请填写所有必填项');
-      return;
-    }
-    // Mock upload logic
-    setShowAddModal(false);
-    setUploadFiles([]);
-    setMaterialName('');
-    setUploadRemarks('');
-  };
-
-  const renderProjectList = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-      </div>
-
-      {/* Search & Filter */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="w-56 relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
-            <input 
-              type="text" 
-              placeholder="搜索项目名称、编号..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <div className="w-40 relative group">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
-            <input 
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all text-slate-600 font-medium"
-            />
-          </div>
-        </div>
-        
-        <div className="flex gap-2">
-          <button className="px-8 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-sm hover:shadow-md transition-all active:scale-95">
-            查询
-          </button>
-          <button 
-            onClick={() => {
-              setSearchTerm('');
-              setDateFilter('');
-            }}
-            className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm hover:shadow-md active:scale-95"
-          >
-            <Filter size={16} /> 重置
-          </button>
-        </div>
-      </div>
-
-      {/* Project Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse table-fixed">
-            <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                {[
-                  { label: '项目名称', key: 'name' },
-                  { label: '项目编号', key: 'code' },
-                  { label: '招标人', key: 'tenderer' },
-                  { label: '材料数量', key: 'count', align: 'center' },
-                  { label: '最后更新', key: 'update' },
-                  { label: '操作', key: 'action', align: 'right' }
-                ].map((col, idx) => (
-                  <th 
-                    key={col.key} 
-                    style={{ width: projectWidths[idx] }}
-                    className={`px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider relative group/th ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : ''}`}
-                  >
-                    <span className="truncate">{col.label}</span>
-                    {idx < 5 && (
-                      <div 
-                        onMouseDown={(e) => onProjectMouseDown(idx, e)}
-                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
-                      />
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {projects.filter(p => {
-                const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
-                const matchesDate = !dateFilter || p.bidOpeningTime?.includes(dateFilter);
-                return matchesSearch && matchesDate;
-              })
-              .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-              .map((project) => {
-                const globalProject = allProjects.find(p => p.code === project.code || p.name === project.name);
-                const isProjectPaused = globalProject?.status === '放弃投标';
-
-                return (
-                  <tr key={project.id} className={`hover:bg-slate-50/50 transition-colors group ${isProjectPaused ? 'opacity-60' : ''}`}>
-                    <td className="px-6 py-4 overflow-hidden">
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="size-8 bg-blue-50 text-primary rounded-lg flex items-center justify-center shrink-0">
-                          <Briefcase size={16} />
-                        </div>
-                        <div className="flex flex-col gap-1 overflow-hidden">
-                          <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm truncate" title={project.name}>{project.name}</p>
-                          {isProjectPaused && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 w-fit">
-                              已暂停
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500 overflow-hidden">
-                      <div className="truncate" title={project.code}>{project.code}</div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-600 overflow-hidden">
-                      <div className="truncate" title={project.tenderer}>{project.tenderer}</div>
-                    </td>
-                    <td className="px-6 py-4 text-center overflow-hidden">
-                      <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold truncate inline-block w-fit">
-                        {project.materialCount}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500 overflow-hidden">
-                      <div className="truncate" title={project.lastUpdate}>{project.lastUpdate}</div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button 
-                        onClick={() => handleEnterDetail(project)}
-                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                          isProjectPaused
-                            ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                            : project.hasMaterials 
-                              ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
-                              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                        }`}
-                      >
-                        {project.hasMaterials ? <Edit3 size={14} /> : <Plus size={14} />}
-                        {project.hasMaterials ? '修改记录' : '新增记录'}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={Math.ceil(projects.filter(p => {
-            const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
-            const matchesDate = !dateFilter || p.bidOpeningTime?.includes(dateFilter);
-            return matchesSearch && matchesDate;
-          }).length / pageSize)}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-          totalItems={projects.filter(p => {
-            const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
-            const matchesDate = !dateFilter || p.bidOpeningTime?.includes(dateFilter);
-            return matchesSearch && matchesDate;
-          }).length}
-        />
-      </div>
-    </div>
-  );
-
-  const addCategory = (name: string) => {
-    setCategories([...categories, { id: `cat-${Date.now()}`, name, children: [] }]);
-  };
-
-  const addSubCategory = (parentId: string, name: string) => {
-    const updateNodes = (nodes: CategoryNode[]): CategoryNode[] => {
-      return nodes.map(node => {
-        if (node.id === parentId) {
-          return {
-            ...node,
-            children: [...node.children, { id: `sub-${Date.now()}`, name, children: [] }]
-          };
-        }
-        if (node.children.length > 0) {
-          return { ...node, children: updateNodes(node.children) };
-        }
-        return node;
-      });
+    return () => {
+      window.removeEventListener('click', handleClick);
+      window.removeEventListener('contextmenu', handleClick);
     };
-    setCategories(updateNodes(categories));
-  };
+  }, [contextMenu]);
 
-  const updateCategoryName = (id: string, newName: string) => {
-    let oldName = '';
-    const findAndReplace = (nodes: CategoryNode[]): CategoryNode[] => {
-      return nodes.map(node => {
-        if (node.id === id) {
-          oldName = node.name;
-          return { ...node, name: newName };
-        }
-        if (node.children.length > 0) {
-          return { ...node, children: findAndReplace(node.children) };
-        }
-        return node;
-      });
-    };
-    
-    const newCategories = findAndReplace(categories);
-    setCategories(newCategories);
-    
-    if (oldName) {
-      setProjectMaterials(prev => prev.map(m => m.type === oldName ? { ...m, type: newName } : m));
-      if (activeCategory === oldName) {
-        setActiveCategory(newName);
-      }
-    }
-    setEditingCatId(null);
-  };
-
-  const deleteCategory = (id: string) => {
-    const findAndRemove = (nodes: CategoryNode[]): CategoryNode[] => {
-      return nodes.filter(node => {
-        if (node.id === id) return false;
-        if (node.children.length > 0) {
-          node.children = findAndRemove(node.children);
-        }
-        return true;
-      });
-    };
-    setCategories(findAndRemove(categories));
-  };
-
-  const CategoryItem: React.FC<{
-    node: CategoryNode;
-    level?: number;
-    activeCategory: string;
-    editingCatId: string | null;
-    setActiveCategory: (name: string) => void;
-    updateCategoryName: (id: string, newName: string) => void;
-    addSubCategory: (parentId: string, name: string) => void;
-    deleteCategory: (id: string) => void;
-    setEditingCatId: (id: string | null) => void;
-  }> = ({ 
-    node, 
-    level = 0, 
-    activeCategory, 
-    editingCatId, 
-    setActiveCategory, 
-    updateCategoryName, 
-    addSubCategory, 
-    setDeleteConfirmId,
-    setEditingCatId
-  }) => {
-    const isActive = activeCategory === node.name;
-    const isEditing = editingCatId === node.id;
-    const [showActions, setShowActions] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(true);
-    const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
-
-    const hasChildren = node.children.length > 0;
-
-    const handleContextMenu = (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setContextMenu({ x: e.clientX, y: e.clientY });
-    };
-
-    useEffect(() => {
-      const handleClick = () => setContextMenu(null);
-      if (contextMenu) {
-        window.addEventListener('click', handleClick);
-        window.addEventListener('contextmenu', handleClick);
-      }
-      return () => {
-        window.removeEventListener('click', handleClick);
-        window.removeEventListener('contextmenu', handleClick);
-      };
-    }, [contextMenu]);
-
-    return (
-      <div className="relative">
+  return (
+    <Reorder.Item 
+      value={node}
+      id={node.id}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.1 }}
+      className="list-none focus:outline-none"
+    >
+      <div className="relative group/item">
         <div className="space-y-1">
           <div 
             className={`group flex items-center justify-between px-3 py-2 rounded-xl transition-all cursor-pointer relative ${
@@ -561,6 +112,13 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
             onMouseLeave={() => setShowActions(false)}
             onContextMenu={handleContextMenu}
           >
+            {/* Drag Handle - Only show if current level has more than 1 item, on hover */}
+            {itemCountAtLevel > 1 && (
+              <div className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-400 transition-opacity z-10">
+                <GripVertical size={14} />
+              </div>
+            )}
+
             <div className="flex items-center gap-1.5 flex-1 overflow-hidden">
               {hasChildren ? (
                 <button 
@@ -573,7 +131,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                   {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </button>
               ) : (
-                <div className="w-5" /> // Spacer for alignment
+                <div className={`w-5 ${itemCountAtLevel > 1 ? '' : ''}`} /> 
               )}
 
               {isEditing ? (
@@ -662,9 +220,15 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.15 }}
                 className="overflow-hidden"
               >
-                <div className="space-y-1">
+                <Reorder.Group 
+                  axis="y" 
+                  values={node.children} 
+                  onReorder={(newChildren) => onReorderItems(newChildren, node.id)}
+                  className="space-y-1"
+                >
                   {node.children.map(child => (
                     <CategoryItem 
                       key={child.id}
@@ -677,15 +241,711 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                       addSubCategory={addSubCategory}
                       setDeleteConfirmId={setDeleteConfirmId}
                       setEditingCatId={setEditingCatId}
+                      onReorderItems={onReorderItems}
+                      itemCountAtLevel={node.children.length}
                     />
                   ))}
-                </div>
+                </Reorder.Group>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
-    );
+    </Reorder.Item>
+  );
+};
+
+const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEnterprise, projects: allProjects = [] }) => {
+  const [view, setView] = useState<'projects' | 'detail'>('projects');
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [appliedFilters, setAppliedFilters] = useState({
+    searchTerm: '',
+    startDate: '',
+    endDate: ''
+  });
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null);
+  const [uploadFiles, setUploadFiles] = useState<{ file: File; name: string }[]>([]);
+  const [materialName, setMaterialName] = useState('');
+  const [uploadType, setUploadType] = useState('技术材料');
+  const [uploadRemarks, setUploadRemarks] = useState('');
+  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
+  const [showDeleteMaterialConfirm, setShowDeleteMaterialConfirm] = useState(false);
+  const [duplicateNameError, setDuplicateNameError] = useState(false);
+  const [detailSearchTerm, setDetailSearchTerm] = useState('');
+  const [previewFile, setPreviewFile] = useState<{ url: string; type: string; name: string } | null>(null);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [detailCurrentPage, setDetailCurrentPage] = useState(1);
+  const [detailPageSize, setDetailPageSize] = useState(10);
+
+  const { widths: projectWidths, onMouseDown: onProjectMouseDown } = useTableResizer([
+    'auto', // 项目名称
+    150,    // 项目编号
+    150,    // 招标人
+    100,    // 材料数量
+    150,    // 最后更新
+    150     // 操作
+  ]);
+
+  const { widths: materialWidths, onMouseDown: onMaterialMouseDown } = useTableResizer([
+    40,     // Checkbox
+    'auto', // 文件名
+    120,    // 类型
+    100,    // 大小
+    120,    // 上传人
+    150,    // 最后更新日期
+    150     // 操作
+  ]);
+
+  const [projects, setProjects] = useState<any[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string>('全部文档');
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<CategoryNode[]>([]);
+  const [projectMaterials, setProjectMaterials] = useState<any[]>([]);
+
+  // Fetch initial data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [projRes, catRes, matRes] = await Promise.all([
+          fetch('/api/projects'),
+          fetch('/api/categories'),
+          fetch('/api/materials')
+        ]);
+        
+        if (projRes.ok) setProjects(await projRes.json());
+        if (catRes.ok) setCategories(await catRes.json());
+        if (matRes.ok) setProjectMaterials(await matRes.json());
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      }
+    };
+    fetchData();
+  }, [currentEnterprise]);
+
+  const isPaused = allProjects.find(p => p.code === selectedProject?.code || p.name === selectedProject?.name)?.status === '放弃投标';
+
+  const handleOpenAddModal = () => {
+    if (isPaused) {
+      alert('此项目已暂停');
+      return;
+    }
+
+    setModalMode('add');
+    setMaterialName('');
+    
+    // Default to currently selected category if it's not "全部文档"
+    const defaultType = activeCategory !== '全部文档' ? activeCategory : '技术材料';
+    setUploadType(defaultType);
+
+    setUploadRemarks('');
+    setUploadFiles([]);
+    setHasAttemptedSave(false);
+    setDuplicateNameError(false);
+    setShowAddModal(true);
+  };
+
+  const handleOpenEditModal = (item: any) => {
+    if (isPaused) {
+      alert('此项目已暂停');
+      return;
+    }
+    setModalMode('edit');
+    setEditingMaterialId(item.id);
+    
+    const nameWithoutExt = item.fileName.includes('.') 
+      ? item.fileName.substring(0, item.fileName.lastIndexOf('.')) 
+      : item.fileName;
+      
+    setMaterialName(nameWithoutExt);
+    setUploadType(item.type);
+    setUploadRemarks(''); 
+    
+    const mockFile = new File([""], item.fileName, { type: "application/octet-stream" });
+    const sizeMatch = item.size ? item.size.match(/[\d.]+/) : null;
+    const sizeInMB = sizeMatch ? parseFloat(sizeMatch[0]) : 0;
+    Object.defineProperty(mockFile, 'size', { value: sizeInMB * 1024 * 1024 });
+    
+    setUploadFiles([{ file: mockFile, name: nameWithoutExt }]);
+    setHasAttemptedSave(false);
+    setDuplicateNameError(false);
+    setShowAddModal(true);
+  };
+
+  const getCategoryTypes = (categoryName: string, nodes: CategoryNode[]): string[] => {
+    let types: string[] = [];
+    const findCategory = (nodes: CategoryNode[]): CategoryNode | undefined => {
+      for (const node of nodes) {
+        if (node.name === categoryName) return node;
+        const found = findCategory(node.children);
+        if (found) return found;
+      }
+      return undefined;
+    };
+    
+    const node = findCategory(nodes);
+    if (!node) return [categoryName];
+
+    const extractTypes = (n: CategoryNode) => {
+      types.push(n.name);
+      n.children.forEach(extractTypes);
+    };
+    extractTypes(node);
+    return types;
+  };
+
+  const filteredMaterials = (activeCategory === '全部文档' 
+    ? projectMaterials 
+    : (() => {
+        const activeTypes = getCategoryTypes(activeCategory, categories);
+        return projectMaterials.filter(m => activeTypes.includes(m.type));
+      })())
+    .filter(m => m.fileName.toLowerCase().includes(detailSearchTerm.toLowerCase()));
+
+  const currentPageMaterials = filteredMaterials.slice((detailCurrentPage - 1) * detailPageSize, detailCurrentPage * detailPageSize);
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      const newSelected = new Set(selectedMaterials);
+      currentPageMaterials.forEach(item => newSelected.add(item.id));
+      setSelectedMaterials(Array.from(newSelected));
+    } else {
+      const newSelected = new Set(selectedMaterials);
+      currentPageMaterials.forEach(item => newSelected.delete(item.id));
+      setSelectedMaterials(Array.from(newSelected));
+    }
+  };
+
+  const handleSelectMaterial = (id: string) => {
+    if (selectedMaterials.includes(id)) {
+      setSelectedMaterials(selectedMaterials.filter(mId => mId !== id));
+    } else {
+      setSelectedMaterials([...selectedMaterials, id]);
+    }
+  };
+
+  const isAllCurrentPageSelected = currentPageMaterials.length > 0 && currentPageMaterials.every(item => selectedMaterials.includes(item.id));
+  const isSomeCurrentPageSelected = currentPageMaterials.some(item => selectedMaterials.includes(item.id));
+
+  const handleEnterDetail = (project: any) => {
+    setSelectedProject(project);
+    setActiveCategory('全部文档');
+    setView('detail');
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newFiles = Array.from(files).map((f: any) => ({
+        file: f,
+        name: f.name
+      }));
+      setUploadFiles([...uploadFiles, ...newFiles]);
+    }
+  };
+
+  const handleRemoveUploadFile = (index: number) => {
+    setUploadFiles(uploadFiles.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateFileName = (index: number, newName: string) => {
+    const updated = [...uploadFiles];
+    updated[index].name = newName;
+    setUploadFiles(updated);
+  };
+
+  const handleUpload = async () => {
+    setHasAttemptedSave(true);
+    if (!materialName.trim()) {
+      alert('请填写所有必填项');
+      return;
+    }
+
+    if (uploadFiles.length === 0) {
+      alert('请至少上传一个文件');
+      return;
+    }
+
+    // --- Validation logic: File name duplication in the same active folder ---
+    // Extract base names that will be generated (ignoring file extensions)
+    const newBaseNamesCheck = uploadFiles.map((uf, i) => {
+        return uploadFiles.length === 1 
+            ? materialName.trim() 
+            : `${materialName.trim()}_${i + 1}`;
+    });
+
+    // We check against all existing materials that are exactly in this target folder (type === uploadType),
+    // and naturally belonging to this same selected/current project.
+    const dupCheckMaterials = projectMaterials.filter((m: any) => m.projectId === selectedProject?.id && m.type === uploadType);
+
+    const extractBaseName = (fileName: string) => {
+      return fileName.includes('.') ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
+    };
+
+    setDuplicateNameError(false);
+
+    if (modalMode === 'add') {
+         const hasDuplicate = newBaseNamesCheck.some(newName => dupCheckMaterials.some((existing: any) => extractBaseName(existing.fileName) === newName));
+         if (hasDuplicate) {
+             setDuplicateNameError(true);
+             alert('同目录下已存在同名材料，且文件名已被占用，请修改材料名称后再保存。');
+             return;
+         }
+    } else if (modalMode === 'edit' && editingMaterialId) {
+         // Assuming editing allows one file change essentially, checking the first one
+         const checkName = newBaseNamesCheck[0];
+         const hasDuplicate = dupCheckMaterials.some((existing: any) => extractBaseName(existing.fileName) === checkName && existing.id !== editingMaterialId);
+         if (hasDuplicate) {
+             setDuplicateNameError(true);
+             alert('同目录下已存在同名材料，且文件名已被占用，请修改材料名称后再保存。');
+             return;
+         }
+    }
+
+
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    try {
+      if (modalMode === 'edit' && editingMaterialId) {
+        // Update existing material
+        const mainFile = uploadFiles[0];
+        const fileNameWithExt = mainFile.file.name;
+        const extension = fileNameWithExt.includes('.') ? fileNameWithExt.substring(fileNameWithExt.lastIndexOf('.')) : '';
+        const newFileName = materialName.trim() + extension;
+        const newSize = mainFile.file.size ? (mainFile.file.size / (1024 * 1024)).toFixed(1) + ' MB' : '0 MB';
+
+        await fetch(`/api/materials/${editingMaterialId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                fileName: newFileName,
+                type: uploadType,
+                uploadDate: today,
+                size: newSize
+            })
+        });
+
+        setProjectMaterials(prev => prev.map(m => {
+          if (m.id === editingMaterialId) {
+            return {
+              ...m,
+              fileName: newFileName,
+              type: uploadType,
+              uploadDate: today,
+              size: newSize,
+            };
+          }
+          return m;
+        }));
+      } else {
+        // Add new materials
+        const newItems: any[] = [];
+        for (let i = 0; i < uploadFiles.length; i++) {
+          const uf = uploadFiles[i];
+          const fileNameWithExt = uf.file.name;
+          const extension = fileNameWithExt.includes('.') ? fileNameWithExt.substring(fileNameWithExt.lastIndexOf('.')) : '';
+          const displayedName = uploadFiles.length === 1 
+            ? materialName.trim() 
+            : `${materialName.trim()}_${i + 1}`;
+          
+          const newItem = {
+            id: 'm-' + Date.now() + '-' + i,
+            fileName: displayedName + extension,
+            type: uploadType,
+            uploadDate: today,
+            size: (uf.file.size / (1024 * 1024)).toFixed(1) + ' MB',
+            uploader: '超级管理员',
+            projectId: selectedProject?.id
+          };
+
+          await fetch('/api/materials', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newItem)
+          });
+          newItems.push(newItem);
+        }
+        
+        setProjectMaterials(prev => [...newItems, ...prev]);
+        
+        // Update material count in projects list
+        if (selectedProject) {
+          setProjects(prev => prev.map(p => {
+            if (p.id === selectedProject.id) {
+              return { ...p, materialCount: p.materialCount + newItems.length };
+            }
+            return p;
+          }));
+        }
+      }
+    } catch (error) {
+        console.error('Failed to upload material:', error);
+    }
+
+    // Reset and close
+    setShowAddModal(false);
+    setUploadFiles([]);
+    setMaterialName('');
+    setUploadRemarks('');
+    setEditingMaterialId(null);
+  };
+
+  const getProjectLastUpdate = (projectId: string) => {
+    const materials = projectMaterials.filter((m: any) => m.projectId === projectId);
+    if (!materials || materials.length === 0) return '-';
+    const dates = materials.map((m: any) => m.uploadDate).filter(Boolean).sort().reverse();
+    return dates[0] || '-';
+  };
+
+  const processedProjects = useMemo(() => {
+    return projects.map((p: any) => ({
+      ...p,
+      lastUpdate: getProjectLastUpdate(p.id)
+    })).filter((p: any) => {
+      const matchesSearch = p.name.includes(appliedFilters.searchTerm) || p.code.includes(appliedFilters.searchTerm);
+      const projectDate = p.bidOpeningTime?.split(' ')[0] || '';
+      const matchesStartDate = !appliedFilters.startDate || projectDate >= appliedFilters.startDate;
+      const matchesEndDate = !appliedFilters.endDate || projectDate <= appliedFilters.endDate;
+      return matchesSearch && matchesStartDate && matchesEndDate;
+    }).sort((a: any, b: any) => {
+      if (a.lastUpdate === '-') return 1;
+      if (b.lastUpdate === '-') return -1;
+      return a.lastUpdate > b.lastUpdate ? -1 : 1;
+    });
+  }, [projects, projectMaterials, appliedFilters]);
+
+  const renderProjectList = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+      </div>
+
+      {/* Search & Filter */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="w-56 relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+            <input 
+              type="text" 
+              placeholder="搜索项目名称、编号..."
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1 group focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+            <Calendar className="text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+            <input 
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="bg-transparent border-none outline-none text-sm text-slate-600 font-medium py-1 w-32"
+            />
+            <span className="text-slate-400 text-xs">至</span>
+            <input 
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="bg-transparent border-none outline-none text-sm text-slate-600 font-medium py-1 w-32"
+            />
+          </div>
+        </div>
+        
+        <div className="flex gap-2">
+          <button 
+            onClick={() => {
+              if ((startDate && !endDate) || (!startDate && endDate)) {
+                alert('请选择完整的时间范围（开始日期和结束日期）');
+                return;
+              }
+              setAppliedFilters({
+                searchTerm,
+                startDate,
+                endDate
+              });
+              setCurrentPage(1);
+            }}
+            className="px-8 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-sm hover:shadow-md transition-all active:scale-95"
+          >
+            查询
+          </button>
+          <button 
+            onClick={() => {
+              setSearchTerm('');
+              setStartDate('');
+              setEndDate('');
+              setAppliedFilters({
+                searchTerm: '',
+                startDate: '',
+                endDate: ''
+              });
+              setCurrentPage(1);
+            }}
+            className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm hover:shadow-md active:scale-95"
+          >
+            <Filter size={16} /> 重置
+          </button>
+        </div>
+      </div>
+
+      {/* Project Table */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse table-fixed">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                {[
+                  { label: '项目名称', key: 'name' },
+                  { label: '项目编号', key: 'code' },
+                  { label: '招标人', key: 'tenderer' },
+                  { label: '材料数量', key: 'count', align: 'center' },
+                  { label: '最后更新', key: 'update' },
+                  { label: '操作', key: 'action', align: 'right' }
+                ].map((col, idx) => (
+                  <th 
+                    key={col.key} 
+                    style={{ width: projectWidths[idx] }}
+                    className={`px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider relative group/th ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : ''}`}
+                  >
+                    <span className="truncate">{col.label}</span>
+                    {idx < 5 && (
+                      <div 
+                        onMouseDown={(e) => onProjectMouseDown(idx, e)}
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary transition-colors z-10"
+                      />
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {processedProjects
+              .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+              .map((project: any) => {
+                const globalProject = allProjects.find(p => p.code === project.code || p.name === project.name);
+                const isProjectPaused = globalProject?.status === '放弃投标';
+
+                return (
+                  <tr key={project.id} className={`hover:bg-slate-50/50 transition-colors group ${isProjectPaused ? 'opacity-60' : ''}`}>
+                    <td className="px-6 py-4 overflow-hidden">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="size-8 bg-blue-50 text-primary rounded-lg flex items-center justify-center shrink-0">
+                          <Briefcase size={16} />
+                        </div>
+                        <div className="flex flex-col gap-1 overflow-hidden">
+                          <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm truncate" title={project.name}>{project.name}</p>
+                          {isProjectPaused && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 w-fit">
+                              已暂停
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-500 overflow-hidden">
+                      <div className="truncate" title={project.code}>{project.code}</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600 overflow-hidden">
+                      <div className="truncate" title={project.tenderer}>{project.tenderer}</div>
+                    </td>
+                    <td className="px-6 py-4 text-center overflow-hidden">
+                      <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold truncate inline-block w-fit">
+                        {project.materialCount}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-500 overflow-hidden">
+                      <div className="truncate" title={project.lastUpdate}>{project.lastUpdate}</div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button 
+                        onClick={() => handleEnterDetail(project)}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                          isProjectPaused
+                            ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                            : project.hasMaterials 
+                              ? 'bg-primary text-white hover:bg-primary/90 shadow-primary/10' 
+                              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        {project.hasMaterials ? <Edit3 size={14} /> : <Plus size={14} />}
+                        {project.hasMaterials ? '修改记录' : '新增记录'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(processedProjects.length / pageSize)}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          totalItems={processedProjects.length}
+        />
+      </div>
+    </div>
+  );
+
+  const addCategory = async (name: string) => {
+    const newId = 'cat-' + Date.now();
+    const newCategory = { id: newId, name, children: [] };
+    
+    try {
+      await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: newId, name, sortOrder: categories.length })
+      });
+      setCategories([...categories, newCategory]);
+    } catch (error) {
+      console.error('Failed to add category:', error);
+    }
+  };
+
+  const addSubCategory = async (parentId: string, name: string) => {
+    const newId = 'sub-' + Date.now();
+    const newSub = { id: newId, name, children: [] };
+    
+    try {
+      await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: newId, name, parentId, sortOrder: 0 })
+      });
+
+      const updateNodes = (nodes: CategoryNode[]): CategoryNode[] => {
+        return nodes.map(node => {
+          if (node.id === parentId) {
+            return {
+              ...node,
+              children: [...node.children, newSub]
+            };
+          }
+          if (node.children.length > 0) {
+            return { ...node, children: updateNodes(node.children) };
+          }
+          return node;
+        });
+      };
+      setCategories(updateNodes(categories));
+    } catch (error) {
+      console.error('Failed to add sub-category:', error);
+    }
+  };
+
+  const updateCategoryName = async (id: string, newName: string) => {
+    try {
+      await fetch(`/api/categories/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName })
+      });
+
+      let oldName = '';
+      const findAndReplace = (nodes: CategoryNode[]): CategoryNode[] => {
+        return nodes.map(node => {
+          if (node.id === id) {
+            oldName = node.name;
+            return { ...node, name: newName };
+          }
+          if (node.children.length > 0) {
+            return { ...node, children: findAndReplace(node.children) };
+          }
+          return node;
+        });
+      };
+      
+      const newCategories = findAndReplace(categories);
+      setCategories(newCategories);
+      
+      if (oldName) {
+        setProjectMaterials(prev => prev.map(m => m.type === oldName ? { ...m, type: newName } : m));
+        if (activeCategory === oldName) {
+          setActiveCategory(newName);
+        }
+      }
+      setEditingCatId(null);
+    } catch (error) {
+      console.error('Failed to update category name:', error);
+    }
+  };
+
+  const deleteCategory = async (id: string) => {
+    try {
+      await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+
+      const findAndRemove = (nodes: CategoryNode[]): CategoryNode[] => {
+        return nodes.filter(node => {
+          if (node.id === id) return false;
+          if (node.children.length > 0) {
+            node.children = findAndRemove(node.children);
+          }
+          return true;
+        });
+      };
+      setCategories(findAndRemove(categories));
+    } catch (error) {
+      console.error('Failed to delete category:', error);
+    }
+  };
+
+  const handleReorder = async (newOrder: CategoryNode[], parentId?: string) => {
+    try {
+      const updateNodes = (nodes: CategoryNode[]): CategoryNode[] => {
+        if (!parentId) {
+          return newOrder.map((node, index) => {
+            const originalNode = nodes.find(n => n.id === node.id);
+            return { ...node, children: originalNode?.children || node.children };
+          });
+        }
+        return nodes.map(node => {
+          if (node.id === parentId) {
+            return { ...node, children: newOrder };
+          }
+          if (node.children.length > 0) {
+            return { ...node, children: updateNodes(node.children) };
+          }
+          return node;
+        });
+      };
+
+      const updatedCategories = updateNodes(categories);
+      setCategories(updatedCategories);
+
+      // Prepare flat list for backend update
+      const flatList: any[] = [];
+      const flatten = (nodes: CategoryNode[], pId: string | null = null) => {
+        nodes.forEach((node, index) => {
+          flatList.push({ id: node.id, parentId: pId, sortOrder: index });
+          if (node.children && node.children.length > 0) {
+            flatten(node.children, node.id);
+          }
+        });
+      };
+      flatten(updatedCategories);
+
+      await fetch('/api/categories/reorder', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categories: flatList })
+      });
+    } catch (error) {
+      console.error('Failed to reorder categories:', error);
+    }
   };
 
   const renderDetailView = () => (
@@ -733,7 +993,12 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
           </button>
         </div>
 
-        <div className="space-y-1">
+        <Reorder.Group 
+          axis="y" 
+          values={categories} 
+          onReorder={(newOrder) => handleReorder(newOrder)}
+          className="space-y-1"
+        >
           {categories.map((node) => (
             <CategoryItem 
               key={node.id}
@@ -745,9 +1010,11 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
               addSubCategory={addSubCategory}
               setDeleteConfirmId={setDeleteConfirmId}
               setEditingCatId={setEditingCatId}
+              onReorderItems={handleReorder}
+              itemCountAtLevel={categories.length}
             />
           ))}
-        </div>
+        </Reorder.Group>
       </div>
 
       {/* Delete Confirmation Modal */}
@@ -779,6 +1046,64 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                   className="flex-1 px-4 py-2 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                 >
                   确定
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Materials Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteMaterialConfirm && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+            >
+              <h3 className="text-lg font-bold text-slate-900 mb-2">确认删除资料</h3>
+              <p className="text-sm text-slate-600 mb-6">
+                确定要删除选中的 {selectedMaterials.length} 份资料吗？数据删除无法恢复！
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteMaterialConfirm(false)}
+                  className="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={async () => {
+                      try {
+                        const deletePromises = selectedMaterials.map(async id => {
+                            const res = await fetch(`/api/materials/${id}`, { method: 'DELETE' });
+                            if (!res.ok) throw new Error(`Failed to delete ${id}`);
+                            return res;
+                        });
+                        await Promise.all(deletePromises);
+                        setProjectMaterials(prev => prev.filter(m => !selectedMaterials.includes(m.id)));
+                        
+                        // Update main projects state count
+                        if (selectedProject) {
+                          setProjects(prev => prev.map(p => {
+                            if (p.id === selectedProject.id) {
+                              return { ...p, materialCount: Math.max(0, p.materialCount - selectedMaterials.length) };
+                            }
+                            return p;
+                          }));
+                        }
+                        setSelectedMaterials([]);
+                        setShowDeleteMaterialConfirm(false);
+                      } catch (e) {
+                        console.error('删除资料失败', e);
+                        alert('删除失败，请重试');
+                      }
+                  }}
+                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
+                >
+                  确定删除
                 </button>
               </div>
             </motion.div>
@@ -818,7 +1143,16 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
               <Plus size={16} />
               上传材料
             </button>
-            <button className="flex items-center gap-2 px-6 py-2.5 bg-white border border-[#0052CC] text-[#0052CC] rounded-xl text-sm font-bold hover:bg-blue-50 transition-all shadow-sm hover:shadow-md active:scale-95">
+            <button 
+              onClick={() => {
+                if (selectedMaterials.length === 0) {
+                  alert('请选择要删除的资料');
+                  return;
+                }
+                setShowDeleteMaterialConfirm(true);
+              }}
+              className="flex items-center gap-2 px-6 py-2.5 bg-white border border-[#0052CC] text-[#0052CC] rounded-xl text-sm font-bold hover:bg-blue-50 transition-all shadow-sm hover:shadow-md active:scale-95"
+            >
               <Trash2 size={16} />
               删除资料
             </button>
@@ -912,6 +1246,16 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button 
+                        onClick={() => {
+                          const type = item.fileName.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg';
+                          setPreviewFile({ url: '#', type, name: item.fileName });
+                        }}
+                        className="p-2 text-slate-400 hover:text-primary transition-colors" 
+                        title="预览"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button 
                         onClick={() => handleOpenEditModal(item)}
                         className="p-2 text-primary hover:text-blue-700 transition-colors" 
                         title="修改"
@@ -1003,31 +1347,28 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                                   {(() => {
                                     const renderNodes = (nodes: CategoryNode[], level = 0) => {
                                       return nodes.map(node => {
-                                        const isLeaf = node.children.length === 0;
+                                        const isSelected = uploadType === node.name;
+                                        const hasChildren = node.children && node.children.length > 0;
                                         return (
                                           <div key={node.id}>
                                             <div 
-                                              className={`px-4 py-2.5 text-sm flex items-center gap-2 transition-colors ${
-                                                isLeaf 
-                                                  ? `cursor-pointer hover:bg-slate-50 ${uploadType === node.name ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}` 
-                                                  : 'cursor-default text-slate-400 font-medium bg-slate-50/30'
+                                              className={`px-4 py-2.5 text-sm flex items-center gap-2 transition-colors cursor-pointer hover:bg-slate-50 text-slate-600 ${
+                                                isSelected ? 'text-primary font-bold bg-primary/5' : ''
                                               }`}
                                               style={{ paddingLeft: `${level * 20 + 16}px` }}
                                               onClick={() => {
-                                                if (isLeaf) {
-                                                  setUploadType(node.name);
-                                                  setShowCategoryDropdown(false);
-                                                }
+                                                setUploadType(node.name);
+                                                setShowCategoryDropdown(false);
                                               }}
                                             >
-                                              {node.children.length > 0 ? (
-                                                <FolderOpen size={14} className="text-slate-400 shrink-0" />
+                                              {hasChildren ? (
+                                                <FolderOpen size={14} className={`${isSelected ? 'text-primary' : 'text-slate-400'} shrink-0`} />
                                               ) : (
-                                                <Folder size={14} className="text-primary/60 shrink-0" />
+                                                <Folder size={14} className={`${isSelected ? 'text-primary' : 'text-primary/60'} shrink-0`} />
                                               )}
                                               <span className="truncate">{node.name}</span>
                                             </div>
-                                            {node.children.length > 0 && renderNodes(node.children, level + 1)}
+                                            {hasChildren && renderNodes(node.children, level + 1)}
                                           </div>
                                         );
                                       });
@@ -1047,16 +1388,24 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                           <input 
                             type="text" 
                             value={materialName}
-                            onChange={(e) => setMaterialName(e.target.value)}
+                            onChange={(e) => {
+                                setMaterialName(e.target.value);
+                                setDuplicateNameError(false);
+                            }}
                             placeholder="请输入材料名称..."
-                            className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${hasAttemptedSave && !materialName.trim() ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'}`}
+                            className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm ${((hasAttemptedSave && !materialName.trim()) || duplicateNameError) ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-slate-200'}`}
                           />
-                          {hasAttemptedSave && !materialName.trim() && (
-                            <div className="absolute right-4 text-red-500">
+                          {((hasAttemptedSave && !materialName.trim()) || duplicateNameError) && (
+                            <div className="absolute right-4 text-red-500 select-none pointer-events-none">
                               <AlertCircle size={16} className="fill-red-500 text-white" />
                             </div>
                           )}
                         </div>
+                        {duplicateNameError && (
+                          <p className="text-xs text-red-500 ml-1 font-bold animate-in fade-in slide-in-from-top-1">
+                            当前目录下已存在同名材料，请修改名称
+                          </p>
+                        )}
                       </div>
 
                       <div className="space-y-1.5">
@@ -1096,7 +1445,7 @@ const OtherProjectMaterials: React.FC<OtherProjectMaterialsProps> = ({ currentEn
                                   <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
                                     <span>{(item.file.size / 1024 / 1024).toFixed(1)}MB</span>
                                     <span>·</span>
-                                    <span>{new Date().toISOString().split('T')[0]}</span>
+                                    <span>{(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; })()}</span>
                                   </div>
                                 </div>
                               </div>

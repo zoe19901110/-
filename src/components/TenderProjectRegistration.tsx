@@ -87,8 +87,8 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
         tendererContact: '010-88888888',
         tenderAgent: 'XX招标代理有限公司',
         tenderAgentContact: '010-66666666',
-        openingTime: '2026-01-15T09:30',
-        depositDeadline: '2026-01-12T17:00',
+        openingTime: '2026-01-15 09:30',
+        depositDeadline: '2026-01-12 17:00',
         openingLocation: 'XX市公共资源交易中心 301 会议室',
         depositAmount: '¥ 500,000.00',
         collectionTime: '2025-12-25',
@@ -134,6 +134,12 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
   const [statusFilter, setStatusFilter] = useState('全部');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [appliedFilters, setAppliedFilters] = useState({
+    searchTerm: '',
+    statusFilter: '全部',
+    startDate: '',
+    endDate: ''
+  });
 
   const { widths, onMouseDown } = useTableResizer([
     250,    // 项目名称
@@ -171,8 +177,17 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
   const handleGiveUpProject = (id: string) => {
     setConfirmDialog({
       message: '请再次确认是否作废？',
-      onConfirm: () => {
-        setProjects(projects.map(p => p.id === id ? { ...p, status: '放弃投标' } : p));
+      onConfirm: async () => {
+        const project = projects.find(p => p.id === id);
+        if (project) {
+          const updated = { ...project, status: '放弃投标' };
+          await fetch(`/api/projects/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updated)
+          });
+          setProjects(projects.map(p => p.id === id ? updated : p));
+        }
       }
     });
   };
@@ -180,13 +195,22 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
   const handleRestartProject = (id: string) => {
     setConfirmDialog({
       message: '确定要重启该项目的投标吗？',
-      onConfirm: () => {
-        setProjects(projects.map(p => p.id === id ? { ...p, status: '投标中' } : p));
+      onConfirm: async () => {
+        const project = projects.find(p => p.id === id);
+        if (project) {
+          const updated = { ...project, status: '投标中' };
+          await fetch(`/api/projects/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updated)
+          });
+          setProjects(projects.map(p => p.id === id ? updated : p));
+        }
       }
     });
   };
 
-  const handleSaveProject = () => {
+  const handleSaveProject = async () => {
     setHasAttemptedSave(true);
     if (!analyzedData.projectName.trim()) {
       alert('请填写所有必填项');
@@ -208,13 +232,28 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
       openingLocation: analyzedData.openingLocation,
       collectionTime: analyzedData.collectionTime,
       requirements: analyzedData.tenderRequirements,
-      otherRemarks: analyzedData.otherRemarks
+      otherRemarks: analyzedData.otherRemarks,
+      tenderControlPrice: analyzedData.depositAmount // Assuming this for now or leaving empty
     };
 
-    if (isEditing) {
-      setProjects(projects.map(p => p.id === editingId ? newProjectData : p));
-    } else {
-      setProjects([newProjectData, ...projects]);
+    try {
+      if (isEditing) {
+        await fetch(`/api/projects/${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newProjectData)
+        });
+        setProjects(projects.map(p => p.id === editingId ? newProjectData : p));
+      } else {
+        await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newProjectData)
+        });
+        setProjects([newProjectData, ...projects]);
+      }
+    } catch (err) {
+      console.error('Failed to save project:', err);
     }
     resetAddModal();
   };
@@ -335,7 +374,23 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
         </div>
 
         <div className="flex gap-2">
-          <button className="px-8 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-sm hover:shadow-md transition-all active:scale-95">
+          <button 
+            onClick={() => {
+              // Ensure both dates are selected if ANY date is selected
+              if ((startDate && !endDate) || (!startDate && endDate)) {
+                alert('请选择完整的时间范围（开始日期和结束日期）');
+                return;
+              }
+              setAppliedFilters({
+                searchTerm,
+                statusFilter,
+                startDate,
+                endDate
+              });
+              setCurrentPage(1); // Reset to first page on new query
+            }}
+            className="px-8 py-2.5 bg-[#0052CC] text-white rounded-xl text-sm font-bold hover:bg-[#0052CC]/90 shadow-sm hover:shadow-md transition-all active:scale-95"
+          >
             查询
           </button>
           <button 
@@ -344,6 +399,13 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
               setStatusFilter('全部');
               setStartDate('');
               setEndDate('');
+              setAppliedFilters({
+                searchTerm: '',
+                statusFilter: '全部',
+                startDate: '',
+                endDate: ''
+              });
+              setCurrentPage(1);
             }}
             className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm hover:shadow-md active:scale-95"
           >
@@ -387,12 +449,12 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
             </thead>
             <tbody className="divide-y divide-slate-100">
               {projects.filter(p => {
-                const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
-                const matchesStatus = statusFilter === '全部' || p.status === statusFilter;
+                const matchesSearch = p.name.includes(appliedFilters.searchTerm) || p.code.includes(appliedFilters.searchTerm);
+                const matchesStatus = appliedFilters.statusFilter === '全部' || p.status === appliedFilters.statusFilter;
                 
                 const projectDate = p.bidOpeningTime.split(' ')[0]; // Extract YYYY-MM-DD
-                const matchesStartDate = !startDate || projectDate >= startDate;
-                const matchesEndDate = !endDate || projectDate <= endDate;
+                const matchesStartDate = !appliedFilters.startDate || projectDate >= appliedFilters.startDate;
+                const matchesEndDate = !appliedFilters.endDate || projectDate <= appliedFilters.endDate;
                 
                 return matchesSearch && matchesStatus && matchesStartDate && matchesEndDate;
               })
@@ -500,12 +562,12 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
       <Pagination 
           currentPage={currentPage}
           totalPages={Math.ceil(projects.filter(p => {
-            const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
-            const matchesStatus = statusFilter === '全部' || p.status === statusFilter;
+            const matchesSearch = p.name.includes(appliedFilters.searchTerm) || p.code.includes(appliedFilters.searchTerm);
+            const matchesStatus = appliedFilters.statusFilter === '全部' || p.status === appliedFilters.statusFilter;
             
             const projectDate = p.bidOpeningTime.split(' ')[0];
-            const matchesStartDate = !startDate || projectDate >= startDate;
-            const matchesEndDate = !endDate || projectDate <= endDate;
+            const matchesStartDate = !appliedFilters.startDate || projectDate >= appliedFilters.startDate;
+            const matchesEndDate = !appliedFilters.endDate || projectDate <= appliedFilters.endDate;
             
             return matchesSearch && matchesStatus && matchesStartDate && matchesEndDate;
           }).length / pageSize)}
@@ -513,12 +575,12 @@ const TenderProjectRegistration: React.FC<TenderProjectRegistrationProps> = ({
           onPageChange={setCurrentPage}
           onPageSizeChange={setPageSize}
           totalItems={projects.filter(p => {
-            const matchesSearch = p.name.includes(searchTerm) || p.code.includes(searchTerm);
-            const matchesStatus = statusFilter === '全部' || p.status === statusFilter;
+            const matchesSearch = p.name.includes(appliedFilters.searchTerm) || p.code.includes(appliedFilters.searchTerm);
+            const matchesStatus = appliedFilters.statusFilter === '全部' || p.status === appliedFilters.statusFilter;
             
             const projectDate = p.bidOpeningTime.split(' ')[0];
-            const matchesStartDate = !startDate || projectDate >= startDate;
-            const matchesEndDate = !endDate || projectDate <= endDate;
+            const matchesStartDate = !appliedFilters.startDate || projectDate >= appliedFilters.startDate;
+            const matchesEndDate = !appliedFilters.endDate || projectDate <= appliedFilters.endDate;
             
             return matchesSearch && matchesStatus && matchesStartDate && matchesEndDate;
           }).length}

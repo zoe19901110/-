@@ -50,7 +50,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(8);
 
   const [analyzedData, setAnalyzedData] = useState({
     projectName: '',
@@ -152,7 +152,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
       id: '3',
       title: `${currentEnterprise.name} - 完成 年度业绩台账 的季度数据校验`,
       priority: '低优先级',
-      time: '11-27 15:00',
+      time: '11月27日 15:00',
       type: 'success'
     }
   ];
@@ -164,35 +164,39 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
       className="space-y-8"
     >
       {/* Hero Section - Card Layout */}
-      <section className="grid grid-cols-8 gap-6 pb-4">
+      <section className="grid grid-cols-7 gap-6 pb-4">
         {/* Primary Action Card */}
         <button 
           onClick={() => setShowNewProjectModal(true)}
           className="col-span-2 h-[160px] bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-6 flex flex-col justify-between items-start text-white shadow-lg shadow-blue-200/50 hover:shadow-blue-300/50 transition-all active:scale-[0.98] group"
         >
-          <div className="size-10 bg-white/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Plus size={24} />
+          <div className="size-14 bg-white/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Plus size={36} strokeWidth={1.5} />
           </div>
-          <span className="text-lg font-bold">创建项目</span>
+          <span className="text-xl font-bold tracking-wide">创建项目</span>
         </button>
 
         {/* Utility Cards */}
         {[
-          { label: 'PDF压缩', icon: Minimize2, color: 'text-blue-500', bg: 'bg-blue-50' },
-          { label: 'word转PDF', icon: ArrowRightLeft, color: 'text-orange-500', bg: 'bg-orange-50' },
-          { label: 'PDF合并', icon: FileStack, color: 'text-purple-500', bg: 'bg-purple-50' },
-          { label: '清标工具', icon: MonitorCheck, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-          { label: '素材市场', icon: Archive, color: 'text-orange-600', bg: 'bg-orange-50' },
-          { label: '招标解析', icon: FileSearch, color: 'text-purple-600', bg: 'bg-purple-50' },
+          { label: 'AI编标', icon: BrainCircuit, color: 'text-blue-500', bg: 'bg-blue-50/80', hover: 'group-hover:bg-blue-100 group-hover:text-blue-600', href: 'https://bqpoint.com/AIbianbiao/dist/index.html' },
+          { label: '标书检查', icon: ShieldCheck, color: 'text-emerald-500', bg: 'bg-emerald-50/80', hover: 'group-hover:bg-emerald-100 group-hover:text-emerald-600' },
+          { label: '素材市场', icon: Archive, color: 'text-orange-500', bg: 'bg-orange-50/80', hover: 'group-hover:bg-orange-100 group-hover:text-orange-600', href: 'https://www.bqpoint.com/materialmarket/vue/dist/index.html?platform=DesktopApp#/application-center-home' },
+          { label: '招标文件解析', icon: FileSearch, color: 'text-purple-500', bg: 'bg-purple-50/80', hover: 'group-hover:bg-purple-100 group-hover:text-purple-600', href: 'https://www.bqpoint.com/bqdesktop/fileanalysis/before_analysis.html?prefectureguid=0325df6d-b4c9-4a60-b35e-096659ba3a3c&platformquyu=320000&platformcode=tool320000022&applicationguid=34d5ebfb-25e6-4d1b-9abc-d3f00b7f6ce6&danweiguid=undefined&winformtype=jsob&prefectureno=tool320000022&redirect_token=MGU4MjU4M2UtODk1ZS00YzU5LWE4MmEtNmFmMDA1OTM1OGM2&p=prefecturetool' },
+          { label: '标讯', icon: Bell, color: 'text-indigo-500', bg: 'bg-indigo-50/80', hover: 'group-hover:bg-indigo-100 group-hover:text-indigo-600', href: 'https://micro.bqpoint.com/epoint-web-micro/frame/pages/iframe/index_iframe' },
         ].map((tool, i) => (
           <button 
             key={i}
-            className="col-span-1 h-[160px] bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-primary/20 transition-all flex flex-col items-center justify-center gap-4 group active:scale-95"
+            onClick={() => {
+              if (tool.href) {
+                window.open(tool.href, '_blank');
+              }
+            }}
+            className="col-span-1 h-[160px] bg-white rounded-xl border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.1)] hover:border-slate-200 transition-all duration-300 flex flex-col items-center justify-center gap-5 group active:scale-[0.98]"
           >
-            <div className={`size-12 rounded-xl ${tool.bg} ${tool.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-              <tool.icon size={24} />
+            <div className={`size-16 rounded-2xl ${tool.bg} ${tool.color} ${tool.hover} flex items-center justify-center group-hover:scale-110 transition-all duration-300`}>
+              <tool.icon size={34} strokeWidth={1.5} />
             </div>
-            <span className="text-sm font-medium text-slate-600">{tool.label}</span>
+            <span className="text-[15px] font-semibold text-slate-700 tracking-wide text-center px-2 group-hover:text-slate-900 transition-colors">{tool.label}</span>
           </button>
         ))}
       </section>
@@ -338,14 +342,14 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onEnterWorkbench, c
                 <div className="flex items-start gap-3">
                   <div className="w-1 h-10 bg-yellow-400 rounded-full shrink-0"></div>
                   <div>
-                    <p className="text-xs font-bold">11-22 今天</p>
+                    <p className="text-xs font-bold">11月22日 今天</p>
                     <p className="text-xs text-slate-500">招标文件最终评审会议</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="w-1 h-10 bg-[#0052CC] rounded-full shrink-0"></div>
                   <div>
-                    <p className="text-xs font-bold text-primary">11-25 关键节点</p>
+                    <p className="text-xs font-bold text-primary">11月25日 关键节点</p>
                     <p className="text-xs text-slate-500">智慧城市管理平台开标</p>
                   </div>
                 </div>

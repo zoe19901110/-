@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { 
   Plus, 
   Search, 
@@ -55,6 +56,13 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
   const [endDate, setEndDate] = useState('');
   const [statusFilter, setStatusFilter] = useState('全部');
   const [fulfillmentFilter, setFulfillmentFilter] = useState('全部');
+  const [appliedFilters, setAppliedFilters] = useState({
+    searchTerm: '',
+    startDate: '',
+    endDate: '',
+    statusFilter: '全部',
+    fulfillmentFilter: '全部'
+  });
   const [showAddModal, setShowAddModal] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [allUsers, setAllUsers] = useState<any[]>([]);
@@ -73,7 +81,7 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
         name: file.name,
         size: `${(file.size / 1024 / 1024).toFixed(1)}MB`,
         type: file.name.split('.').pop()?.toLowerCase() || 'unknown',
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
       }));
       setTenderFiles([...tenderFiles, ...newFiles]);
     }
@@ -119,6 +127,8 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
     }
   }, []);
 
+  const [currentEditingRecord, setCurrentEditingRecord] = useState<any>(null);
+
   const handleOpenModal = (record?: any) => {
     setHasAttemptedSave(false);
     // Check if the project is paused
@@ -128,6 +138,8 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
       return;
     }
     
+    setCurrentEditingRecord(record || null);
+
     if (record) {
       if (!record.hasOpeningInfo) {
         setIsNewRecord(true);
@@ -146,23 +158,23 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
   // Modal State
   const [isEditing, setIsEditing] = useState(true);
   const [isNewRecord, setIsNewRecord] = useState(false);
-  const [openingRecords, setOpeningRecords] = useState([
+  const [openingRecords, setOpeningRecords] = useLocalStorage('tenderStatus_openingRecords', [
     { units: '某某建设集团有限公司', price: 12105000, rank: '1', isWinner: true, isSelf: true },
     { units: '中建某局有限公司', price: 12500000, rank: '2', isWinner: false, isSelf: false },
     { units: '省建工集团', price: 12800000, rank: '3', isWinner: false, isSelf: false },
   ]);
-  const [winningRecords, setWinningRecords] = useState([
+  const [winningRecords, setWinningRecords] = useLocalStorage('tenderStatus_winningRecords', [
     { unit: '某某建设集团有限公司', amount: 12105000, date: '2026-03-25', url: 'http://ggzy.example.com/...' },
   ]);
-  const [contractRecords, setContractRecords] = useState([
+  const [contractRecords, setContractRecords] = useLocalStorage('tenderStatus_contractRecords', [
     { id: 'HT-2026-001', name: '城市基础设施施工合同', date: '2026-04-05', amount: 11800000, owner: '陈经理', duration: '30', status: '履行中', fulfillmentDate: '2026-04-10', expectedCompletionDate: '2026-05-10' },
   ]);
-  const [unsuccessfulReason, setUnsuccessfulReason] = useState('由于竞争对手报价更具优势，且在同类项目中有更丰富的实施经验，本次未能中标。后续需加强成本控制和案例积累。');
-  const [contractAttachments, setContractAttachments] = useState<Attachment[]>([
+  const [unsuccessfulReason, setUnsuccessfulReason] = useLocalStorage('tenderStatus_unsuccessfulReason', '由于竞争对手报价更具优势，且在同类项目中有更丰富的实施经验，本次未能中标。后续需加强成本控制和案例积累。');
+  const [contractAttachments, setContractAttachments] = useLocalStorage<Attachment[]>('tenderStatus_contractAttachments', [
     { id: '1', name: '中标通知书.pdf', size: '1.2MB', type: 'pdf', date: '2026-03-25', category: '中标通知书' },
     { id: '2', name: '施工合同扫描件.jpg', size: '2.4MB', type: 'image', date: '2026-04-05', category: '合同' },
   ]);
-  const [openingRecordFiles, setOpeningRecordFiles] = useState<Attachment[]>([
+  const [openingRecordFiles, setOpeningRecordFiles] = useLocalStorage<Attachment[]>('tenderStatus_openingRecordFiles', [
     { id: 'orf-1', name: '开标记录表-20260320.pdf', size: '1.5MB', type: 'pdf', date: '2026-03-20', category: '开标记录' }
   ]);
 
@@ -262,7 +274,7 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
     alert('详情数据已准备好导出（包含附件列表，模拟导出成功）');
   };
 
-  const [records, setRecords] = useState<any[]>([]);
+  const [records, setRecords] = useLocalStorage<any[]>('tenderStatus_records', []);
 
   const formatCurrency = (value: number | string) => {
     if (typeof value === 'string') return value;
@@ -273,6 +285,8 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
   };
 
   React.useEffect(() => {
+    if (records.length > 0) return; // Only set rawRecords if empty
+
     const rawRecords = [
       {
         id: '1',
@@ -461,7 +475,23 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
         </div>
         
         <div className="flex gap-4 shrink-0">
-          <button className="px-8 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 shadow-sm hover:shadow-md transition-all">
+          <button 
+            onClick={() => {
+              if ((startDate && !endDate) || (!startDate && endDate)) {
+                alert('请选择完整的时间范围（开始日期和结束日期）');
+                return;
+              }
+              setAppliedFilters({
+                searchTerm,
+                startDate,
+                endDate,
+                statusFilter,
+                fulfillmentFilter
+              });
+              setCurrentPage(1);
+            }}
+            className="px-8 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 shadow-sm hover:shadow-md transition-all"
+          >
             查询
           </button>
           <button 
@@ -471,6 +501,14 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
               setEndDate('');
               setStatusFilter('全部');
               setFulfillmentFilter('全部');
+              setAppliedFilters({
+                searchTerm: '',
+                startDate: '',
+                endDate: '',
+                statusFilter: '全部',
+                fulfillmentFilter: '全部'
+              });
+              setCurrentPage(1);
             }}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all"
           >
@@ -511,11 +549,11 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
             </thead>
             <tbody className="divide-y divide-slate-100">
               {records.filter(r => {
-                const matchesSearch = r.projectName.includes(searchTerm) || r.projectCode.includes(searchTerm);
-                const matchesStartDate = !startDate || r.openingDate >= startDate;
-                const matchesEndDate = !endDate || r.openingDate <= endDate;
-                const matchesStatus = statusFilter === '全部' || r.result === statusFilter;
-                const matchesFulfillment = fulfillmentFilter === '全部' || r.fulfillmentStatus === fulfillmentFilter;
+                const matchesSearch = r.projectName.includes(appliedFilters.searchTerm) || r.projectCode.includes(appliedFilters.searchTerm);
+                const matchesStartDate = !appliedFilters.startDate || r.openingDate >= appliedFilters.startDate;
+                const matchesEndDate = !appliedFilters.endDate || r.openingDate <= appliedFilters.endDate;
+                const matchesStatus = appliedFilters.statusFilter === '全部' || r.result === appliedFilters.statusFilter;
+                const matchesFulfillment = appliedFilters.fulfillmentFilter === '全部' || r.fulfillmentStatus === appliedFilters.fulfillmentFilter;
                 return matchesSearch && matchesStartDate && matchesEndDate && matchesStatus && matchesFulfillment;
               })
               .slice((currentPage - 1) * pageSize, currentPage * pageSize)
@@ -596,22 +634,22 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
       <Pagination 
         currentPage={currentPage}
         totalPages={Math.ceil(records.filter(r => {
-          const matchesSearch = r.projectName.includes(searchTerm) || r.projectCode.includes(searchTerm);
-          const matchesStartDate = !startDate || r.openingDate >= startDate;
-          const matchesEndDate = !endDate || r.openingDate <= endDate;
-          const matchesStatus = statusFilter === '全部' || r.result === statusFilter;
-          const matchesFulfillment = fulfillmentFilter === '全部' || r.fulfillmentStatus === fulfillmentFilter;
+          const matchesSearch = r.projectName.includes(appliedFilters.searchTerm) || r.projectCode.includes(appliedFilters.searchTerm);
+          const matchesStartDate = !appliedFilters.startDate || r.openingDate >= appliedFilters.startDate;
+          const matchesEndDate = !appliedFilters.endDate || r.openingDate <= appliedFilters.endDate;
+          const matchesStatus = appliedFilters.statusFilter === '全部' || r.result === appliedFilters.statusFilter;
+          const matchesFulfillment = appliedFilters.fulfillmentFilter === '全部' || r.fulfillmentStatus === appliedFilters.fulfillmentFilter;
           return matchesSearch && matchesStartDate && matchesEndDate && matchesStatus && matchesFulfillment;
         }).length / pageSize)}
         pageSize={pageSize}
         onPageChange={setCurrentPage}
         onPageSizeChange={setPageSize}
         totalItems={records.filter(r => {
-          const matchesSearch = r.projectName.includes(searchTerm) || r.projectCode.includes(searchTerm);
-          const matchesStartDate = !startDate || r.openingDate >= startDate;
-          const matchesEndDate = !endDate || r.openingDate <= endDate;
-          const matchesStatus = statusFilter === '全部' || r.result === statusFilter;
-          const matchesFulfillment = fulfillmentFilter === '全部' || r.fulfillmentStatus === fulfillmentFilter;
+          const matchesSearch = r.projectName.includes(appliedFilters.searchTerm) || r.projectCode.includes(appliedFilters.searchTerm);
+          const matchesStartDate = !appliedFilters.startDate || r.openingDate >= appliedFilters.startDate;
+          const matchesEndDate = !appliedFilters.endDate || r.openingDate <= appliedFilters.endDate;
+          const matchesStatus = appliedFilters.statusFilter === '全部' || r.result === appliedFilters.statusFilter;
+          const matchesFulfillment = appliedFilters.fulfillmentFilter === '全部' || r.fulfillmentStatus === appliedFilters.fulfillmentFilter;
           return matchesSearch && matchesStartDate && matchesEndDate && matchesStatus && matchesFulfillment;
         }).length}
       />
@@ -954,6 +992,7 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                 <th className="px-6 py-4">排名 <span className="text-red-500">*</span></th>
                                 <th className="px-6 py-4 text-center">是否中标 <span className="text-red-500">*</span></th>
                                 <th className="px-6 py-4 text-center">是否本单位 <span className="text-red-500">*</span></th>
+                                {isEditing && <th className="px-6 py-4 text-center whitespace-nowrap">操作</th>}
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -1049,6 +1088,17 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                                       row.isSelf && <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-[10px] font-bold">本单位</span>
                                     )}
                                   </td>
+                                  {isEditing && (
+                                    <td className="px-6 py-4 text-center">
+                                      <button 
+                                        onClick={() => setOpeningRecords(openingRecords.filter((_, idx) => idx !== i))}
+                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                        title="删除参标单位"
+                                      >
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </td>
+                                  )}
                                 </tr>
                               ))}
                             </tbody>
@@ -1537,6 +1587,25 @@ const TenderOpeningStatusManagement: React.FC<TenderOpeningStatusManagementProps
                         if (!isValid) {
                           alert('请填写所有必填项，并选择本单位');
                           return;
+                        }
+
+                        if (currentEditingRecord) {
+                          setRecords(prevRecords => prevRecords.map(r => {
+                            if (r.id === currentEditingRecord.id) {
+                              const selfRecord = openingRecords.find(or => or.isSelf);
+                              const isSelfWinner = selfRecord ? selfRecord.isWinner : false;
+                              return {
+                                ...r,
+                                hasOpeningInfo: true,
+                                bidPrice: selfRecord ? parseFloat(selfRecord.price as any) : r.bidPrice,
+                                result: selfRecord ? (isSelfWinner ? '中标' : '未中标') : r.result,
+                                competitors: openingRecords.length,
+                                ranking: selfRecord ? parseInt(selfRecord.rank as any) || r.ranking : r.ranking,
+                                fulfillmentStatus: !isSelfWinner ? '无需履行' : (r.fulfillmentStatus === '无需履行' ? '未开始' : r.fulfillmentStatus),
+                              };
+                            }
+                            return r;
+                          }));
                         }
 
                         setShowAddModal(false);

@@ -189,7 +189,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ initialTab, currentEnte
             name: file.name, 
             url: URL.createObjectURL(file),
             size: (file.size / 1024).toFixed(2) + ' KB',
-            uploadDate: new Date().toLocaleDateString()
+            uploadDate: new Date().toISOString().split('T')[0]
           };
 
           // 更新基本信息表单中的附件
